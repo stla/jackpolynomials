@@ -123,12 +123,12 @@ schur x lambda =
       where
         nll = _N lambda lambda
         n = length x
-        arr0 = listArray ((1,1), (nll, n)) (replicate (nll * n) Nothing)
+        arr0 = listArray ((1, 1), (nll, n)) (replicate (nll * n) Nothing)
         sch :: Int -> Int -> [Int] -> Array (Int,Int) (Maybe a) -> a
         sch m k nu arr
-          | null nu || nu!!0 == 0 || m == 0 = 1
+          | null nu || head nu == 0 || m == 0 = 1
           | length nu > m && nu!!m > 0 = 0
-          | m == 1 = x!!0 ^ (nu!!0)
+          | m == 1 = head x ^ head nu
           | isJust (arr ! (_N lambda nu, m)) = fromJust $ arr ! (_N lambda nu, m)
           | otherwise = s
             where
@@ -138,18 +138,18 @@ schur x lambda =
                 | length nu < ii || nu!!(ii-1) == 0 = ss
                 | otherwise =
                   let u = nu!!(ii-1) in
-                  if length nu == ii && u > 0 || u > nu!!ii
+                  if length nu == ii && u > 0 || u > nu !! ii
                     then
                       let nu' = (element (ii-1) .~ u-1) nu in
                       if u > 1
                         then
-                          go (ss + x!!(m-1) * sch m ii nu' arr) (ii+1)
+                          go (ss + x!!(m-1) * sch m ii nu' arr) (ii + 1)
                         else
                           if head nu' == 0
                             then
-                              go (ss + x!!(m-1)) (ii+1)
+                              go (ss + x!!(m-1)) (ii + 1)
                             else
                               let arr' = arr // [((_N lambda nu, m), Just ss)] in
-                              go (ss + x!!(m-1) * sch (m-1) 1 nu' arr') (ii+1)
+                              go (ss + x!!(m-1) * sch (m-1) 1 nu' arr') (ii + 1)
                     else
                       go ss (ii+1)

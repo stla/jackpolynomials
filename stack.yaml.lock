@@ -24,11 +24,11 @@ packages:
     git: https://github.com/stla/mpolynomials.git
     pantry-tree:
       size: 473
-      sha256: 638d8affc02b5eff0d3e5b8232ac3a981224923bcf274f0dacc845535d083d67
-    commit: 02308e92b11d1c3dadc59599339aec4821a8f886
+      sha256: 809a898d80a09d4a3b9c2bdaa031d7321fc4d7dc2c2f641bd1856afc54095b50
+    commit: 1947d6cab80b4cf9eadd0fb1d3b708d40b756bf4
   original:
     git: https://github.com/stla/mpolynomials.git
-    commit: 02308e92b11d1c3dadc59599339aec4821a8f886
+    commit: 1947d6cab80b4cf9eadd0fb1d3b708d40b756bf4
 snapshots:
 - completed:
     size: 619163

@@ -18,6 +18,7 @@ library
                      , Jack4
                      , GPochhammer
                      , Jack5
+                     , JackPol
   build-depends:       base >= 4.7 && < 5
                      , ilist
                      , array
