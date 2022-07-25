@@ -5,56 +5,9 @@ module Jack4
   where
 import Control.Lens                             ( (.~), element )
 import Data.Array                               ( Array, (!), (//), listArray )
-import Data.List.Index                          (iconcatMap)
 import Data.Maybe                               ( fromJust, isJust )
-import Math.Combinat.Partitions.Integer.IntList (_dualPartition, _isPartition)
-import Numeric.SpecFunctions                    (factorial)
-
-_ij :: [Int] -> ([Int],[Int])
-_ij lambda =
-  (
-    iconcatMap (\i a ->  replicate a (i + 1)) lambda,
-    concatMap (\a -> [1 .. a]) (filter (>0) lambda)
-  )
-
-_convParts :: Num b => [Int] -> ([b],[b])
-_convParts lambda =
-  (map fromIntegral lambda, map fromIntegral (_dualPartition lambda))
-
-hookLengths :: Fractional a => [Int] -> a -> [a]
-hookLengths lambda alpha = upper ++ lower
-  where
-    (i, j) = _ij lambda
-    (lambda', lambdaConj') = _convParts lambda
-    upper = zipWith (fup lambdaConj' lambda') i j
-      where
-        fup x y ii jj =
-          x!!(jj-1) - fromIntegral ii + alpha * (y!!(ii-1) - fromIntegral jj + 1)
-    lower = zipWith (flow lambdaConj' lambda') i j
-      where
-        flow x y ii jj =
-          x!!(jj-1) - fromIntegral ii + 1 + alpha * (y!!(ii-1) - fromIntegral jj)
-
-_betaratio :: Fractional a => [Int] -> [Int] -> Int -> a -> a
-_betaratio kappa mu k alpha = alpha * prod1 * prod2 * prod3
-  where
-    mukm1 = mu !! (k-1)
-    t = fromIntegral k - alpha * fromIntegral mukm1
-    u = zipWith (\s kap -> t + 1 - fromIntegral s + alpha * fromIntegral kap)
-                [1 .. k] kappa -- (take k kappa)
-    v = zipWith (\s m -> t - fromIntegral s + alpha * fromIntegral m)
-                [1 .. k-1] mu -- (take (k-1) mu)
-    --mu' = take (mu!!(k-1)-1) (_dualPartition mu)
-    w = zipWith (\s m -> fromIntegral m - t - alpha * fromIntegral s)
-                [1 .. mukm1-1] (_dualPartition mu)
-    prod1 = product $ map (\x -> x / (x + alpha - 1)) u
-    prod2 = product $ map (\x -> (x + alpha) / x) v
-    prod3 = product $ map (\x -> (x + alpha) / x) w
-
-_N :: [Int] -> [Int] -> Int
-_N lambda mu = sum $ zipWith (*) mu prods
-  where
-  prods = map (\i -> product $ drop i (map (+1) lambda)) [1 .. length lambda]
+import Internal                                 ( _N, hookLengths, _betaratio, _isPartition )
+import Numeric.SpecFunctions                    ( factorial )
 
 jack :: forall a. (Fractional a, Ord a) => [a] -> [Int] -> a -> a
 jack x lambda alpha =

@@ -1,31 +1,66 @@
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module JackPol
-  (schurPol)
+  (schurPol, jackPol)
   where
-import Control.Lens                             ( (.~), element )
-import Data.Array                               ( Array, (!), (//), listArray )
-import Data.List.Index                          (iconcatMap)
-import Data.Maybe                               ( fromJust, isJust )
-import Math.Combinat.Partitions.Integer.IntList (_dualPartition, _isPartition)
-import MultiPol2
+import qualified Algebra.Ring                   as AR
+import           Control.Lens                   ( (.~), element )
+import           Data.Array                     ( Array, (!), (//), listArray )
+import           Data.Maybe                     ( fromJust, isJust )
+import           Internal
+import           MultiPol2
 -- import Numeric.SpecFunctions                    (factorial)
 
-_ij :: [Int] -> ([Int],[Int])
-_ij lambda =
-  (
-    iconcatMap (\i a ->  replicate a (i + 1)) lambda,
-    concatMap (\a -> [1 .. a]) (filter (>0) lambda)
-  )
-
-_convParts :: Num b => [Int] -> ([b],[b])
-_convParts lambda =
-  (map fromIntegral lambda, map fromIntegral (_dualPartition lambda))
-
-_N :: [Int] -> [Int] -> Int
-_N lambda mu = sum $ zipWith (*) mu prods
-  where
-  prods = map (\i -> product $ drop i (map (+1) lambda)) [1 .. length lambda]
+jackPol :: forall a. (Fractional a, Ord a, AR.C a) => Int -> Partition -> a -> Polynomial a
+jackPol n lambda alpha =
+  case _isPartition lambda && alpha > 0 of
+    False -> if _isPartition lambda
+      then error "alpha must be strictly positive"
+      else error "lambda is not a valid integer partition"
+    True -> jac (length x) 0 lambda lambda arr0 1
+      where
+      nll = _N lambda lambda
+      x = map lone [1 .. n] :: [Polynomial a]
+      arr0 = listArray ((1, 1), (nll, n)) (replicate (nll * n) Nothing)
+      theproduct :: Int -> a
+      theproduct nu0 = if nu0 <= 1
+        then AR.one
+        else AR.product $ map (\i -> alpha * fromIntegral i + 1) [1 .. nu0-1]
+      jac :: Int -> Int -> Partition -> Partition -> Array (Int,Int) (Maybe (Polynomial a)) -> a -> Polynomial a
+      jac m k mu nu arr beta
+        | null nu || head nu == 0 || m == 0 = constant 1
+        | length nu > m && nu!!m > 0 = constant 0
+        | m == 1 = theproduct (head nu) *^ (head x ^**^ head nu) 
+        | k == 0 && isJust (arr ! (_N lambda nu, m)) =
+                      fromJust $ arr ! (_N lambda nu, m)
+        | otherwise = s
+          where
+            s = go (beta *^ (jac (m-1) 0 nu nu arr 1 ^*^ ((x!!(m-1)) ^**^ (sum mu - sum nu))))
+                (max 1 k)
+            go :: Polynomial a -> Int -> Polynomial a
+            go !ss ii
+              | length nu < ii || nu!!(ii-1) == 0 = ss
+              | otherwise =
+                let u = nu!!(ii-1) in
+                if length nu == ii && u > 0 || u > nu!!ii
+                  then
+                    let nu' = (element (ii-1) .~ u-1) nu in
+                    let gamma = beta * _betaratio' mu nu ii alpha in
+                    if u > 1
+                      then
+                        go (ss ^+^ jac m ii mu nu' arr gamma) (ii + 1)
+                      else
+                        if head nu' == 0
+                          then
+                            go (ss ^+^ (gamma *^ (x!!(m-1) ^**^ sum mu))) (ii + 1)
+                          else
+                            let arr' = arr // [((_N lambda nu, m), Just ss)] in
+                            let jck = jac (m-1) 0 nu' nu' arr' 1 in
+                            let jck' = gamma *^ (jck ^*^ 
+                                        (x!!(m-1) ^**^ (sum mu - sum nu'))) in
+                            go (ss ^+^ jck') (ii+1)
+                  else
+                    go ss (ii+1)
 
 schurPol :: Int -> [Int] -> Polynomial Int
 schurPol n lambda =
