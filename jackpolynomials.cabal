@@ -1,6 +1,9 @@
 name:                jackpolynomials
-version:             0.1.0.0
-description:         Evaluation of Jack, zonal, and Schur polynomials
+version:             1.0.0.0
+synopsis:            Jack, zonal, and Schur polynomials
+description:         This library can evaluate Jack polynomials, zonal polynomials
+                     .
+                     and Schur polynomials. It is also able to compute them in symbolic form.
 homepage:            https://github.com/stla/jackpolynomials#readme
 license:             GPL-3
 license-file:        LICENSE
