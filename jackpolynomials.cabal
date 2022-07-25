@@ -3,6 +3,7 @@ version:             0.1.0.0
 description:         Evaluation of Jack, zonal, and Schur polynomials
 homepage:            https://github.com/stla/jackpolynomials#readme
 license:             GPL-3
+license-file:        LICENSE
 author:              Stéphane Laurent
 maintainer:          laurent_step@outlook.fr
 copyright:           2022 Stéphane Laurent
