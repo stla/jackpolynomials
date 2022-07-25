@@ -10,17 +10,17 @@ license-file:        LICENSE
 author:              Stéphane Laurent
 maintainer:          laurent_step@outlook.fr
 copyright:           2022 Stéphane Laurent
-category:            Maths
+category:            Math, Algebra
 build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Jack
-                     , GPochhammer
-                     , JackPol
-                     , Internal
+  exposed-modules:     Math.Algebra.Jack.GPochhammer
+                     , Math.Algebra.Jack
+                     , Math.Algebra.JackPol
+  other-modules:       Math.Algebra.Jack.Internal
   build-depends:       base >= 4.7 && < 5
                      , ilist
                      , array

@@ -1,15 +1,15 @@
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module JackPol
+module Math.Algebra.JackPol
   (schurPol, jackPol, zonalPol)
   where
 import qualified Algebra.Ring as AR
-import           Control.Lens ( (.~), element )
-import           Data.Array   ( Array, (!), (//), listArray )
-import           Data.Maybe   ( fromJust, isJust )
-import           Internal     ( _betaratio', hookLengths, _N
-                              , _isPartition, Partition )
-import           MultiPol     ( (*^), (^**^), (^*^), (^+^)
+import           Control.Lens               ( (.~), element )
+import           Data.Array                 ( Array, (!), (//), listArray )
+import           Data.Maybe                 ( fromJust, isJust )
+import           Math.Algebra.Jack.Internal ( _betaratio', hookLengths, _N
+                                            , _isPartition, Partition )
+import           Math.Algebra.MultiPol      ( (*^), (^**^), (^*^), (^+^)
                               , constant, lone, Polynomial )
 import Numeric.SpecFunctions  ( factorial )
 

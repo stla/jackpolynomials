@@ -1,5 +1,5 @@
 {-# LANGUAGE BangPatterns #-}
-module Internal
+module Math.Algebra.Jack.Internal
   where
 import qualified Algebra.Ring    as AR
 import           Data.List.Index ( iconcatMap )

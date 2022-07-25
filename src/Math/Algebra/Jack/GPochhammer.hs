@@ -1,5 +1,5 @@
-module GPochhammer where
-import           Jack                                    (zonal)
+module Math.Algebra.Jack.GPochhammer where
+import Math.Algebra.Jack (zonal)
 
 gpochhammer :: Fractional a => a -> [Int] -> a -> a
 gpochhammer a kappa alpha =

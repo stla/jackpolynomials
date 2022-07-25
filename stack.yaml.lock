@@ -5,30 +5,16 @@
 
 packages:
 - completed:
-    hackage: combinat-0.2.10.0@sha256:adc1dbb532b048e419374e9e89dc4f92c47758300ffe8534a54849266706e53b,5318
-    pantry-tree:
-      size: 4964
-      sha256: 3633e40972d9b3bc12ae75fdeadff558d5bf8293f592245db8bfdbff8c9e22be
-  original:
-    hackage: combinat-0.2.10.0@sha256:adc1dbb532b048e419374e9e89dc4f92c47758300ffe8534a54849266706e53b,5318
-- completed:
-    hackage: compact-word-vectors-0.2.0.2@sha256:e46c7c3186dafe1ae22434556ddec91af022f2360c57c30a46397758938f3acc,2617
-    pantry-tree:
-      size: 744
-      sha256: 04bb169017c6d066518c6b90938839cf0f1b3352188a4800ffe7b04d79cb2b99
-  original:
-    hackage: compact-word-vectors-0.2.0.2@sha256:e46c7c3186dafe1ae22434556ddec91af022f2360c57c30a46397758938f3acc,2617
-- completed:
     name: mpolynomials
     version: 0.1.0.0
     git: https://github.com/stla/mpolynomials.git
     pantry-tree:
-      size: 475
-      sha256: 89b0269fd10d3a05661073c0dbd36db624dc403f01e87e510078dae4eef52588
-    commit: 48eae19037e508eca17ba9128409be52d4b2f9fc
+      size: 540
+      sha256: bd0e6ec413a7b3b9e8541b40734d5ed26c375c3f99b7ee8ad14495ae810e0f15
+    commit: eed39129b7f9580b3eaf1e0f884033f407bd586d
   original:
     git: https://github.com/stla/mpolynomials.git
-    commit: 48eae19037e508eca17ba9128409be52d4b2f9fc
+    commit: eed39129b7f9580b3eaf1e0f884033f407bd586d
 snapshots:
 - completed:
     size: 619163

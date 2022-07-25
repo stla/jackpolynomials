@@ -6,16 +6,16 @@ applications in multivariate statistics. They are particular cases of
 allows to evaluate these polynomials. It can also compute their symbolic form.
 
 ```haskell
-import Jack
+import Math.Algebra.Jack
 import Data.Ratio
 jackPol [1, 1] [3, 1] (2%1)
 -- 48 % 1
 ```
 
 ```haskell
-import JackPol
+import Math.Algebra.JackPol
 import Data.Ratio
-import MultiPol
+import Math.Algebra.MultiPol
 jp = jackPol 2 [3, 1] (2%1)
 jp
 -- (M (Monomial {coefficient = 18 % 1, powers = fromList [1,3]}) 

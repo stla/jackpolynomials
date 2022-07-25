@@ -1,13 +1,13 @@
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module Jack
+module Math.Algebra.Jack
   (schur, jack, zonal)
   where
-import Control.Lens          ( (.~), element )
-import Data.Array            ( Array, (!), (//), listArray )
-import Data.Maybe            ( fromJust, isJust )
-import Internal              ( _N, hookLengths, _betaratio, _isPartition, Partition )
-import Numeric.SpecFunctions ( factorial )
+import Control.Lens               ( (.~), element )
+import Data.Array                 ( Array, (!), (//), listArray )
+import Data.Maybe                 ( fromJust, isJust )
+import Math.Algebra.Jack.Internal ( _N, hookLengths, _betaratio, _isPartition, Partition )
+import Numeric.SpecFunctions      ( factorial )
 
 -- | Evaluation of Jack polynomial
 jack :: forall a. (Fractional a, Ord a) 
