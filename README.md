@@ -23,6 +23,7 @@ jp
 --  M (Monomial {coefficient = 12 % 1, powers = fromList [2,2]})) 
 --  :+: 
 --  M (Monomial {coefficient = 18 % 1, powers = fromList [3,1]})
+prettyPol show "x" jp
 evalPoly jp [1, 1]
 -- 48 % 1
 ```

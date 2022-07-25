@@ -7,4 +7,4 @@ extra-deps:
 - combinat-0.2.10.0@sha256:adc1dbb532b048e419374e9e89dc4f92c47758300ffe8534a54849266706e53b,5318
 - compact-word-vectors-0.2.0.2@sha256:e46c7c3186dafe1ae22434556ddec91af022f2360c57c30a46397758938f3acc,2617
 - git: https://github.com/stla/mpolynomials.git
-  commit: 1947d6cab80b4cf9eadd0fb1d3b708d40b756bf4
+  commit: 48eae19037e508eca17ba9128409be52d4b2f9fc

@@ -9,7 +9,7 @@ import           Data.Array   ( Array, (!), (//), listArray )
 import           Data.Maybe   ( fromJust, isJust )
 import           Internal     ( _betaratio', hookLengths, _N
                               , _isPartition, Partition )
-import           MultiPol2    ( (*^), (^**^), (^*^), (^+^)
+import           MultiPol     ( (*^), (^**^), (^*^), (^+^)
                               , constant, lone, Polynomial )
 import Numeric.SpecFunctions  ( factorial )
 
