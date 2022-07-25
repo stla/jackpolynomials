@@ -1,0 +1,32 @@
+name:                jackpolynomials
+version:             0.1.0.0
+description:         Evaluation of Jack, zonal, and Schur polynomials
+homepage:            https://github.com/stla/jackpolynomials#readme
+license:             GPL-3
+author:              Stéphane Laurent
+maintainer:          laurent_step@outlook.fr
+copyright:           2022 Stéphane Laurent
+category:            Maths
+build-type:          Simple
+extra-source-files:  README.md
+cabal-version:       >=1.10
+
+library
+  hs-source-dirs:      src
+  exposed-modules:     Jack3
+                     , Jack4
+                     , GPochhammer
+                     , Jack5
+  build-depends:       base >= 4.7 && < 5
+                     , ilist
+                     , array
+                     , lens
+                     , math-functions
+                     , mpolynomials
+                     , combinat
+  default-language:    Haskell2010
+  ghc-options:         -Wall
+
+source-repository head
+  type:     git
+  location: https://github.com/stla/jack
