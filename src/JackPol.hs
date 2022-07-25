@@ -13,7 +13,12 @@ import           MultiPol     ( (*^), (^**^), (^*^), (^+^)
                               , constant, lone, Polynomial )
 import Numeric.SpecFunctions  ( factorial )
 
-jackPol :: forall a. (Fractional a, Ord a, AR.C a) => Int -> Partition -> a -> Polynomial a
+-- | Symbolic Jack polynomial
+jackPol :: forall a. (Fractional a, Ord a, AR.C a) 
+  => Int -- ^ number of variables
+  -> Partition -- ^ partition of integers
+  -> a -- ^ alpha parameter
+  -> Polynomial a
 jackPol n lambda alpha =
   case _isPartition lambda && alpha > 0 of
     False -> if _isPartition lambda
@@ -64,7 +69,11 @@ jackPol n lambda alpha =
                   else
                     go ss (ii+1)
 
-zonalPol :: (Fractional a, Ord a, AR.C a) => Int -> Partition -> Polynomial a
+-- | Symbolic zonal polynomial
+zonalPol :: (Fractional a, Ord a, AR.C a) 
+  => Int -- ^ number of variables
+  -> Partition -- ^ partition of integers
+  -> Polynomial a
 zonalPol n lambda = c *^ jck
   where
     k = sum lambda
@@ -72,7 +81,11 @@ zonalPol n lambda = c *^ jck
     c = 2^k * realToFrac (factorial k) / jlambda
     jck = jackPol n lambda 2
 
-schurPol :: Int -> Partition -> Polynomial Int
+-- | Symbolic Schur polynomial
+schurPol :: 
+  Int -- ^ number of variables
+  -> Partition -- ^ partition of integers
+  -> Polynomial Int
 schurPol n lambda =
   case _isPartition lambda of
     False -> error "lambda is not a valid integer partition"

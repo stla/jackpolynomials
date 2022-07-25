@@ -3,13 +3,18 @@
 module Jack
   (schur, jack, zonal)
   where
-import Control.Lens                             ( (.~), element )
-import Data.Array                               ( Array, (!), (//), listArray )
-import Data.Maybe                               ( fromJust, isJust )
-import Internal                                 ( _N, hookLengths, _betaratio, _isPartition )
-import Numeric.SpecFunctions                    ( factorial )
+import Control.Lens          ( (.~), element )
+import Data.Array            ( Array, (!), (//), listArray )
+import Data.Maybe            ( fromJust, isJust )
+import Internal              ( _N, hookLengths, _betaratio, _isPartition, Partition )
+import Numeric.SpecFunctions ( factorial )
 
-jack :: forall a. (Fractional a, Ord a) => [a] -> [Int] -> a -> a
+-- | Evaluation of Jack polynomial
+jack :: forall a. (Fractional a, Ord a) 
+  => [a] -- ^ values of the variables
+  -> Partition -- ^ partition of integers
+  -> a -- ^ alpha parameter
+  -> a
 jack x lambda alpha =
   case _isPartition lambda && alpha > 0 of
     False -> if _isPartition lambda
@@ -60,7 +65,11 @@ jack x lambda alpha =
                   else
                     go ss (ii+1)
 
-zonal :: (Fractional a, Ord a) => [a] -> [Int] -> a
+-- | Evaluation of zonal polynomial
+zonal :: (Fractional a, Ord a) 
+  => [a] -- ^ values of the variables
+  -> Partition -- ^ partition of integers
+  -> a
 zonal x lambda = c * jck
   where
     k = sum lambda
@@ -68,7 +77,11 @@ zonal x lambda = c * jck
     c = 2^k * realToFrac (factorial k) / jlambda
     jck = jack x lambda 2
 
-schur :: forall a. Fractional a => [a] -> [Int] -> a
+-- | Evaluation of Schur polynomial
+schur :: forall a. Fractional a 
+  => [a] -- ^ values of the variables
+  -> Partition -- ^ partition of integers 
+  -> a
 schur x lambda =
   case _isPartition lambda of
     False -> error "lambda is not a valid integer partition"
