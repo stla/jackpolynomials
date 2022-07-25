@@ -1,6 +1,6 @@
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module Jack4
+module Jack
   (schur, jack, zonal)
   where
 import Control.Lens                             ( (.~), element )

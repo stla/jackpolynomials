@@ -14,7 +14,7 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Jack4
+  exposed-modules:     Jack
                      , GPochhammer
                      , JackPol
                      , Internal

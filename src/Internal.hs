@@ -41,7 +41,7 @@ _N lambda mu = sum $ zipWith (*) mu prods
   where
   prods = map (\i -> product $ drop i (map (+1) lambda)) [1 .. length lambda]
 
-hookLengths :: Fractional a => [Int] -> a -> [a]
+hookLengths :: Fractional a => Partition -> a -> [a]
 hookLengths lambda alpha = upper ++ lower
   where
     (i, j) = _ij lambda
@@ -55,10 +55,10 @@ hookLengths lambda alpha = upper ++ lower
         flow x y ii jj =
           x!!(jj-1) - fromIntegral ii + 1 + alpha * (y!!(ii-1) - fromIntegral jj)
 
-hookLengths' :: (Fractional a, AR.C a) => [Int] -> a -> [a]
+hookLengths' :: (Fractional a, AR.C a) => Partition -> a -> [a]
 hookLengths' = hookLengths
 
-_betaratio :: Fractional a => [Int] -> [Int] -> Int -> a -> a
+_betaratio :: Fractional a => Partition -> Partition -> Int -> a -> a
 _betaratio kappa mu k alpha = alpha * prod1 * prod2 * prod3
   where
     mukm1 = mu !! (k-1)

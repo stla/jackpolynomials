@@ -1,15 +1,17 @@
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module JackPol
-  (schurPol, jackPol)
+  (schurPol, jackPol, zonalPol)
   where
-import qualified Algebra.Ring                   as AR
-import           Control.Lens                   ( (.~), element )
-import           Data.Array                     ( Array, (!), (//), listArray )
-import           Data.Maybe                     ( fromJust, isJust )
-import           Internal
-import           MultiPol2
--- import Numeric.SpecFunctions                    (factorial)
+import qualified Algebra.Ring as AR
+import           Control.Lens ( (.~), element )
+import           Data.Array   ( Array, (!), (//), listArray )
+import           Data.Maybe   ( fromJust, isJust )
+import           Internal     ( _betaratio', hookLengths, _N
+                              , _isPartition, Partition )
+import           MultiPol2    ( (*^), (^**^), (^*^), (^+^)
+                              , constant, lone, Polynomial )
+import Numeric.SpecFunctions  ( factorial )
 
 jackPol :: forall a. (Fractional a, Ord a, AR.C a) => Int -> Partition -> a -> Polynomial a
 jackPol n lambda alpha =
@@ -62,7 +64,15 @@ jackPol n lambda alpha =
                   else
                     go ss (ii+1)
 
-schurPol :: Int -> [Int] -> Polynomial Int
+zonalPol :: (Fractional a, Ord a, AR.C a) => Int -> Partition -> Polynomial a
+zonalPol n lambda = c *^ jck
+  where
+    k = sum lambda
+    jlambda = product (hookLengths lambda 2)
+    c = 2^k * realToFrac (factorial k) / jlambda
+    jck = jackPol n lambda 2
+
+schurPol :: Int -> Partition -> Polynomial Int
 schurPol n lambda =
   case _isPartition lambda of
     False -> error "lambda is not a valid integer partition"
