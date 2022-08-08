@@ -24,6 +24,7 @@ jp
 --  :+: 
 --  M (Monomial {coefficient = 18 % 1, powers = fromList [3,1]})
 prettyPol show "x" jp
+-- "(18 % 1) * x^(1, 3) + (12 % 1) * x^(2, 2) + (18 % 1) * x^(3, 1)"
 evalPoly jp [1, 1]
 -- 48 % 1
 ```

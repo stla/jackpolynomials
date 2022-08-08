@@ -5,16 +5,12 @@
 
 packages:
 - completed:
-    name: mpolynomials
-    version: 0.1.0.0
-    git: https://github.com/stla/mpolynomials.git
+    hackage: mpolynomials-0.1.0.0@sha256:213af2afb53023e60c31f386a10fb823d9ed45cd62c541ec807bdab0af3034c6,1144
     pantry-tree:
-      size: 540
-      sha256: bd0e6ec413a7b3b9e8541b40734d5ed26c375c3f99b7ee8ad14495ae810e0f15
-    commit: eed39129b7f9580b3eaf1e0f884033f407bd586d
+      size: 275
+      sha256: 646e7367154446131f9a046f772d1a01ffc12b6de6a3b87443f5cd2762c72a55
   original:
-    git: https://github.com/stla/mpolynomials.git
-    commit: eed39129b7f9580b3eaf1e0f884033f407bd586d
+    hackage: mpolynomials-0.1.0.0
 snapshots:
 - completed:
     size: 619163

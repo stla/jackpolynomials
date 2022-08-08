@@ -4,5 +4,5 @@ packages:
 - .
 
 extra-deps:
-- git: https://github.com/stla/mpolynomials.git
-  commit: eed39129b7f9580b3eaf1e0f884033f407bd586d
+- mpolynomials-0.1.0.0
+
