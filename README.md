@@ -8,7 +8,7 @@ allows to evaluate these polynomials. It can also compute their symbolic form.
 ```haskell
 import Math.Algebra.Jack
 import Data.Ratio
-jackPol [1, 1] [3, 1] (2%1)
+jack [1, 1] [3, 1] (2%1)
 -- 48 % 1
 ```
 
