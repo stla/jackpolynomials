@@ -2,7 +2,7 @@ module Main where
 import Math.Algebra.JackPol
 import Math.Algebra.Jack
 import Data.Ratio
-import Math.Algebra.MultiPol
+import Math.Algebra.Hspray
 import Test.Tasty       (defaultMain, testGroup)
 import Test.Tasty.HUnit (assertEqual, testCase)
 
@@ -11,7 +11,7 @@ main = defaultMain $
   testGroup "Tests"
   [ testCase "jackPol" $ do
       let jp = jackPol 2 [3, 1] (2%1)
-      let v = evalPoly jp [1, 1]
+      let v = evalSpray jp [1, 1]
       assertEqual ""
         v
         (48%1),
@@ -27,7 +27,7 @@ main = defaultMain $
       let sp3 = schurPol 4 [2, 2]
       let sp4 = schurPol 4 [2, 1, 1]
       let sp5 = schurPol 4 [1, 1, 1, 1]
-      let v = evalPoly (sp1 ^+^ 3 *^ sp2 ^+^ 2*^ sp3 ^+^ 3*^ sp4 ^+^ sp5) [2, 2, 2, 2]
+      let v = evalSpray (sp1 ^+^ 3 *^ sp2 ^+^ 2*^ sp3 ^+^ 3*^ sp4 ^+^ sp5) [2, 2, 2, 2]
       assertEqual ""
         v
         4096,
@@ -43,10 +43,10 @@ main = defaultMain $
         256,
 
     testCase "zonalPol" $ do
-      let zp1 = zonalPol 4 [3] :: Polynomial Rational
-      let zp2 = zonalPol 4 [2, 1] :: Polynomial Rational
-      let zp3 = zonalPol 4 [1, 1, 1] :: Polynomial Rational
-      let v = evalPoly (zp1 ^+^ zp2 ^+^ zp3) [2, 2, 2, 2]
+      let zp1 = zonalPol 4 [3] :: Spray Rational
+      let zp2 = zonalPol 4 [2, 1] :: Spray Rational
+      let zp3 = zonalPol 4 [1, 1, 1] :: Spray Rational
+      let v = evalSpray (zp1 ^+^ zp2 ^+^ zp3) [2, 2, 2, 2]
       assertEqual ""
         v
         512,

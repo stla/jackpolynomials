@@ -6,6 +6,7 @@
 -------
 * removed the upper bounds of the dependencies
 
-1.0.0.1.9000
+1.1.0.0
 -------
+* replaced the 'mpolynomials' dependency with 'hspray'
 * unit tests

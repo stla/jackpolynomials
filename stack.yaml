@@ -4,4 +4,4 @@ packages:
 - '.'
 
 extra-deps:
-- ../mpolynomials
+- ../hspray
