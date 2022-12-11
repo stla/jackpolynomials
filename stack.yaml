@@ -4,4 +4,4 @@ packages:
 - '.'
 
 extra-deps:
-- ../hspray
+- hspray-0.1.0.0
