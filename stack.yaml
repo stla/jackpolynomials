@@ -1,8 +1,7 @@
 resolver: lts-20.3
 
 packages:
-- .
+- '.'
 
 extra-deps:
-- mpolynomials-0.1.0.0
-
+- ../mpolynomials

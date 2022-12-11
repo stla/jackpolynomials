@@ -3,14 +3,7 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages:
-- completed:
-    hackage: mpolynomials-0.1.0.0@sha256:213af2afb53023e60c31f386a10fb823d9ed45cd62c541ec807bdab0af3034c6,1144
-    pantry-tree:
-      sha256: 646e7367154446131f9a046f772d1a01ffc12b6de6a3b87443f5cd2762c72a55
-      size: 275
-  original:
-    hackage: mpolynomials-0.1.0.0
+packages: []
 snapshots:
 - completed:
     sha256: 03cec7d96ed78877b03b5c2bc5e31015b47f69af2fe6a62d994a42b7a43c5805
