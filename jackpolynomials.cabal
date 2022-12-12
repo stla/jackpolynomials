@@ -1,5 +1,5 @@
 name:                jackpolynomials
-version:             1.1.0.0
+version:             1.1.0.1
 synopsis:            Jack, zonal, and Schur polynomials
 description:         This library can evaluate Jack polynomials, zonal polynomials and Schur polynomials. It is also able to compute them in symbolic form.
 homepage:            https://github.com/stla/jackpolynomials#readme
@@ -16,7 +16,7 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Math.Algebra.Jack.GPochhammer
+  exposed-modules:     Math.Algebra.Jack.HypergeoPQ
                      , Math.Algebra.Jack
                      , Math.Algebra.JackPol
   other-modules:       Math.Algebra.Jack.Internal
@@ -39,6 +39,7 @@ test-suite unit-tests
                       , tasty-hunit
                       , jackpolynomials
                       , hspray
+                      , hypergeomatrix
   Default-Language:     Haskell2010
 
 source-repository head

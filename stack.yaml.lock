@@ -3,7 +3,21 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: hspray-0.1.0.0@sha256:fd6558442e1ab1b1efa2bdd9815acd7e6f7d1a13bbed9b39d98a095550b1539b,1225
+    pantry-tree:
+      sha256: 2be106843f0d12ee888d9a52148cb04872309c8067a5aff9069de636b5dc500e
+      size: 319
+  original:
+    hackage: hspray-0.1.0.0
+- completed:
+    hackage: hypergeomatrix-1.1.0.1@sha256:42026e956eab49036b7e176ff50de3a8512a196749896fb466fdc2d50ce79295,1575
+    pantry-tree:
+      sha256: a148ac0a6366ddb927c7799f236e3e2c6ba3ab5cb24dc248eaa80ef81418a7fd
+      size: 667
+  original:
+    hackage: hypergeomatrix-1.1.0.1
 snapshots:
 - completed:
     sha256: 03cec7d96ed78877b03b5c2bc5e31015b47f69af2fe6a62d994a42b7a43c5805

@@ -10,3 +10,8 @@
 -------
 * replaced the 'mpolynomials' dependency with 'hspray'
 * unit tests
+
+1.1.0.1
+-------
+* unexported some useless functions
+* one more unit test
