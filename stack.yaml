@@ -4,5 +4,5 @@ packages:
 - '.'
 
 extra-deps:
-- hspray-0.1.0.0
+- hspray-0.1.1.0
 - hypergeomatrix-1.1.0.1

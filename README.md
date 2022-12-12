@@ -5,6 +5,8 @@ applications in multivariate statistics. They are particular cases of
 [Jack polynomials](https://en.wikipedia.org/wiki/Jack_function). This package
 allows to evaluate these polynomials. It can also compute their symbolic form.
 
+___
+
 ```haskell
 import Math.Algebra.Jack
 import Data.Ratio
@@ -22,3 +24,12 @@ prettySpray show "x" jp
 evalSpray jp [1, 1]
 -- 48 % 1
 ```
+
+
+## References
+
+* I.G. Macdonald. *Symmetric Functions and Hall Polynomials*. Oxford Mathematical Monographs. The Clarendon Press Oxford University Press, New York, second edition, 1995.
+
+* J. Demmel and P. Koev. *Accurate and efficient evaluation of Schur and Jack functions*. Mathematics of computations, vol. 75, n. 253, 223-229, 2005.
+
+* Jack polynomials. <https://www.symmetricfunctions.com/jack.htm>.
