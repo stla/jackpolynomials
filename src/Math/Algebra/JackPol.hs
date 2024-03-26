@@ -7,7 +7,7 @@ import qualified Algebra.Ring               as AR
 import           Control.Lens               ( (.~), element )
 import           Data.Array                 ( Array, (!), (//), listArray )
 import           Data.Maybe                 ( fromJust, isJust )
-import           Math.Algebra.Jack.Internal ( _betaratio', hookLengths, _N
+import           Math.Algebra.Jack.Internal ( _betaratio, hookLengths, _N
                                             , _isPartition, Partition )
 import           Math.Algebra.Hspray        ( (*^), (^**^), (^*^), (^+^)
                                             , constantSpray, lone, Spray )
@@ -31,8 +31,8 @@ jackPol n lambda alpha =
       arr0 = listArray ((1, 1), (nll, n)) (replicate (nll * n) Nothing)
       theproduct :: Int -> a
       theproduct nu0 = if nu0 <= 1
-        then AR.one
-        else AR.product $ map (\i -> alpha * fromIntegral i + 1) [1 .. nu0-1]
+        then 1
+        else product $ map (\i -> alpha * fromIntegral i + 1) [1 .. nu0-1]
       jac :: Int -> Int -> Partition -> Partition -> Array (Int,Int) (Maybe (Spray a)) -> a -> Spray a
       jac m k mu nu arr beta
         | null nu || head nu == 0 || m == 0 = constantSpray 1
@@ -52,7 +52,7 @@ jackPol n lambda alpha =
                 if length nu == ii && u > 0 || u > nu!!ii
                   then
                     let nu' = (element (ii-1) .~ u-1) nu in
-                    let gamma = beta * _betaratio' mu nu ii alpha in
+                    let gamma = beta * _betaratio mu nu ii alpha in
                     if u > 1
                       then
                         go (ss ^+^ jac m ii mu nu' arr gamma) (ii + 1)

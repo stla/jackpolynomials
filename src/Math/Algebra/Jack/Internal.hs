@@ -1,7 +1,6 @@
 {-# LANGUAGE BangPatterns #-}
 module Math.Algebra.Jack.Internal
   where
-import qualified Algebra.Ring    as AR
 import           Data.List.Index ( iconcatMap )
 
 type Partition = [Int]
@@ -55,9 +54,6 @@ hookLengths lambda alpha = upper ++ lower
         flow x y ii jj =
           x!!(jj-1) - fromIntegral ii + 1 + alpha * (y!!(ii-1) - fromIntegral jj)
 
-hookLengths' :: (Fractional a, AR.C a) => Partition -> a -> [a]
-hookLengths' = hookLengths
-
 _betaratio :: Fractional a => Partition -> Partition -> Int -> a -> a
 _betaratio kappa mu k alpha = alpha * prod1 * prod2 * prod3
   where
@@ -72,6 +68,3 @@ _betaratio kappa mu k alpha = alpha * prod1 * prod2 * prod3
     prod1 = product $ map (\x -> x / (x + alpha - 1)) u
     prod2 = product $ map (\x -> (x + alpha) / x) v
     prod3 = product $ map (\x -> (x + alpha) / x) w
-
-_betaratio' :: (Fractional a, AR.C a) => [Int] -> [Int] -> Int -> a -> a
-_betaratio' = _betaratio
