@@ -1,6 +1,7 @@
 module Main where
 import Data.Ratio                               ( (%) )
-import Math.Algebra.Hspray                      ( (^+^), (*^), Spray, evalSpray )
+import Math.Algebra.Hspray                      ( (^+^), (*^), Spray
+                                                , evalSpray, isSymmetricSpray )
 import Math.Algebra.Jack                        ( jack, zonal, schur )
 import Math.Algebra.Jack.HypergeoPQ             ( hypergeoPQ )
 import Math.Algebra.JackPol                     ( zonalPol, jackPol, schurPol )
@@ -9,6 +10,7 @@ import Test.Tasty                               ( defaultMain
                                                 , testGroup
                                                 )
 import Test.Tasty.HUnit                         ( assertEqual
+                                                , assertBool
                                                 , testCase
                                                 )
 
@@ -22,6 +24,10 @@ main = defaultMain $ testGroup
         v  = evalSpray jp [1, 1]
     assertEqual "" v (48 % 1)
 
+  , testCase "jackPol is symmetric" $ do
+    let jp = jackPol 2 [3, 1] (2 % 1) :: Spray Rational
+    assertBool "" (isSymmetricSpray jp)
+
   , testCase "jack" $ do
     assertEqual "" (jack [1, 1] [3, 1] (2 % 1)) (48 % 1 :: Rational)
 
@@ -33,6 +39,10 @@ main = defaultMain $ testGroup
         sp5 = schurPol 4 [1, 1, 1, 1] :: Spray Int
         v = evalSpray (sp1 ^+^ 3 *^ sp2 ^+^ 2 *^ sp3 ^+^ 3 *^ sp4 ^+^ sp5) [2, 2, 2, 2]
     assertEqual "" v 4096
+
+  , testCase "schurPol is symmetric" $ do
+    let sp = schurPol 2 [3, 1] :: Spray Rational
+    assertBool "" (isSymmetricSpray sp)
 
   , testCase "schur" $ do
     let sp1 = schur [1, 1, 1, 1] [4]

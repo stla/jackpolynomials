@@ -15,3 +15,9 @@
 -------
 * unexported some useless functions
 * one more unit test
+
+1.1.1.0
+-------
+* `schurPol` now returns a `Spray a`
+* added package bounds in the cabal file
+* cleaned the code
