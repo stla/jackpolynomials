@@ -1,9 +1,20 @@
+{-|
+Module      : Math.Algebra.JackPol
+Description : Evaluation of Jack polynomials.
+Copyright   : (c) Stéphane Laurent, 2024
+License     : GPL-3
+Maintainer  : laurent_step@outlook.fr
+
+Evaluation of Jack polynomials, zonal polynomials, and Schur polynomials. 
+See README for examples and references.
+-}
+
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Math.Algebra.Jack
-  (schur, jack, zonal)
+  (jack, zonal, schur)
   where
-import qualified Algebra.Additive     as AA
+import qualified Algebra.Additive as AA
 import qualified Algebra.Ring     as AR
 import Control.Lens               ( (.~), element )
 import Data.Array                 ( Array, (!), (//), listArray )

@@ -1,7 +1,18 @@
+{-|
+Module      : Math.Algebra.JackPol
+Description : Symbolic Jack polynomials.
+Copyright   : (c) Stéphane Laurent, 2024
+License     : GPL-3
+Maintainer  : laurent_step@outlook.fr
+
+Computation of symbolic Jack polynomials, zonal polynomials, and Schur polynomials. 
+See README for examples and references.
+-}
+
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Math.Algebra.JackPol
-  (schurPol, jackPol, zonalPol)
+  (jackPol, zonalPol, schurPol)
   where
 import qualified Algebra.Ring               as AR
 import           Control.Lens               ( (.~), element )
