@@ -58,7 +58,7 @@ jackPol n lambda alpha =
                       then
                         go (ss ^+^ jac m ii mu nu' arr gamma) (ii + 1)
                       else
-                        if head nu' == 0
+                        if nu'!!0 == 0
                           then
                             go (ss ^+^ (gamma *^ (x!!(m-1) ^**^ sum mu))) (ii + 1)
                           else

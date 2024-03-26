@@ -54,7 +54,7 @@ jack x@(x0:_) lambda alpha =
                       then
                         go (ss + jac m ii mu nu' arr gamma) (ii + 1)
                       else
-                        if head nu' == 0
+                        if nu' !! 0 == 0
                           then
                             go (ss + gamma * x!!(m-1)^ sum mu) (ii + 1)
                           else
@@ -113,7 +113,7 @@ schur x@(x0:_) lambda =
                         then
                           go (ss + x!!(m-1) * sch m ii nu' arr) (ii + 1)
                         else
-                          if head nu' == 0
+                          if nu' !! 0 == 0
                             then
                               go (ss + x!!(m-1)) (ii + 1)
                             else
