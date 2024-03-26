@@ -22,3 +22,5 @@
 * added package upper bounds in the cabal file
 * increased the version of the dependencies **hspray** and **hypergeomatrix**
 * cleaned the code
+* tested with higher versions of GHC
+* new unit tests
