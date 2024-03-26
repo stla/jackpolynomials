@@ -82,19 +82,19 @@ zonalPol n lambda = c *^ jck
     jck = jackPol n lambda 2
 
 -- | Symbolic Schur polynomial
-schurPol :: 
-  Int          -- ^ number of variables
+schurPol :: forall a. (Integral a, Ord a, AR.C a)
+  => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
-  -> Spray Int
+  -> Spray a
 schurPol n lambda =
   case _isPartition lambda of
     False -> error "schurPol: invalid integer partition"
     True -> sch n 1 lambda arr0
       where
-        x = map lone [1 .. n] :: [Spray Int]
+        x = map lone [1 .. n] :: [Spray a]
         nll = _N lambda lambda
         arr0 = listArray ((1, 1), (nll, n)) (replicate (nll * n) Nothing)
-        sch :: Int -> Int -> [Int] -> Array (Int,Int) (Maybe (Spray Int)) -> Spray Int
+        sch :: Int -> Int -> [Int] -> Array (Int,Int) (Maybe (Spray a)) -> Spray a
         sch m k nu arr
           | null nu || head nu == 0 || m == 0 = constantSpray 1
           | length nu > m && nu!!m > 0 = constantSpray 0
@@ -103,7 +103,7 @@ schurPol n lambda =
           | otherwise = s
             where
               s = go (sch (m-1) 1 nu arr) k
-              go :: Spray Int -> Int -> Spray Int
+              go :: Spray a -> Int -> Spray a
               go !ss ii
                 | length nu < ii || nu!!(ii-1) == 0 = ss
                 | otherwise =

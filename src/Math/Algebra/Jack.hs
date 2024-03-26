@@ -78,7 +78,7 @@ zonal x lambda = c * jck
     jck = jack x lambda 2
 
 -- | Evaluation of Schur polynomial
-schur :: forall a. Fractional a 
+schur :: forall a. Integral a 
   => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers 
   -> a
@@ -99,7 +99,7 @@ schur x lambda =
           | otherwise = s
             where
               s = go (sch (m-1) 1 nu arr) k
-              go :: Fractional a => a -> Int -> a
+              go :: Integral a => a -> Int -> a
               go !ss ii
                 | length nu < ii || nu!!(ii-1) == 0 = ss
                 | otherwise =
