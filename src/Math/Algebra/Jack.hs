@@ -15,7 +15,8 @@ jack :: forall a. (Fractional a, Ord a)
   -> Partition -- ^ partition of integers
   -> a         -- ^ alpha parameter
   -> a
-jack x lambda alpha =
+jack []       _      _     = error "jack: empty list of variables"
+jack x@(x0:_) lambda alpha =
   case _isPartition lambda && alpha > 0 of
     False -> if _isPartition lambda
       then error "jack: alpha must be strictly positive"
@@ -31,9 +32,9 @@ jack x lambda alpha =
         else product $ map (\i -> alpha * fromIntegral i + 1) [1 .. nu0-1]
       jac :: Int -> Int -> [Int] -> [Int] -> Array (Int,Int) (Maybe a) -> a -> a
       jac m k mu nu arr beta
-        | null nu || head nu == 0 || m == 0 = 1
+        | null nu || nu!!0 == 0 || m == 0 = 1
         | length nu > m && nu!!m > 0 = 0
-        | m == 1 = head x ^ head nu * theproduct (head nu)
+        | m == 1 = x0 ^ (nu!!0) * theproduct (nu!!0)
         | k == 0 && isJust (arr ! (_N lambda nu, m)) =
                       fromJust $ arr ! (_N lambda nu, m)
         | otherwise = s
@@ -82,7 +83,8 @@ schur :: forall a. Integral a
   => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers 
   -> a
-schur x lambda =
+schur []       _      = error "schur: empty list of variables"
+schur x@(x0:_) lambda =
   case _isPartition lambda of
     False -> error "schur: invalid integer partition"
     True -> sch n 1 lambda arr0
@@ -92,9 +94,9 @@ schur x lambda =
         arr0 = listArray ((1, 1), (nll, n)) (replicate (nll * n) Nothing)
         sch :: Int -> Int -> [Int] -> Array (Int,Int) (Maybe a) -> a
         sch m k nu arr
-          | null nu || head nu == 0 || m == 0 = 1
+          | null nu || nu!!0 == 0 || m == 0 = 1
           | length nu > m && nu!!m > 0 = 0
-          | m == 1 = head x ^ head nu
+          | m == 1 = x0 ^ nu!!0
           | isJust (arr ! (_N lambda nu, m)) = fromJust $ arr ! (_N lambda nu, m)
           | otherwise = s
             where

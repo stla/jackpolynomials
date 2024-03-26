@@ -10,7 +10,8 @@ import           Data.Maybe                 ( fromJust, isJust )
 import           Math.Algebra.Jack.Internal ( _betaratio, hookLengths, _N
                                             , _isPartition, Partition )
 import           Math.Algebra.Hspray        ( (*^), (^**^), (^*^), (^+^)
-                                            , constantSpray, lone, Spray )
+                                            , lone, Spray
+                                            , zeroSpray, unitSpray )
 import           Numeric.SpecFunctions      ( factorial )
 
 -- | Symbolic Jack polynomial
@@ -35,9 +36,9 @@ jackPol n lambda alpha =
         else product $ map (\i -> alpha * fromIntegral i + 1) [1 .. nu0-1]
       jac :: Int -> Int -> Partition -> Partition -> Array (Int,Int) (Maybe (Spray a)) -> a -> Spray a
       jac m k mu nu arr beta
-        | null nu || head nu == 0 || m == 0 = constantSpray 1
-        | length nu > m && nu!!m > 0 = constantSpray 0
-        | m == 1 = theproduct (head nu) *^ (head x ^**^ head nu) 
+        | null nu || nu!!0 == 0 || m == 0 = unitSpray
+        | length nu > m && nu!!m > 0 = zeroSpray
+        | m == 1 = theproduct (nu!!0) *^ (x!!0 ^**^ nu!!0) 
         | k == 0 && isJust (arr ! (_N lambda nu, m)) =
                       fromJust $ arr ! (_N lambda nu, m)
         | otherwise = s
@@ -96,9 +97,9 @@ schurPol n lambda =
         arr0 = listArray ((1, 1), (nll, n)) (replicate (nll * n) Nothing)
         sch :: Int -> Int -> [Int] -> Array (Int,Int) (Maybe (Spray a)) -> Spray a
         sch m k nu arr
-          | null nu || head nu == 0 || m == 0 = constantSpray 1
-          | length nu > m && nu!!m > 0 = constantSpray 0
-          | m == 1 = head x ^**^ head nu
+          | null nu || nu!!0 == 0 || m == 0 = unitSpray
+          | length nu > m && nu!!m > 0 = zeroSpray
+          | m == 1 = x!!0 ^**^ nu!!0
           | isJust (arr ! (_N lambda nu, m)) = fromJust $ arr ! (_N lambda nu, m)
           | otherwise = s
             where
@@ -115,7 +116,7 @@ schurPol n lambda =
                         then
                           go (ss ^+^ ((x!!(m-1)) ^*^ sch m ii nu' arr)) (ii + 1)
                         else
-                          if head nu' == 0
+                          if nu'!!0 == 0
                             then
                               go (ss ^+^ (x!!(m-1))) (ii + 1)
                             else

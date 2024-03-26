@@ -1,5 +1,5 @@
 module Math.Algebra.Jack.HypergeoPQ
-  ( hypergeoPQ, _allPartitions
+  ( hypergeoPQ
   ) where
 import           Math.Algebra.Jack              ( zonal )
 
@@ -20,12 +20,12 @@ hcoeff a b kappa alpha = numerator / denominator /
   denominator = product $ map (\x -> gpochhammer x kappa alpha) b
 
 _allPartitions :: Int -> [[Int]]
-_allPartitions m = [[]] ++ (map reverse (concat ps))
+_allPartitions m = [] : map reverse (concat ps)
  where
   ps      = [] : map parts [1 .. m]
   parts n = [n] : [ x : p | x <- [1 .. n], p <- ps !! (n - x), x <= head p ]
 
--- | Inefficient hypergeometric function of a matrix argument
+-- | Inefficient hypergeometric function of a matrix argument (for testing purpose)
 hypergeoPQ :: (Fractional a, Ord a) => Int -> [a] -> [a] -> [a] -> a
 hypergeoPQ m a b x = sum $ map (\kappa -> coeff kappa * zonal x kappa) kappas
  where

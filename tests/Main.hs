@@ -1,14 +1,14 @@
 module Main where
-import Data.Ratio ( (%) )
-import Math.Algebra.Hspray ( (^+^), (*^), Spray, evalSpray )
-import Math.Algebra.Jack ( jack, zonal, schur )
-import Math.Algebra.Jack.HypergeoPQ ( hypergeoPQ )
+import Data.Ratio                               ( (%) )
+import Math.Algebra.Hspray                      ( (^+^), (*^), Spray, evalSpray )
+import Math.Algebra.Jack                        ( jack, zonal, schur )
+import Math.Algebra.Jack.HypergeoPQ             ( hypergeoPQ )
 import Math.Algebra.JackPol                     ( zonalPol, jackPol, schurPol )
 import Math.HypergeoMatrix                      ( hypergeomat )
-import           Test.Tasty                     ( defaultMain
+import Test.Tasty                               ( defaultMain
                                                 , testGroup
                                                 )
-import           Test.Tasty.HUnit               ( assertEqual
+import Test.Tasty.HUnit                         ( assertEqual
                                                 , testCase
                                                 )
 
