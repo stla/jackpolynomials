@@ -25,7 +25,7 @@ library
                      , array >= 0.5.4.0
                      , lens >= 5.0.1
                      , math-functions >= 0.3.4.2
-                     , hspray >= 0.1.0.0
+                     , hspray >= 0.2.0.0 && < 1
                      , numeric-prelude >= 0.4.4
   default-language:    Haskell2010
   ghc-options:         -Wall
@@ -38,8 +38,8 @@ test-suite unit-tests
                       , tasty
                       , tasty-hunit
                       , jackpolynomials
-                      , hspray
-                      , hypergeomatrix
+                      , hspray >= 0.2.0.0 && < 1
+                      , hypergeomatrix >= 1.1.0.2 && < 2
   Default-Language:     Haskell2010
 
 source-repository head
