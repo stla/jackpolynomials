@@ -83,7 +83,7 @@ zonalPol n lambda = c *^ jck
     jck = jackPol n lambda 2
 
 -- | Symbolic Schur polynomial
-schurPol :: forall a. (Real a, Ord a, AR.C a)
+schurPol :: forall a. (Ord a, AR.C a)
   => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> Spray a

@@ -19,5 +19,6 @@
 1.1.1.0
 -------
 * `schurPol` now returns a `Spray a`
-* added package bounds in the cabal file
+* added package upper bounds in the cabal file
+* increased the version of the dependencies **hspray** and **hypergeomatrix**
 * cleaned the code

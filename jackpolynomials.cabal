@@ -27,8 +27,18 @@ library
                      , math-functions >= 0.3.4.2 && < 0.3.5
                      , hspray >= 0.2.0.0 && < 1
                      , numeric-prelude >= 0.4.4 && < 0.5
+  other-extensions:    ScopedTypeVariables
+                     , BangPatterns
   default-language:    Haskell2010
   ghc-options:         -Wall
+                       -Wcompat
+                       -Widentities
+                       -Wincomplete-record-updates
+                       -Wincomplete-uni-patterns
+                       -Wmissing-export-lists
+                       -Wmissing-home-modules
+                       -Wpartial-fields
+                       -Wredundant-constraints
 
 test-suite unit-tests
   type:                 exitcode-stdio-1.0

@@ -3,6 +3,8 @@
 module Math.Algebra.Jack
   (schur, jack, zonal)
   where
+import qualified Algebra.Additive     as AA
+import qualified Algebra.Ring     as AR
 import Control.Lens               ( (.~), element )
 import Data.Array                 ( Array, (!), (//), listArray )
 import Data.Maybe                 ( fromJust, isJust )
@@ -79,7 +81,7 @@ zonal x lambda = c * jck
     jck = jack x lambda 2
 
 -- | Evaluation of Schur polynomial
-schur :: forall a. Integral a 
+schur :: forall a. AR.C a 
   => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers 
   -> a
@@ -94,14 +96,14 @@ schur x@(x0:_) lambda =
         arr0 = listArray ((1, 1), (nll, n)) (replicate (nll * n) Nothing)
         sch :: Int -> Int -> [Int] -> Array (Int,Int) (Maybe a) -> a
         sch m k nu arr
-          | null nu || nu!!0 == 0 || m == 0 = 1
-          | length nu > m && nu!!m > 0 = 0
-          | m == 1 = x0 ^ nu!!0
+          | null nu || nu!!0 == 0 || m == 0 = AR.one
+          | length nu > m && nu!!m > 0 = AA.zero
+          | m == 1 = AR.product (replicate (nu!!0) x0)
           | isJust (arr ! (_N lambda nu, m)) = fromJust $ arr ! (_N lambda nu, m)
           | otherwise = s
             where
               s = go (sch (m-1) 1 nu arr) k
-              go :: Integral a => a -> Int -> a
+              go :: a -> Int -> a
               go !ss ii
                 | length nu < ii || nu!!(ii-1) == 0 = ss
                 | otherwise =
@@ -111,13 +113,13 @@ schur x@(x0:_) lambda =
                       let nu' = (element (ii-1) .~ u-1) nu in
                       if u > 1
                         then
-                          go (ss + x!!(m-1) * sch m ii nu' arr) (ii + 1)
+                          go (ss AA.+ x!!(m-1) AR.* sch m ii nu' arr) (ii + 1)
                         else
                           if nu' !! 0 == 0
                             then
-                              go (ss + x!!(m-1)) (ii + 1)
+                              go (ss AA.+ x!!(m-1)) (ii + 1)
                             else
                               let arr' = arr // [((_N lambda nu, m), Just ss)] in
-                              go (ss + x!!(m-1) * sch (m-1) 1 nu' arr') (ii + 1)
+                              go (ss AA.+ x!!(m-1) AR.* sch (m-1) 1 nu' arr') (ii + 1)
                     else
                       go ss (ii+1)
