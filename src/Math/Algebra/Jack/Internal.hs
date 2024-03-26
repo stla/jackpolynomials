@@ -1,5 +1,6 @@
 {-# LANGUAGE BangPatterns #-}
 module Math.Algebra.Jack.Internal
+  (Partition, hookLengths, _betaratio, _isPartition, _N)
   where
 import           Data.List.Index ( iconcatMap )
 
