@@ -3,7 +3,7 @@
 module Math.Algebra.JackPol
   (schurPol, jackPol, zonalPol)
   where
-import qualified Algebra.Ring as AR
+import qualified Algebra.Ring               as AR
 import           Control.Lens               ( (.~), element )
 import           Data.Array                 ( Array, (!), (//), listArray )
 import           Data.Maybe                 ( fromJust, isJust )
@@ -15,15 +15,15 @@ import           Numeric.SpecFunctions      ( factorial )
 
 -- | Symbolic Jack polynomial
 jackPol :: forall a. (Fractional a, Ord a, AR.C a) 
-  => Int -- ^ number of variables
+  => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
-  -> a -- ^ alpha parameter
+  -> a         -- ^ alpha parameter
   -> Spray a
 jackPol n lambda alpha =
   case _isPartition lambda && alpha > 0 of
     False -> if _isPartition lambda
-      then error "alpha must be strictly positive"
-      else error "lambda is not a valid integer partition"
+      then error "jackPol: alpha must be strictly positive"
+      else error "jackPol: invalid integer partition"
     True -> jac (length x) 0 lambda lambda arr0 1
       where
       nll = _N lambda lambda
@@ -71,7 +71,7 @@ jackPol n lambda alpha =
 
 -- | Symbolic zonal polynomial
 zonalPol :: (Fractional a, Ord a, AR.C a) 
-  => Int -- ^ number of variables
+  => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> Spray a
 zonalPol n lambda = c *^ jck
@@ -83,12 +83,12 @@ zonalPol n lambda = c *^ jck
 
 -- | Symbolic Schur polynomial
 schurPol :: 
-  Int -- ^ number of variables
+  Int          -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> Spray Int
 schurPol n lambda =
   case _isPartition lambda of
-    False -> error "lambda is not a valid integer partition"
+    False -> error "schurPol: invalid integer partition"
     True -> sch n 1 lambda arr0
       where
         x = map lone [1 .. n] :: [Spray Int]

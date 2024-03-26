@@ -11,15 +11,15 @@ import Numeric.SpecFunctions      ( factorial )
 
 -- | Evaluation of Jack polynomial
 jack :: forall a. (Fractional a, Ord a) 
-  => [a] -- ^ values of the variables
+  => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers
-  -> a -- ^ alpha parameter
+  -> a         -- ^ alpha parameter
   -> a
 jack x lambda alpha =
   case _isPartition lambda && alpha > 0 of
     False -> if _isPartition lambda
-      then error "alpha must be strictly positive"
-      else error "lambda is not a valid integer partition"
+      then error "jack: alpha must be strictly positive"
+      else error "jack: invalid integer partition"
     True -> jac (length x) 0 lambda lambda arr0 1
       where
       nll = _N lambda lambda
@@ -67,7 +67,7 @@ jack x lambda alpha =
 
 -- | Evaluation of zonal polynomial
 zonal :: (Fractional a, Ord a) 
-  => [a] -- ^ values of the variables
+  => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers
   -> a
 zonal x lambda = c * jck
@@ -79,12 +79,12 @@ zonal x lambda = c * jck
 
 -- | Evaluation of Schur polynomial
 schur :: forall a. Fractional a 
-  => [a] -- ^ values of the variables
+  => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers 
   -> a
 schur x lambda =
   case _isPartition lambda of
-    False -> error "lambda is not a valid integer partition"
+    False -> error "schur: invalid integer partition"
     True -> sch n 1 lambda arr0
       where
         nll = _N lambda lambda
