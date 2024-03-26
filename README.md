@@ -1,5 +1,12 @@
 # jackpolynomials
 
+*Jack, zonal, and Schur polynomials.*
+
+<!-- badges: start -->
+[![Stack-lts](https://github.com/stla/jackpolynomials/actions/workflows/Stack-lts.yml/badge.svg)](https://github.com/stla/jackpolynomials/actions/workflows/Stack-lts.yml)
+[![Stack-nightly](https://github.com/stla/jackpolynomials/actions/workflows/Stack-nightly.yml/badge.svg)](https://github.com/stla/jackpolynomials/actions/workflows/Stack-nightly.yml)
+<!-- badges: end -->
+
 Schur polynomials have applications in combinatorics and zonal polynomials have
 applications in multivariate statistics. They are particular cases of
 [Jack polynomials](https://en.wikipedia.org/wiki/Jack_function). This package

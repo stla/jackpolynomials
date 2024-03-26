@@ -4,6 +4,6 @@ packages:
 - '.'
 
 extra-deps:
-- hspray-0.2.1.1
+- hspray-0.2.2.0
 - hypergeomatrix-1.1.0.2
 - ilist-0.4.0.1@sha256:126019faf3d02f305c5762ae9602be1cbf76291153a1a7461270ad1429678111,3305

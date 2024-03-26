@@ -25,7 +25,7 @@ library
                      , array >= 0.5.4.0 && < 0.6
                      , lens >= 5.0.1 && < 5.3
                      , math-functions >= 0.3.4.2 && < 0.3.5
-                     , hspray >= 0.2.0.0 && < 1
+                     , hspray >= 0.2.2.0 && < 1
                      , numeric-prelude >= 0.4.3 && < 0.5
   other-extensions:    ScopedTypeVariables
                      , BangPatterns
@@ -48,7 +48,7 @@ test-suite unit-tests
                       , tasty >= 1.4 && < 1.6
                       , tasty-hunit >= 0.10 && < 0.11
                       , jackpolynomials
-                      , hspray >= 0.2.0.0 && < 1
+                      , hspray >= 0.2.2.0 && < 1
                       , hypergeomatrix >= 1.1.0.2 && < 2
   Default-Language:     Haskell2010
 

@@ -5,12 +5,12 @@
 
 packages:
 - completed:
-    hackage: hspray-0.2.1.1@sha256:89a4df51b42373fa5db3b226ceb6e9b6cb93cfbfda9e893b1cafd5e789a4dc31,2623
+    hackage: hspray-0.2.2.0@sha256:a51a499dcebf91d6ffc27d1934777fe89f419dcb6452acedaeae4952cfacc52f,2623
     pantry-tree:
-      sha256: 5912141c5cd3a74275e01344ad2a927842e467599b67c63d008a253e61385cd4
+      sha256: 9e43e400b3f02ee1770f25990bc796127d4ab4aa2fe1b0f529ceb32b4f38dac0
       size: 488
   original:
-    hackage: hspray-0.2.1.1
+    hackage: hspray-0.2.2.0
 - completed:
     hackage: hypergeomatrix-1.1.0.2@sha256:f9d811e544264de55a9ac0277eb4eea59facab881cd50272f4850f7447508f6d,1941
     pantry-tree:
@@ -18,6 +18,13 @@ packages:
       size: 667
   original:
     hackage: hypergeomatrix-1.1.0.2
+- completed:
+    hackage: ilist-0.4.0.1@sha256:126019faf3d02f305c5762ae9602be1cbf76291153a1a7461270ad1429678111,3305
+    pantry-tree:
+      sha256: 1e45ec9d7d543f0689da97b6de57b9a729c605660af73e15848c10b37640a888
+      size: 438
+  original:
+    hackage: ilist-0.4.0.1@sha256:126019faf3d02f305c5762ae9602be1cbf76291153a1a7461270ad1429678111,3305
 snapshots:
 - completed:
     sha256: 6f0bea3ba5b07360f25bc886e8cff8d847767557a492a6f7f6dcb06e3cc79ee9

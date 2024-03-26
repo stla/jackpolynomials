@@ -25,7 +25,7 @@ main = defaultMain $ testGroup
     assertEqual "" v (48 % 1)
 
   , testCase "jackPol is symmetric" $ do
-    let jp = jackPol 2 [3, 1] (2 % 1) :: Spray Rational
+    let jp = jackPol 3 [3, 2, 1] (2 % 1) :: Spray Rational
     assertBool "" (isSymmetricSpray jp)
 
   , testCase "jack" $ do
@@ -41,7 +41,7 @@ main = defaultMain $ testGroup
     assertEqual "" v 4096
 
   , testCase "schurPol is symmetric" $ do
-    let sp = schurPol 2 [3, 1] :: Spray Rational
+    let sp = schurPol 3 [3, 2, 1] :: Spray Rational
     assertBool "" (isSymmetricSpray sp)
 
   , testCase "schur" $ do
