@@ -23,7 +23,7 @@ _allPartitions :: Int -> [[Int]]
 _allPartitions m = [] : map reverse (concat ps)
  where
   ps      = [] : map parts [1 .. m]
-  parts n = [n] : [ x : p | x <- [1 .. n], p <- ps !! (n - x), x <= head p ]
+  parts n = [n] : [ x : p | x <- [1 .. n], p <- ps !! (n - x), x <= p!!0 ]
 
 -- | Inefficient hypergeometric function of a matrix argument (for testing purpose)
 hypergeoPQ :: (Fractional a, Ord a) => Int -> [a] -> [a] -> [a] -> a
