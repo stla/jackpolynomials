@@ -12,13 +12,14 @@ See README for examples and references.
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Math.Algebra.Jack
-  (jack, zonal, schur)
+  (jack, zonal, schur, skewSchur)
   where
 import qualified Algebra.Additive as AA
 import qualified Algebra.Ring     as AR
 import Control.Lens               ( (.~), element )
 import Data.Array                 ( Array, (!), (//), listArray )
 import Data.Maybe                 ( fromJust, isJust )
+import qualified Data.Map.Strict  as DM
 import Math.Algebra.Jack.Internal ( _N, hookLengths
                                   , _betaratio, _isPartition
                                   , Partition, skewSchurLRCoefficients )
@@ -136,3 +137,16 @@ schur x@(x0:_) lambda =
                               go (ss AA.+ x!!(m-1) AR.* sch (m-1) 1 nu' arr') (ii + 1)
                     else
                       go ss (ii+1)
+
+-- | Evaluation of a skew Schur polynomial
+skewSchur :: forall a. AR.C a 
+  => [a]       -- ^ values of the variables
+  -> Partition -- ^ partition of integers, the outer partition 
+  -> Partition -- ^ partition of integers, the inner partition
+  -> a
+skewSchur xs lambda mu = DM.foldlWithKey' f AA.zero lrCoefficients
+  where
+    lrCoefficients = skewSchurLRCoefficients lambda mu
+    f :: a -> Partition -> a -> a
+    f x nu k = x AA.+ k AR.* (schur xs nu)
+
