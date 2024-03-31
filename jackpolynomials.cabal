@@ -27,6 +27,8 @@ library
                      , math-functions >= 0.3.4.2 && < 0.3.5
                      , hspray >= 0.2.2.0 && < 1
                      , numeric-prelude >= 0.4.4 && < 0.5
+                     , combinat >= 0.2.10 && < 0.3
+                     , containers >= 0.6.4.1 && < 0.8
   other-extensions:    ScopedTypeVariables
                      , BangPatterns
   default-language:    Haskell2010

@@ -1,8 +1,13 @@
 {-# LANGUAGE BangPatterns #-}
 module Math.Algebra.Jack.Internal
-  (Partition, hookLengths, _betaratio, _isPartition, _N)
+  (Partition, hookLengths, _betaratio, _isPartition, _N, skewSchurLRCoefficients)
   where
-import           Data.List.Index ( iconcatMap )
+import qualified Algebra.Additive                            as AA
+import qualified Algebra.Ring                                as AR
+import           Data.List.Index                             ( iconcatMap )
+import qualified Math.Combinat.Partitions.Integer            as MCP
+import           Math.Combinat.Tableaux.LittlewoodRichardson (_lrRule)
+import qualified Data.Map.Strict                             as DM
 
 type Partition = [Int]
 
@@ -69,3 +74,22 @@ _betaratio kappa mu k alpha = alpha * prod1 * prod2 * prod3
     prod1 = product $ map (\x -> x / (x + alpha - 1)) u
     prod2 = product $ map (\x -> (x + alpha) / x) v
     prod3 = product $ map (\x -> (x + alpha) / x) w
+
+(.^) :: AA.C a => Int -> a -> a
+(.^) k x = if k >= 0
+  then AA.sum (replicate k x)
+  else AA.negate $ AA.sum (replicate (-k) x)
+
+_fromInt :: AR.C a => Int -> a
+_fromInt k = k .^ AR.one
+
+skewSchurLRCoefficients :: AR.C a => Partition -> Partition -> DM.Map Partition a
+skewSchurLRCoefficients lambda mu = 
+  DM.map _fromInt $ DM.mapKeys toPartition (_lrRule lambda' mu')
+  where
+    toPartition :: MCP.Partition -> Partition
+    toPartition (MCP.Partition part) = part 
+    fromPartition :: Partition -> MCP.Partition
+    fromPartition part = MCP.Partition part
+    lambda' = fromPartition lambda
+    mu'     = fromPartition mu

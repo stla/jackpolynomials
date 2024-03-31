@@ -24,3 +24,7 @@
 * cleaned the code
 * tested with higher versions of GHC
 * new unit tests
+
+1.1.2.0
+-------
+* skew Schur polynomials (functions `skewSchur` and `skewSchurPol`)

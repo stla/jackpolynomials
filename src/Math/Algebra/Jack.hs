@@ -19,7 +19,9 @@ import qualified Algebra.Ring     as AR
 import Control.Lens               ( (.~), element )
 import Data.Array                 ( Array, (!), (//), listArray )
 import Data.Maybe                 ( fromJust, isJust )
-import Math.Algebra.Jack.Internal ( _N, hookLengths, _betaratio, _isPartition, Partition )
+import Math.Algebra.Jack.Internal ( _N, hookLengths
+                                  , _betaratio, _isPartition
+                                  , Partition, skewSchurLRCoefficients )
 import Numeric.SpecFunctions      ( factorial )
 
 -- | Evaluation of Jack polynomial
