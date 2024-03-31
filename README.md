@@ -1,6 +1,6 @@
 # jackpolynomials
 
-*Jack, zonal, and Schur polynomials.*
+*Jack, zonal, Schur and skew Schur polynomials.*
 
 <!-- badges: start -->
 [![Stack-lts](https://github.com/stla/jackpolynomials/actions/workflows/Stack-lts.yml/badge.svg)](https://github.com/stla/jackpolynomials/actions/workflows/Stack-lts.yml)

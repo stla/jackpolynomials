@@ -5,7 +5,7 @@ Copyright   : (c) Stéphane Laurent, 2024
 License     : GPL-3
 Maintainer  : laurent_step@outlook.fr
 
-Computation of symbolic Jack polynomials, zonal polynomials, and Schur polynomials. 
+Computation of symbolic Jack polynomials, zonal polynomials, Schur polynomials and skew Schur polynomials. 
 See README for examples and references.
 -}
 
