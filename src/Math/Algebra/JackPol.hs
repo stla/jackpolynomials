@@ -12,14 +12,18 @@ See README for examples and references.
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Math.Algebra.JackPol
-  (jackPol, zonalPol, schurPol)
+  (jackPol, zonalPol, schurPol, skewSchurPol)
   where
+import qualified Algebra.Module             as AM
 import qualified Algebra.Ring               as AR
 import           Control.Lens               ( (.~), element )
 import           Data.Array                 ( Array, (!), (//), listArray )
+import qualified Data.Map.Strict            as DM
 import           Data.Maybe                 ( fromJust, isJust )
 import           Math.Algebra.Jack.Internal ( _betaratio, hookLengths, _N
-                                            , _isPartition, Partition )
+                                            , _isPartition, Partition
+                                            , skewSchurLRCoefficients
+                                            , isSkewPartition )
 import           Math.Algebra.Hspray        ( (*^), (^**^), (^*^), (^+^)
                                             , lone, Spray
                                             , zeroSpray, unitSpray )
@@ -135,3 +139,19 @@ schurPol n lambda =
                               go (ss ^+^ ((x!!(m-1)) ^*^ sch (m-1) 1 nu' arr')) (ii + 1)
                     else
                       go ss (ii+1)
+
+-- | Symbolic skew Schur polynomial
+skewSchurPol :: forall a. (Ord a, AR.C a)
+  => Int       -- ^ number of variables
+  -> Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
+  -> Spray a
+skewSchurPol n lambda mu =
+  case isSkewPartition lambda mu of
+    False -> error "skewSchurPol: invalid skew partition"
+    True  -> DM.foldlWithKey' f zeroSpray lrCoefficients
+  where
+    lrCoefficients = skewSchurLRCoefficients lambda mu
+    f :: Spray a -> Partition -> a -> Spray a
+    f spray nu k = spray ^+^ k AM.*> (schurPol n nu)
+
