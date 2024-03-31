@@ -5,6 +5,7 @@ module Math.Algebra.Jack.Internal
   , _betaratio
   , _isPartition
   , _N
+  , _fromInt
   , skewSchurLRCoefficients
   , isSkewPartition)
   where
@@ -89,9 +90,9 @@ _betaratio kappa mu k alpha = alpha * prod1 * prod2 * prod3
 _fromInt :: AR.C a => Int -> a
 _fromInt k = k .^ AR.one
 
-skewSchurLRCoefficients :: AR.C a => Partition -> Partition -> DM.Map Partition a
+skewSchurLRCoefficients :: Partition -> Partition -> DM.Map Partition Int
 skewSchurLRCoefficients lambda mu = 
-  DM.map _fromInt $ DM.mapKeys toPartition (_lrRule lambda' mu')
+  DM.mapKeys toPartition (_lrRule lambda' mu')
   where
     toPartition :: MCP.Partition -> Partition
     toPartition (MCP.Partition part) = part 

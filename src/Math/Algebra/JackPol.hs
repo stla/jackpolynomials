@@ -23,7 +23,7 @@ import           Data.Maybe                 ( fromJust, isJust )
 import           Math.Algebra.Jack.Internal ( _betaratio, hookLengths, _N
                                             , _isPartition, Partition
                                             , skewSchurLRCoefficients
-                                            , isSkewPartition )
+                                            , isSkewPartition, _fromInt )
 import           Math.Algebra.Hspray        ( (*^), (^**^), (^*^), (^+^)
                                             , lone, Spray
                                             , zeroSpray, unitSpray )
@@ -152,6 +152,8 @@ skewSchurPol n lambda mu =
     True  -> DM.foldlWithKey' f zeroSpray lrCoefficients
   where
     lrCoefficients = skewSchurLRCoefficients lambda mu
-    f :: Spray a -> Partition -> a -> Spray a
-    f spray nu k = spray ^+^ k AM.*> (schurPol n nu)
+    f :: Spray a -> Partition -> Int -> Spray a
+    f spray nu k = spray ^+^ (_fromInt' k) AM.*> (schurPol n nu)
+    _fromInt' :: Int -> a
+    _fromInt' = _fromInt
 

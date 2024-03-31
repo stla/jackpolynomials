@@ -23,7 +23,7 @@ import qualified Data.Map.Strict  as DM
 import Math.Algebra.Jack.Internal ( _N, hookLengths
                                   , _betaratio, _isPartition
                                   , Partition, skewSchurLRCoefficients
-                                  , isSkewPartition )
+                                  , isSkewPartition, _fromInt )
 import Numeric.SpecFunctions      ( factorial )
 
 -- | Evaluation of Jack polynomial
@@ -151,6 +151,6 @@ skewSchur xs lambda mu =
     else error "skewSchur: invalid skew partition"
   where
     lrCoefficients = skewSchurLRCoefficients lambda mu
-    f :: a -> Partition -> a -> a
-    f x nu k = x AA.+ k AR.* (schur xs nu)
+    f :: a -> Partition -> Int -> a
+    f x nu k = x AA.+ (_fromInt k) AR.* (schur xs nu)
 
