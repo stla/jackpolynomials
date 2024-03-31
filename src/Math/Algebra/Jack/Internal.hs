@@ -1,6 +1,12 @@
 {-# LANGUAGE BangPatterns #-}
 module Math.Algebra.Jack.Internal
-  (Partition, hookLengths, _betaratio, _isPartition, _N, skewSchurLRCoefficients)
+  (Partition
+  , hookLengths
+  , _betaratio
+  , _isPartition
+  , _N
+  , skewSchurLRCoefficients
+  , isSkewPartition)
   where
 import qualified Algebra.Additive                            as AA
 import qualified Algebra.Ring                                as AR
@@ -93,3 +99,7 @@ skewSchurLRCoefficients lambda mu =
     fromPartition part = MCP.Partition part
     lambda' = fromPartition lambda
     mu'     = fromPartition mu
+
+isSkewPartition :: Partition -> Partition -> Bool
+isSkewPartition lambda mu = 
+  _isPartition lambda && _isPartition mu && all (>= 0) (zipWith (-) lambda mu)

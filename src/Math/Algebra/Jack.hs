@@ -1,5 +1,5 @@
 {-|
-Module      : Math.Algebra.JackPol
+Module      : Math.Algebra.Jack
 Description : Evaluation of Jack polynomials.
 Copyright   : (c) Stéphane Laurent, 2024
 License     : GPL-3
@@ -22,7 +22,8 @@ import Data.Maybe                 ( fromJust, isJust )
 import qualified Data.Map.Strict  as DM
 import Math.Algebra.Jack.Internal ( _N, hookLengths
                                   , _betaratio, _isPartition
-                                  , Partition, skewSchurLRCoefficients )
+                                  , Partition, skewSchurLRCoefficients
+                                  , isSkewPartition )
 import Numeric.SpecFunctions      ( factorial )
 
 -- | Evaluation of Jack polynomial
@@ -141,10 +142,13 @@ schur x@(x0:_) lambda =
 -- | Evaluation of a skew Schur polynomial
 skewSchur :: forall a. AR.C a 
   => [a]       -- ^ values of the variables
-  -> Partition -- ^ partition of integers, the outer partition 
-  -> Partition -- ^ partition of integers, the inner partition
+  -> Partition -- ^ the outer partition of the skew partition
+  -> Partition -- ^ the inner partition of the skew partition
   -> a
-skewSchur xs lambda mu = DM.foldlWithKey' f AA.zero lrCoefficients
+skewSchur xs lambda mu = 
+  if isSkewPartition lambda mu 
+    then DM.foldlWithKey' f AA.zero lrCoefficients
+    else error "skewSchur: invalid skew partition"
   where
     lrCoefficients = skewSchurLRCoefficients lambda mu
     f :: a -> Partition -> a -> a
