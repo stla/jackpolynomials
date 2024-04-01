@@ -14,8 +14,16 @@ See README for examples and references.
 module Math.Algebra.JackPol
   (jackPol, zonalPol, schurPol, skewSchurPol)
   where
-import qualified Algebra.Module             as AM
-import qualified Algebra.Ring               as AR
+import Prelude hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger)
+import qualified Prelude as P
+import           Algebra.Additive           
+import           Algebra.Module             
+import           Algebra.Field              
+import           Algebra.Ring
+import           Algebra.ToInteger           
+import qualified Algebra.Module             as AlgMod
+import qualified Algebra.Field              as AlgField
+import qualified Algebra.Ring               as AlgRing
 import           Control.Lens               ( (.~), element )
 import           Data.Array                 ( Array, (!), (//), listArray )
 import qualified Data.Map.Strict            as DM
@@ -24,31 +32,31 @@ import           Math.Algebra.Jack.Internal ( _betaratio, hookLengths, _N
                                             , _isPartition, Partition
                                             , skewSchurLRCoefficients
                                             , isSkewPartition, _fromInt )
-import           Math.Algebra.Hspray        ( (*^), (^**^), (^*^), (^+^)
+import           Math.Algebra.Hspray        ( (.^), (*^), (^**^), (^*^), (^+^)
                                             , lone, Spray
                                             , zeroSpray, unitSpray )
 import           Numeric.SpecFunctions      ( factorial )
 
 -- | Symbolic Jack polynomial
-jackPol :: forall a. (Fractional a, Ord a, AR.C a) 
+jackPol :: forall a. (AlgField.C a, Ord a) 
   => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> a         -- ^ alpha parameter
   -> Spray a
 jackPol n lambda alpha =
-  case _isPartition lambda && alpha > 0 of
+  case _isPartition lambda && alpha > zero of
     False -> if _isPartition lambda
       then error "jackPol: alpha must be strictly positive"
       else error "jackPol: invalid integer partition"
-    True -> jac (length x) 0 lambda lambda arr0 1
+    True -> jac (length x) 0 lambda lambda arr0 one
       where
       nll = _N lambda lambda
       x = map lone [1 .. n] :: [Spray a]
       arr0 = listArray ((1, 1), (nll, n)) (replicate (nll * n) Nothing)
       theproduct :: Int -> a
       theproduct nu0 = if nu0 <= 1
-        then 1
-        else product $ map (\i -> alpha * fromIntegral i + 1) [1 .. nu0-1]
+        then one
+        else product $ map (\i -> alpha * fromIntegral i + one) [1 .. nu0-1]
       jac :: Int -> Int -> Partition -> Partition -> Array (Int,Int) (Maybe (Spray a)) -> a -> Spray a
       jac m k mu nu arr beta
         | null nu || nu!!0 == 0 || m == 0 = unitSpray
@@ -58,7 +66,7 @@ jackPol n lambda alpha =
                       fromJust $ arr ! (_N lambda nu, m)
         | otherwise = s
           where
-            s = go (beta *^ (jac (m-1) 0 nu nu arr 1 ^*^ ((x!!(m-1)) ^**^ (sum mu - sum nu))))
+            s = go (beta *^ (jac (m-1) 0 nu nu arr one ^*^ ((x!!(m-1)) ^**^ (sum mu - sum nu))))
                 (max 1 k)
             go :: Spray a -> Int -> Spray a
             go !ss ii
@@ -78,7 +86,7 @@ jackPol n lambda alpha =
                             go (ss ^+^ (gamma *^ (x!!(m-1) ^**^ sum mu))) (ii + 1)
                           else
                             let arr' = arr // [((_N lambda nu, m), Just ss)] in
-                            let jck = jac (m-1) 0 nu' nu' arr' 1 in
+                            let jck = jac (m-1) 0 nu' nu' arr' one in
                             let jck' = gamma *^ (jck ^*^ 
                                         (x!!(m-1) ^**^ (sum mu - sum nu'))) in
                             go (ss ^+^ jck') (ii+1)
@@ -86,19 +94,19 @@ jackPol n lambda alpha =
                     go ss (ii+1)
 
 -- | Symbolic zonal polynomial
-zonalPol :: (Fractional a, Ord a, AR.C a) 
+zonalPol :: forall a. (AlgField.C a, Ord a) 
   => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> Spray a
-zonalPol n lambda = c *^ jck
+zonalPol n lambda = c .^ (AlgField.recip jlambda *> jck)
   where
     k = sum lambda
-    jlambda = product (hookLengths lambda 2)
-    c = 2^k * realToFrac (factorial k) / jlambda
-    jck = jackPol n lambda 2
+    jlambda = product (hookLengths lambda (fromInteger 2)) :: a
+    c = (fromIntegral $ (2 :: Integer)^(fromIntegral k)) * product [2 .. k] 
+    jck = jackPol n lambda (one + one)
 
 -- | Symbolic Schur polynomial
-schurPol :: forall a. (Ord a, AR.C a)
+schurPol :: forall a. (Ord a, AlgRing.C a)
   => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> Spray a
@@ -141,7 +149,7 @@ schurPol n lambda =
                       go ss (ii+1)
 
 -- | Symbolic skew Schur polynomial
-skewSchurPol :: forall a. (Ord a, AR.C a)
+skewSchurPol :: forall a. (Ord a, AlgRing.C a)
   => Int       -- ^ number of variables
   -> Partition -- ^ outer partition of the skew partition
   -> Partition -- ^ inner partition of the skew partition
@@ -153,7 +161,7 @@ skewSchurPol n lambda mu =
   where
     lrCoefficients = skewSchurLRCoefficients lambda mu
     f :: Spray a -> Partition -> Int -> Spray a
-    f spray nu k = spray ^+^ (_fromInt' k) AM.*> (schurPol n nu)
+    f spray nu k = spray ^+^ (_fromInt' k) AlgMod.*> (schurPol n nu)
     _fromInt' :: Int -> a
     _fromInt' = _fromInt
 

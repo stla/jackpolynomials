@@ -14,8 +14,16 @@ See README for examples and references.
 module Math.Algebra.Jack
   (jack, zonal, schur, skewSchur)
   where
-import qualified Algebra.Additive as AA
-import qualified Algebra.Ring     as AR
+import Prelude hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger)
+import qualified Prelude as P
+import           Algebra.Additive           
+import           Algebra.Module             
+import           Algebra.Field              
+import           Algebra.Ring
+import           Algebra.ToInteger           
+import qualified Algebra.Module             as AlgMod
+import qualified Algebra.Field              as AlgField
+import qualified Algebra.Ring               as AlgRing
 import Control.Lens               ( (.~), element )
 import Data.Array                 ( Array, (!), (//), listArray )
 import Data.Maybe                 ( fromJust, isJust )
@@ -27,36 +35,36 @@ import Math.Algebra.Jack.Internal ( _N, hookLengths
 import Numeric.SpecFunctions      ( factorial )
 
 -- | Evaluation of Jack polynomial
-jack :: forall a. (Fractional a, Ord a) 
+jack :: forall a. (AlgField.C a, Ord a) 
   => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers
   -> a         -- ^ alpha parameter
   -> a
 jack []       _      _     = error "jack: empty list of variables"
 jack x@(x0:_) lambda alpha =
-  case _isPartition lambda && alpha > 0 of
+  case _isPartition lambda && alpha > fromInteger 0 of
     False -> if _isPartition lambda
       then error "jack: alpha must be strictly positive"
       else error "jack: invalid integer partition"
-    True -> jac (length x) 0 lambda lambda arr0 1
+    True -> jac (length x) 0 lambda lambda arr0 one
       where
       nll = _N lambda lambda
       n = length x
       arr0 = listArray ((1, 1), (nll, n)) (replicate (nll * n) Nothing)
       theproduct :: Int -> a
       theproduct nu0 = if nu0 <= 1
-        then 1
-        else product $ map (\i -> alpha * fromIntegral i + 1) [1 .. nu0-1]
+        then one
+        else product $ map (\i -> alpha * fromIntegral i + one) [1 .. nu0-1]
       jac :: Int -> Int -> [Int] -> [Int] -> Array (Int,Int) (Maybe a) -> a -> a
       jac m k mu nu arr beta
-        | null nu || nu!!0 == 0 || m == 0 = 1
-        | length nu > m && nu!!m > 0 = 0
-        | m == 1 = x0 ^ (nu!!0) * theproduct (nu!!0)
+        | null nu || nu!!0 == 0 || m == 0 = one
+        | length nu > m && nu!!m > 0 = zero
+        | m == 1 = x0 ^ (fromIntegral $ nu!!0) * theproduct (nu!!0)
         | k == 0 && isJust (arr ! (_N lambda nu, m)) =
                       fromJust $ arr ! (_N lambda nu, m)
         | otherwise = s
           where
-            s = go (jac (m-1) 0 nu nu arr 1 * beta * x!!(m-1) ^ (sum mu - sum nu))
+            s = go (jac (m-1) 0 nu nu arr one * beta * x!!(m-1) ^ (fromIntegral $ sum mu - sum nu))
                 (max 1 k)
             go :: a -> Int -> a
             go !ss ii
@@ -69,34 +77,34 @@ jack x@(x0:_) lambda alpha =
                     let gamma = beta * _betaratio mu nu ii alpha in
                     if u > 1
                       then
-                        go (ss + jac m ii mu nu' arr gamma) (ii + 1)
+                        go (ss + jac m ii mu nu' arr gamma) (ii + one)
                       else
                         if nu' !! 0 == 0
                           then
-                            go (ss + gamma * x!!(m-1)^ sum mu) (ii + 1)
+                            go (ss + gamma * x!!(m-1)^ (fromIntegral $ sum mu)) (ii + one)
                           else
                             let arr' = arr // [((_N lambda nu, m), Just ss)] in
-                            let jck = jac (m-1) 0 nu' nu' arr' 1 in
+                            let jck = jac (m-1) 0 nu' nu' arr' one in
                             let jck' = jck * gamma *
-                                        x!!(m-1) ^ (sum mu - sum nu') in
+                                        x!!(m-1) ^ (fromIntegral $ sum mu - sum nu') in
                             go (ss+jck') (ii+1)
                   else
                     go ss (ii+1)
 
 -- | Evaluation of zonal polynomial
-zonal :: (Fractional a, Ord a) 
+zonal :: (AlgField.C a, Ord a) 
   => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers
   -> a
-zonal x lambda = c * jck
+zonal x lambda = c *  jck / jlambda
   where
-    k = sum lambda
-    jlambda = product (hookLengths lambda 2)
-    c = 2^k * realToFrac (factorial k) / jlambda
-    jck = jack x lambda 2
+    k = fromIntegral $ sum lambda
+    jlambda = product (hookLengths lambda (fromInteger 2))
+    c = fromInteger $ 2^k * (product [2 .. k])
+    jck = jack x lambda (fromInteger 2)
 
 -- | Evaluation of Schur polynomial
-schur :: forall a. AR.C a 
+schur :: forall a. AlgRing.C a 
   => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers 
   -> a
@@ -111,9 +119,9 @@ schur x@(x0:_) lambda =
         arr0 = listArray ((1, 1), (nll, n)) (replicate (nll * n) Nothing)
         sch :: Int -> Int -> [Int] -> Array (Int,Int) (Maybe a) -> a
         sch m k nu arr
-          | null nu || nu!!0 == 0 || m == 0 = AR.one
-          | length nu > m && nu!!m > 0 = AA.zero
-          | m == 1 = AR.product (replicate (nu!!0) x0)
+          | null nu || nu!!0 == 0 || m == 0 = one
+          | length nu > m && nu!!m > 0 = zero
+          | m == 1 = product (replicate (nu!!0) x0)
           | isJust (arr ! (_N lambda nu, m)) = fromJust $ arr ! (_N lambda nu, m)
           | otherwise = s
             where
@@ -128,29 +136,29 @@ schur x@(x0:_) lambda =
                       let nu' = (element (ii-1) .~ u-1) nu in
                       if u > 1
                         then
-                          go (ss AA.+ x!!(m-1) AR.* sch m ii nu' arr) (ii + 1)
+                          go (ss + x!!(m-1) * sch m ii nu' arr) (ii + 1)
                         else
                           if nu' !! 0 == 0
                             then
-                              go (ss AA.+ x!!(m-1)) (ii + 1)
+                              go (ss + x!!(m-1)) (ii + 1)
                             else
                               let arr' = arr // [((_N lambda nu, m), Just ss)] in
-                              go (ss AA.+ x!!(m-1) AR.* sch (m-1) 1 nu' arr') (ii + 1)
+                              go (ss + x!!(m-1) * sch (m-1) 1 nu' arr') (ii + 1)
                     else
                       go ss (ii+1)
 
 -- | Evaluation of a skew Schur polynomial
-skewSchur :: forall a. AR.C a 
+skewSchur :: forall a. AlgRing.C a 
   => [a]       -- ^ values of the variables
   -> Partition -- ^ the outer partition of the skew partition
   -> Partition -- ^ the inner partition of the skew partition
   -> a
 skewSchur xs lambda mu = 
   if isSkewPartition lambda mu 
-    then DM.foldlWithKey' f AA.zero lrCoefficients
+    then DM.foldlWithKey' f zero lrCoefficients
     else error "skewSchur: invalid skew partition"
   where
     lrCoefficients = skewSchurLRCoefficients lambda mu
     f :: a -> Partition -> Int -> a
-    f x nu k = x AA.+ (_fromInt k) AR.* (schur xs nu)
+    f x nu k = x + (_fromInt k) * (schur xs nu)
 

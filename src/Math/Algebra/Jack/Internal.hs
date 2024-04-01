@@ -9,8 +9,17 @@ module Math.Algebra.Jack.Internal
   , skewSchurLRCoefficients
   , isSkewPartition)
   where
-import qualified Algebra.Additive                            as AA
-import qualified Algebra.Ring                                as AR
+import Prelude hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral)
+import qualified Prelude as P
+import           Algebra.Additive           
+import           Algebra.Module             
+import           Algebra.Field              
+import           Algebra.Ring
+import           Algebra.ToInteger           
+import qualified Algebra.Additive           as AlgAdd
+import qualified Algebra.Module             as AlgMod
+import qualified Algebra.Field              as AlgField
+import qualified Algebra.Ring               as AlgRing
 import           Data.List.Index                             ( iconcatMap )
 import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.LittlewoodRichardson (_lrRule)
@@ -44,7 +53,7 @@ _ij lambda =
     concatMap (\a -> [1 .. a]) (filter (>0) lambda)
   )
 
-_convParts :: Num b => [Int] -> ([b], [b])
+_convParts :: AlgRing.C b => [Int] -> ([b], [b])
 _convParts lambda =
   (map fromIntegral lambda, map fromIntegral (_dualPartition lambda))
 
@@ -53,7 +62,7 @@ _N lambda mu = sum $ zipWith (*) mu prods
   where
   prods = map (\i -> product $ drop i (map (+1) lambda)) [1 .. length lambda]
 
-hookLengths :: Fractional a => Partition -> a -> [a]
+hookLengths :: AlgField.C a => Partition -> a -> [a]
 hookLengths lambda alpha = upper ++ lower
   where
     (i, j) = _ij lambda
@@ -61,34 +70,34 @@ hookLengths lambda alpha = upper ++ lower
     upper = zipWith (fup lambdaConj' lambda') i j
       where
         fup x y ii jj =
-          x!!(jj-1) - fromIntegral ii + alpha * (y!!(ii-1) - fromIntegral jj + 1)
+          x!!(jj-1) - fromIntegral ii + alpha * (y!!(ii-1) - fromIntegral jj + one)
     lower = zipWith (flow lambdaConj' lambda') i j
       where
         flow x y ii jj =
-          x!!(jj-1) - fromIntegral ii + 1 + alpha * (y!!(ii-1) - fromIntegral jj)
+          x!!(jj-1) - fromIntegral ii + one + alpha * (y!!(ii-1) - fromIntegral jj)
 
-_betaratio :: Fractional a => Partition -> Partition -> Int -> a -> a
+_betaratio :: AlgField.C a => Partition -> Partition -> Int -> a -> a
 _betaratio kappa mu k alpha = alpha * prod1 * prod2 * prod3
   where
     mukm1 = mu !! (k-1)
     t = fromIntegral k - alpha * fromIntegral mukm1
-    u = zipWith (\s kap -> t + 1 - fromIntegral s + alpha * fromIntegral kap)
+    u = zipWith (\s kap -> t + one - fromIntegral s + alpha * fromIntegral kap)
                 [1 .. k] kappa 
     v = zipWith (\s m -> t - fromIntegral s + alpha * fromIntegral m)
                 [1 .. k-1] mu 
     w = zipWith (\s m -> fromIntegral m - t - alpha * fromIntegral s)
                 [1 .. mukm1-1] (_dualPartition mu)
-    prod1 = product $ map (\x -> x / (x + alpha - 1)) u
+    prod1 = product $ map (\x -> x / (x + alpha - one)) u
     prod2 = product $ map (\x -> (x + alpha) / x) v
     prod3 = product $ map (\x -> (x + alpha) / x) w
 
-(.^) :: AA.C a => Int -> a -> a
+(.^) :: AlgAdd.C a => Int -> a -> a
 (.^) k x = if k >= 0
-  then AA.sum (replicate k x)
-  else AA.negate $ AA.sum (replicate (-k) x)
+  then AlgAdd.sum (replicate k x)
+  else AlgAdd.negate $ AlgAdd.sum (replicate (-k) x)
 
-_fromInt :: AR.C a => Int -> a
-_fromInt k = k .^ AR.one
+_fromInt :: AlgRing.C a => Int -> a
+_fromInt k = k .^ AlgRing.one
 
 skewSchurLRCoefficients :: Partition -> Partition -> DM.Map Partition Int
 skewSchurLRCoefficients lambda mu = 
