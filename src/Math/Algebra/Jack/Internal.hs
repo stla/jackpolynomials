@@ -2,6 +2,8 @@
 module Math.Algebra.Jack.Internal
   (Partition
   , _productHookLengths
+  , jackCoeffP
+  , jackCoeffQ
   , _betaratio
   , _isPartition
   , _N
@@ -77,6 +79,16 @@ _productHookLengths :: AlgField.C a => Partition -> a -> a
 _productHookLengths lambda alpha = product lower * product upper
   where
     (lower, upper) = hookLengths lambda alpha
+
+jackCoeffP :: AlgField.C a => Partition -> a -> a
+jackCoeffP lambda alpha = one / product lower
+  where
+    (lower, _) = hookLengths lambda alpha
+
+jackCoeffQ :: AlgField.C a => Partition -> a -> a
+jackCoeffQ lambda alpha = one / product upper
+  where
+    (_, upper) = hookLengths lambda alpha
 
 _betaratio :: AlgField.C a => Partition -> Partition -> Int -> a -> a
 _betaratio kappa mu k alpha = alpha * prod1 * prod2 * prod3

@@ -26,6 +26,7 @@ import Data.Array                 ( Array, (!), (//), listArray )
 import Data.Maybe                 ( fromJust, isJust )
 import qualified Data.Map.Strict  as DM
 import Math.Algebra.Jack.Internal ( _N, _productHookLengths
+                                  , jackCoeffP, jackCoeffQ
                                   , _betaratio, _isPartition
                                   , Partition, skewSchurLRCoefficients
                                   , isSkewPartition, _fromInt )
@@ -35,15 +36,21 @@ jack :: forall a. (AlgField.C a, Ord a)
   => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers
   -> a         -- ^ alpha parameter
+  -> String    -- ^ which Jack polynomial, @"J"@, @"P"@ or @"Q"@
   -> a
-jack []       _      _     = error "jack: empty list of variables"
-jack x@(x0:_) lambda alpha =
+jack []       _      _     _     = error "jack: empty list of variables"
+jack x@(x0:_) lambda alpha which =
   case _isPartition lambda && alpha > fromInteger 0 of
     False -> if _isPartition lambda
       then error "jack: alpha must be strictly positive"
       else error "jack: invalid integer partition"
-    True -> jac (length x) 0 lambda lambda arr0 one
+    True -> case which of 
+      "J" -> resultJ
+      "P" -> jackCoeffP lambda alpha * resultJ
+      "Q" -> jackCoeffQ lambda alpha * resultJ
+      _   -> error "jack: please use \"J\", \"P\" or \"Q\" for last argument"
       where
+      resultJ = jac (length x) 0 lambda lambda arr0 one
       nll = _N lambda lambda
       n = length x
       arr0 = listArray ((1, 1), (nll, n)) (replicate (nll * n) Nothing)
@@ -97,7 +104,7 @@ zonal x lambda = c *  jck / jlambda
     k = fromIntegral $ sum lambda
     jlambda = _productHookLengths lambda (fromInteger 2)
     c = fromInteger $ 2^k * (product [2 .. k])
-    jck = jack x lambda (fromInteger 2)
+    jck = jack x lambda (fromInteger 2) "J"
 
 -- | Evaluation of Schur polynomial
 schur :: forall a. AlgRing.C a 

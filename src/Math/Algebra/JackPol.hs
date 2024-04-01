@@ -28,6 +28,7 @@ import qualified Data.Map.Strict            as DM
 import           Data.Maybe                 ( fromJust, isJust )
 import           Math.Algebra.Jack.Internal ( _betaratio, _productHookLengths, _N
                                             , _isPartition, Partition
+                                            , jackCoeffP, jackCoeffQ
                                             , skewSchurLRCoefficients
                                             , isSkewPartition, _fromInt )
 import           Math.Algebra.Hspray        ( (.^), (*^), (^**^), (^*^), (^+^)
@@ -39,14 +40,20 @@ jackPol :: forall a. (AlgField.C a, Ord a)
   => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> a         -- ^ alpha parameter
+  -> String    -- ^ which Jack polynomial, @"J"@, @"P"@ or @"Q"@
   -> Spray a
-jackPol n lambda alpha =
+jackPol n lambda alpha which =
   case _isPartition lambda && alpha > zero of
     False -> if _isPartition lambda
       then error "jackPol: alpha must be strictly positive"
       else error "jackPol: invalid integer partition"
-    True -> jac (length x) 0 lambda lambda arr0 one
+    True -> case which of 
+      "J" -> resultJ
+      "P" -> jackCoeffP lambda alpha *> resultJ
+      "Q" -> jackCoeffQ lambda alpha *> resultJ
+      _   -> error "jackPol: please use \"J\", \"P\" or \"Q\" for last argument"
       where
+      resultJ = jac (length x) 0 lambda lambda arr0 one
       nll = _N lambda lambda
       x = map lone [1 .. n] :: [Spray a]
       arr0 = listArray ((1, 1), (nll, n)) (replicate (nll * n) Nothing)
@@ -100,7 +107,7 @@ zonalPol n lambda = c .^ (AlgField.recip jlambda *> jck)
     k = fromIntegral $ sum lambda
     jlambda = _productHookLengths lambda (fromInteger 2) :: a
     c = fromInteger $ 2^k * (product [2 .. k])
-    jck = jackPol n lambda (fromInteger 2)
+    jck = jackPol n lambda (fromInteger 2) "J"
 
 -- | Symbolic Schur polynomial
 schurPol :: forall a. (Ord a, AlgRing.C a)
