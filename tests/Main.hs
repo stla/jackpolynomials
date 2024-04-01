@@ -29,7 +29,7 @@ main = defaultMain $ testGroup
     assertBool "" (isSymmetricSpray jp)
 
   , testCase "jack" $ do
-    assertEqual "" (jack [1, 1] [3, 1] (2 % 1)) (48 % 1 :: Rational)
+    assertEqual "" (jack [1, 1] [3, 1] (2 % 1) "J") (48 % 1 :: Rational)
 
   , testCase "schurPol" $ do
     let sp1 = schurPol 4 [4]
