@@ -2,15 +2,11 @@ module Math.Algebra.Jack.HypergeoPQ
   ( hypergeoPQ
   ) where
 import Prelude hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger)
-import qualified Prelude as P
 import           Algebra.Additive           
-import           Algebra.Module             
 import           Algebra.Field              
 import           Algebra.Ring
 import           Algebra.ToInteger           
-import qualified Algebra.Module             as AlgMod
 import qualified Algebra.Field              as AlgField
-import qualified Algebra.Ring               as AlgRing
 import           Math.Algebra.Jack              ( zonal )
 
 gpochhammer :: AlgField.C a => a -> [Int] -> a -> a

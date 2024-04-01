@@ -24,7 +24,6 @@ library
                      , ilist >= 0.4.0.1 && < 0.4.1
                      , array >= 0.5.4.0 && < 0.6
                      , lens >= 5.0.1 && < 5.3
-                     , math-functions >= 0.3.4.2 && < 0.3.5
                      , hspray >= 0.2.2.0 && < 1
                      , numeric-prelude >= 0.4.4 && < 0.5
                      , combinat >= 0.2.10 && < 0.3

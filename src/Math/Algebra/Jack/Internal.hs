@@ -1,7 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 module Math.Algebra.Jack.Internal
   (Partition
-  , hookLengths
+  , _productHookLengths
   , _betaratio
   , _isPartition
   , _N
@@ -10,14 +10,11 @@ module Math.Algebra.Jack.Internal
   , isSkewPartition)
   where
 import Prelude hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral)
-import qualified Prelude as P
 import           Algebra.Additive           
-import           Algebra.Module             
 import           Algebra.Field              
 import           Algebra.Ring
 import           Algebra.ToInteger           
 import qualified Algebra.Additive           as AlgAdd
-import qualified Algebra.Module             as AlgMod
 import qualified Algebra.Field              as AlgField
 import qualified Algebra.Ring               as AlgRing
 import           Data.List.Index                             ( iconcatMap )
@@ -62,8 +59,8 @@ _N lambda mu = sum $ zipWith (*) mu prods
   where
   prods = map (\i -> product $ drop i (map (+1) lambda)) [1 .. length lambda]
 
-hookLengths :: AlgField.C a => Partition -> a -> [a]
-hookLengths lambda alpha = upper ++ lower
+hookLengths :: AlgField.C a => Partition -> a -> ([a], [a])
+hookLengths lambda alpha = (lower, upper)
   where
     (i, j) = _ij lambda
     (lambda', lambdaConj') = _convParts lambda
@@ -75,6 +72,11 @@ hookLengths lambda alpha = upper ++ lower
       where
         flow x y ii jj =
           x!!(jj-1) - fromIntegral ii + one + alpha * (y!!(ii-1) - fromIntegral jj)
+
+_productHookLengths :: AlgField.C a => Partition -> a -> a
+_productHookLengths lambda alpha = product lower * product upper
+  where
+    (lower, upper) = hookLengths lambda alpha
 
 _betaratio :: AlgField.C a => Partition -> Partition -> Int -> a -> a
 _betaratio kappa mu k alpha = alpha * prod1 * prod2 * prod3

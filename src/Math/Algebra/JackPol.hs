@@ -15,10 +15,8 @@ module Math.Algebra.JackPol
   (jackPol, zonalPol, schurPol, skewSchurPol)
   where
 import Prelude hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger)
-import qualified Prelude as P
 import           Algebra.Additive           
 import           Algebra.Module             
-import           Algebra.Field              
 import           Algebra.Ring
 import           Algebra.ToInteger           
 import qualified Algebra.Module             as AlgMod
@@ -28,14 +26,13 @@ import           Control.Lens               ( (.~), element )
 import           Data.Array                 ( Array, (!), (//), listArray )
 import qualified Data.Map.Strict            as DM
 import           Data.Maybe                 ( fromJust, isJust )
-import           Math.Algebra.Jack.Internal ( _betaratio, hookLengths, _N
+import           Math.Algebra.Jack.Internal ( _betaratio, _productHookLengths, _N
                                             , _isPartition, Partition
                                             , skewSchurLRCoefficients
                                             , isSkewPartition, _fromInt )
 import           Math.Algebra.Hspray        ( (.^), (*^), (^**^), (^*^), (^+^)
                                             , lone, Spray
                                             , zeroSpray, unitSpray )
-import           Numeric.SpecFunctions      ( factorial )
 
 -- | Symbolic Jack polynomial
 jackPol :: forall a. (AlgField.C a, Ord a) 
@@ -100,10 +97,10 @@ zonalPol :: forall a. (AlgField.C a, Ord a)
   -> Spray a
 zonalPol n lambda = c .^ (AlgField.recip jlambda *> jck)
   where
-    k = sum lambda
-    jlambda = product (hookLengths lambda (fromInteger 2)) :: a
-    c = (fromIntegral $ (2 :: Integer)^(fromIntegral k)) * product [2 .. k] 
-    jck = jackPol n lambda (one + one)
+    k = fromIntegral $ sum lambda
+    jlambda = _productHookLengths lambda (fromInteger 2) :: a
+    c = fromInteger $ 2^k * (product [2 .. k])
+    jck = jackPol n lambda (fromInteger 2)
 
 -- | Symbolic Schur polynomial
 schurPol :: forall a. (Ord a, AlgRing.C a)

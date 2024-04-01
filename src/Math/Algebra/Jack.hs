@@ -15,24 +15,20 @@ module Math.Algebra.Jack
   (jack, zonal, schur, skewSchur)
   where
 import Prelude hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger)
-import qualified Prelude as P
 import           Algebra.Additive           
-import           Algebra.Module             
 import           Algebra.Field              
 import           Algebra.Ring
 import           Algebra.ToInteger           
-import qualified Algebra.Module             as AlgMod
-import qualified Algebra.Field              as AlgField
-import qualified Algebra.Ring               as AlgRing
+import qualified Algebra.Field    as AlgField
+import qualified Algebra.Ring     as AlgRing
 import Control.Lens               ( (.~), element )
 import Data.Array                 ( Array, (!), (//), listArray )
 import Data.Maybe                 ( fromJust, isJust )
 import qualified Data.Map.Strict  as DM
-import Math.Algebra.Jack.Internal ( _N, hookLengths
+import Math.Algebra.Jack.Internal ( _N, _productHookLengths
                                   , _betaratio, _isPartition
                                   , Partition, skewSchurLRCoefficients
                                   , isSkewPartition, _fromInt )
-import Numeric.SpecFunctions      ( factorial )
 
 -- | Evaluation of Jack polynomial
 jack :: forall a. (AlgField.C a, Ord a) 
@@ -99,7 +95,7 @@ zonal :: (AlgField.C a, Ord a)
 zonal x lambda = c *  jck / jlambda
   where
     k = fromIntegral $ sum lambda
-    jlambda = product (hookLengths lambda (fromInteger 2))
+    jlambda = _productHookLengths lambda (fromInteger 2)
     c = fromInteger $ 2^k * (product [2 .. k])
     jck = jack x lambda (fromInteger 2)
 
