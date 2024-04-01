@@ -17,7 +17,7 @@ ___
 ```haskell
 import Math.Algebra.Jack
 import Data.Ratio
-jack [1, 1] [3, 1] (2%1)
+jack [1, 1] [3, 1] (2%1) "J"
 -- 48 % 1
 ```
 
@@ -25,7 +25,7 @@ jack [1, 1] [3, 1] (2%1)
 import Math.Algebra.JackPol
 import Data.Ratio
 import Math.Algebra.Hspray
-jp = jackPol 2 [3, 1] (2%1)
+jp = jackPol 2 [3, 1] (2%1) "J"
 putStrLn $ prettySpray' jp
 -- (18 % 1) x1^3x2 + (12 % 1) x1^2x2^2 + (18 % 1) x1x2^3
 evalSpray jp [1, 1]
