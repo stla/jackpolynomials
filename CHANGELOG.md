@@ -28,3 +28,8 @@
 1.1.2.0
 -------
 * skew Schur polynomials (functions `skewSchur` and `skewSchurPol`)
+
+1.1.3.0
+-------
+* it is now possible to choose which Jack polynomial to get or evaluate, `J`, `P` or `Q` 
+(the previous versions returned `J` only)
