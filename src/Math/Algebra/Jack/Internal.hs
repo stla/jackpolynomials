@@ -6,6 +6,7 @@ module Math.Algebra.Jack.Internal
   , jackCoeffP
   , jackCoeffQ
   , _betaratio
+  , _betaRatioOfPolynomials
   , _isPartition
   , _N
   , (.^)
@@ -26,7 +27,6 @@ import qualified Data.Map.Strict                             as DM
 import           Math.Algebra.Hspray                         ( 
                                                                RatioOfPolynomials
                                                              , Polynomial
-                                                             , (*.)
                                                              , outerVariable
                                                              , constPoly
                                                              )
@@ -115,10 +115,10 @@ _betaratio kappa mu k alpha = alpha * prod1 * prod2 * prod3
     prod2 = product $ map (\x -> (x + alpha) / x) v
     prod3 = product $ map (\x -> (x + alpha) / x) w
 
-_betaRatioOfPolynomials :: forall a. (Eq a, AlgField.C a) 
-  => Partition -> Partition -> Int -> a -> RatioOfPolynomials a
-_betaRatioOfPolynomials kappa mu k alpha = 
-  alpha *. ((num1 * num2 * num3) :% (den1 * den2 * den3))
+_betaRatioOfPolynomials :: forall a. AlgField.C a
+  => Partition -> Partition -> Int -> RatioOfPolynomials a
+_betaRatioOfPolynomials kappa mu k = 
+  ((x * num1 * num2 * num3) :% (den1 * den2 * den3))
   where
     mukm1 = mu !! (k-1)
     x = outerVariable :: Polynomial a
