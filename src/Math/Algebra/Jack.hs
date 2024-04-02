@@ -14,22 +14,23 @@ See README for examples and references.
 module Math.Algebra.Jack
   (jack', zonal', schur', skewSchur', jack, zonal, schur, skewSchur)
   where
-import Prelude hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger)
-import           Algebra.Additive           
-import           Algebra.Field              
-import           Algebra.Ring
-import           Algebra.ToInteger           
-import qualified Algebra.Field    as AlgField
-import qualified Algebra.Ring     as AlgRing
-import Control.Lens               ( (.~), element )
-import Data.Array                 ( Array, (!), (//), listArray )
-import Data.Maybe                 ( fromJust, isJust )
-import qualified Data.Map.Strict  as DM
-import Math.Algebra.Jack.Internal ( (.^), _N, _productHookLengths
-                                  , jackCoeffP, jackCoeffQ
-                                  , _betaratio, _isPartition
-                                  , Partition, skewSchurLRCoefficients
-                                  , isSkewPartition, _fromInt )
+import           Prelude 
+  hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger)
+import           Algebra.Additive           ( (+), (-), sum, zero )
+import           Algebra.Field              ( (/) )
+import           Algebra.Ring               ( (*), product, one, (^), fromInteger )
+import           Algebra.ToInteger          ( fromIntegral ) 
+import qualified Algebra.Field              as AlgField
+import qualified Algebra.Ring               as AlgRing
+import           Control.Lens               ( (.~), element )
+import           Data.Array                 ( Array, (!), (//), listArray )
+import           Data.Maybe                 ( fromJust, isJust )
+import qualified Data.Map.Strict            as DM
+import           Math.Algebra.Jack.Internal ( (.^), _N, _productHookLengths
+                                            , jackCoeffP, jackCoeffQ
+                                            , _betaratio, _isPartition
+                                            , Partition, skewSchurLRCoefficients
+                                            , isSkewPartition, _fromInt )
 
 -- | Evaluation of Jack polynomial
 jack' 

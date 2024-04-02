@@ -2,7 +2,7 @@ module Main where
 import Data.Ratio                               ( (%) )
 import Math.Algebra.Hspray                      ( (^+^), (*^), (^*^), (^**^), Spray, lone
                                                 , evalSpray, isSymmetricSpray, evalSymbolicSpray' )
-import Math.Algebra.Jack                        ( jack, jack', zonal, schur, skewSchur )
+import Math.Algebra.Jack                        ( jack, zonal, schur, skewSchur )
 import Math.Algebra.Jack.HypergeoPQ             ( hypergeoPQ )
 import Math.Algebra.JackPol                     ( zonalPol, jackPol, schurPol, skewSchurPol )
 import Math.Algebra.JackSymbolicPol             ( jackSymbolicPol' )

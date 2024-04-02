@@ -15,11 +15,12 @@ module Math.Algebra.JackPol
   ( jackPol', zonalPol', schurPol', skewSchurPol'
   , jackPol, zonalPol, schurPol, skewSchurPol )
   where
-import Prelude hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger)
-import           Algebra.Additive           
-import           Algebra.Module             
-import           Algebra.Ring
-import           Algebra.ToInteger           
+import           Prelude 
+  hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger)
+import           Algebra.Additive           ( (+), (-), sum, zero )
+import           Algebra.Module             ( (*>) )
+import           Algebra.Ring               ( (*), product, one, (^), fromInteger )
+import           Algebra.ToInteger          ( fromIntegral ) 
 import qualified Algebra.Module             as AlgMod
 import qualified Algebra.Field              as AlgField
 import qualified Algebra.Ring               as AlgRing

@@ -14,7 +14,8 @@ See README for examples and references.
 module Math.Algebra.JackSymbolicPol
   (jackSymbolicPol', jackSymbolicPol)
   where
-import Prelude hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger, recip)
+import           Prelude 
+  hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger, recip)
 import           Algebra.Additive           ( (+), (-), sum )
 import           Algebra.Ring               ( (*), product, one )
 import           Algebra.ToInteger          ( fromIntegral ) 
