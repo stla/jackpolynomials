@@ -25,7 +25,7 @@ import Control.Lens               ( (.~), element )
 import Data.Array                 ( Array, (!), (//), listArray )
 import Data.Maybe                 ( fromJust, isJust )
 import qualified Data.Map.Strict  as DM
-import Math.Algebra.Jack.Internal ( _N, _productHookLengths
+import Math.Algebra.Jack.Internal ( (.^), _N, _productHookLengths
                                   , jackCoeffP, jackCoeffQ
                                   , _betaratio, _isPartition
                                   , Partition, skewSchurLRCoefficients
@@ -57,11 +57,11 @@ jack x@(x0:_) lambda alpha which =
       theproduct :: Int -> a
       theproduct nu0 = if nu0 <= 1
         then one
-        else product $ map (\i -> alpha * fromIntegral i + one) [1 .. nu0-1]
+        else product $ map (\i -> one + i .^ alpha) [1 .. nu0-1]
       jac :: Int -> Int -> [Int] -> [Int] -> Array (Int,Int) (Maybe a) -> a -> a
       jac m k mu nu arr beta
         | null nu || nu!!0 == 0 || m == 0 = one
-        | length nu > m && nu!!m > 0 = zero
+        | length nu > m && nu!!m > 0      = zero
         | m == 1 = x0 ^ (fromIntegral $ nu!!0) * theproduct (nu!!0)
         | k == 0 && isJust (arr ! (_N lambda nu, m)) =
                       fromJust $ arr ! (_N lambda nu, m)
@@ -80,30 +80,30 @@ jack x@(x0:_) lambda alpha which =
                     let gamma = beta * _betaratio mu nu ii alpha in
                     if u > 1
                       then
-                        go (ss + jac m ii mu nu' arr gamma) (ii + one)
+                        go (ss + jac m ii mu nu' arr gamma) (ii + 1)
                       else
                         if nu' !! 0 == 0
                           then
-                            go (ss + gamma * x!!(m-1)^ (fromIntegral $ sum mu)) (ii + one)
+                            go (ss + gamma * x!!(m-1)^ (fromIntegral $ sum mu)) (ii + 1)
                           else
                             let arr' = arr // [((_N lambda nu, m), Just ss)] in
                             let jck = jac (m-1) 0 nu' nu' arr' one in
                             let jck' = jck * gamma *
                                         x!!(m-1) ^ (fromIntegral $ sum mu - sum nu') in
-                            go (ss+jck') (ii+1)
+                            go (ss + jck') (ii + 1)
                   else
-                    go ss (ii+1)
+                    go ss (ii + 1)
 
 -- | Evaluation of zonal polynomial
 zonal :: (AlgField.C a, Ord a) 
   => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers
   -> a
-zonal x lambda = c *  jck / jlambda
+zonal x lambda = fromInteger c * jck / jlambda
   where
     k = fromIntegral $ sum lambda
     jlambda = _productHookLengths lambda (fromInteger 2)
-    c = fromInteger $ 2^k * (product [2 .. k])
+    c = product [2 .. k] * (2^k)
     jck = jack x lambda (fromInteger 2) "J"
 
 -- | Evaluation of Schur polynomial

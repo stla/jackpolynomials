@@ -6,13 +6,13 @@ import           Algebra.Additive
 import           Algebra.Field              
 import           Algebra.Ring
 import           Algebra.ToInteger           
-import qualified Algebra.Field              as AlgField
+import qualified Algebra.Field                  as AlgField
 import           Math.Algebra.Jack              ( zonal )
 
 gpochhammer :: AlgField.C a => a -> [Int] -> a -> a
 gpochhammer a kappa alpha = product $ map
   (\i -> product $ map
-    (\j -> a - (fromIntegral i - one) / alpha + fromIntegral j - one)
+    (\j -> a - (fromIntegral (i - 1)) / alpha + fromIntegral (j - 1))
     [1 .. kappa !! (i - 1)]
   )
   [1 .. length kappa]

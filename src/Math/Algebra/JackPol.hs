@@ -26,12 +26,12 @@ import           Control.Lens               ( (.~), element )
 import           Data.Array                 ( Array, (!), (//), listArray )
 import qualified Data.Map.Strict            as DM
 import           Data.Maybe                 ( fromJust, isJust )
-import           Math.Algebra.Jack.Internal ( _betaratio, _productHookLengths, _N
-                                            , _isPartition, Partition
+import           Math.Algebra.Jack.Internal ( (.^), _betaratio, _productHookLengths
+                                            , _N, _isPartition, Partition
                                             , jackCoeffP, jackCoeffQ
                                             , skewSchurLRCoefficients
                                             , isSkewPartition, _fromInt )
-import           Math.Algebra.Hspray        ( (.^), (*^), (^**^), (^*^), (^+^)
+import           Math.Algebra.Hspray        ( (*^), (^**^), (^*^), (^+^)
                                             , lone, Spray
                                             , zeroSpray, unitSpray )
 
@@ -60,12 +60,12 @@ jackPol n lambda alpha which =
       theproduct :: Int -> a
       theproduct nu0 = if nu0 <= 1
         then one
-        else product $ map (\i -> alpha * fromIntegral i + one) [1 .. nu0-1]
+        else product $ map (\i -> i .^ alpha + one) [1 .. nu0-1]
       jac :: Int -> Int -> Partition -> Partition -> Array (Int,Int) (Maybe (Spray a)) -> a -> Spray a
       jac m k mu nu arr beta
         | null nu || nu!!0 == 0 || m == 0 = unitSpray
-        | length nu > m && nu!!m > 0 = zeroSpray
-        | m == 1 = theproduct (nu!!0) *^ (x!!0 ^**^ nu!!0) 
+        | length nu > m && nu!!m > 0      = zeroSpray
+        | m == 1                          = theproduct (nu!!0) *^ (x!!0 ^**^ nu!!0) 
         | k == 0 && isJust (arr ! (_N lambda nu, m)) =
                       fromJust $ arr ! (_N lambda nu, m)
         | otherwise = s
@@ -79,7 +79,7 @@ jackPol n lambda alpha which =
                 let u = nu!!(ii-1) in
                 if length nu == ii && u > 0 || u > nu!!ii
                   then
-                    let nu' = (element (ii-1) .~ u-1) nu in
+                    let nu'   = (element (ii-1) .~ u-1) nu in
                     let gamma = beta * _betaratio mu nu ii alpha in
                     if u > 1
                       then
@@ -90,23 +90,23 @@ jackPol n lambda alpha which =
                             go (ss ^+^ (gamma *^ (x!!(m-1) ^**^ sum mu))) (ii + 1)
                           else
                             let arr' = arr // [((_N lambda nu, m), Just ss)] in
-                            let jck = jac (m-1) 0 nu' nu' arr' one in
+                            let jck  = jac (m-1) 0 nu' nu' arr' one in
                             let jck' = gamma *^ (jck ^*^ 
                                         (x!!(m-1) ^**^ (sum mu - sum nu'))) in
-                            go (ss ^+^ jck') (ii+1)
+                            go (ss ^+^ jck') (ii + 1)
                   else
-                    go ss (ii+1)
+                    go ss (ii + 1)
 
 -- | Symbolic zonal polynomial
 zonalPol :: forall a. (AlgField.C a, Ord a) 
   => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> Spray a
-zonalPol n lambda = c .^ (AlgField.recip jlambda *> jck)
+zonalPol n lambda = fromInteger c * (AlgField.recip jlambda *> jck)
   where
     k = fromIntegral $ sum lambda
     jlambda = _productHookLengths lambda (fromInteger 2) :: a
-    c = fromInteger $ 2^k * (product [2 .. k])
+    c = 2^k * (product [2 .. k])
     jck = jackPol n lambda (fromInteger 2) "J"
 
 -- | Symbolic Schur polynomial

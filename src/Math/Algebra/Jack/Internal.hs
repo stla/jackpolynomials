@@ -7,6 +7,7 @@ module Math.Algebra.Jack.Internal
   , _betaratio
   , _isPartition
   , _N
+  , (.^)
   , _fromInt
   , skewSchurLRCoefficients
   , isSkewPartition)
