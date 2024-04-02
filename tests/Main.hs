@@ -1,7 +1,9 @@
 module Main where
 import Data.Ratio                               ( (%) )
 import Math.Algebra.Hspray                      ( (^+^), (*^), (^*^), (^**^), Spray, lone
-                                                , evalSpray, isSymmetricSpray, evalSymbolicSpray' )
+                                                , evalSpray, isSymmetricSpray
+                                                , evalSymbolicSpray, evalSymbolicSpray'
+                                                , Rational' )
 import Math.Algebra.Jack                        ( jack, zonal, schur, skewSchur )
 import Math.Algebra.Jack.HypergeoPQ             ( hypergeoPQ )
 import Math.Algebra.JackPol                     ( zonalPol, jackPol, schurPol, skewSchurPol )
@@ -25,7 +27,13 @@ main = defaultMain $ testGroup
     let jp = jackSymbolicPol' 3 [3, 1] 'J'
         v  = evalSymbolicSpray' jp 2 [-3, 4, 5]
     assertEqual "" v 1488
-    
+
+  , testCase "jackSymbolicPol C" $ do
+    let jp = jackSymbolicPol' 4 [3, 1] 'C'
+        zp = zonalPol 4 [3, 1] :: Spray Rational'
+        p  = evalSymbolicSpray jp 2 
+    assertEqual "" zp p
+
   , testCase "jackPol" $ do
     let jp = jackPol 2 [3, 1] (2 % 1) 'J' :: Spray Rational
         v  = evalSpray jp [1, 1]
