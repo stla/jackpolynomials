@@ -23,10 +23,16 @@ import qualified Algebra.Field                               as AlgField
 import qualified Algebra.Ring                                as AlgRing
 import           Data.List.Index                             ( iconcatMap )
 import qualified Data.Map.Strict                             as DM
-import Math.Algebra.Hspray
+import           Math.Algebra.Hspray                         ( 
+                                                               RatioOfPolynomials
+                                                             , Polynomial
+                                                             , (*.)
+                                                             , outerVariable
+                                                             , constPoly
+                                                             )
 import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
-import           Number.Ratio                                ( (:%) )
+import           Number.Ratio                                ( T( (:%) ) )
 
 type Partition = [Int]
 
@@ -109,10 +115,10 @@ _betaratio kappa mu k alpha = alpha * prod1 * prod2 * prod3
     prod2 = product $ map (\x -> (x + alpha) / x) v
     prod3 = product $ map (\x -> (x + alpha) / x) w
 
-_betaRatioOfPolynomials :: forall a. AlgField.C a 
+_betaRatioOfPolynomials :: forall a. (Eq a, AlgField.C a) 
   => Partition -> Partition -> Int -> a -> RatioOfPolynomials a
 _betaRatioOfPolynomials kappa mu k alpha = 
-  alpha *> ((num1 * num2 * num3) :% (den1 * den2 * den 3))
+  alpha *. ((num1 * num2 * num3) :% (den1 * den2 * den3))
   where
     mukm1 = mu !! (k-1)
     x = outerVariable :: Polynomial a
