@@ -1,6 +1,6 @@
 {-|
 Module      : Math.Algebra.JackSymbolicPol
-Description : Jack polynomials with symbolic parameter.
+Description : Jack polynomials with symbolic Jack parameter.
 Copyright   : (c) Stéphane Laurent, 2024
 License     : GPL-3
 Maintainer  : laurent_step@outlook.fr
@@ -12,7 +12,7 @@ See README for examples and references.
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Math.Algebra.JackSymbolicPol
-  (jackSymbolicPol, jackSymbolicPol')
+  (jackSymbolicPol', jackSymbolicPol)
   where
 import Prelude hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger, recip)
 import           Algebra.Additive           ( (+), (-), sum )

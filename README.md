@@ -38,7 +38,7 @@ import Math.Algebra.Hspray
 jp = jackSymbolicPol' 2 [3, 1] 'J'
 putStrLn $ prettySymbolicQSpray "a" jp
 -- ((2) + (4)a + (2)a^2)*x1^3x2 + ((4) + (4)a)*x1^2x2^2 + ((2) + (4)a + (2)a^2)*x1x2^3
-prettySpray' $ evalSymbolicSpray jp 2
+putStrLn $ prettySpray' $ evalSymbolicSpray jp 2
 -- (18 % 1) x1^3x2 + (12 % 1) x1^2x2^2 + (18 % 1) x1x2^3
 ```
 

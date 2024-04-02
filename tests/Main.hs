@@ -1,10 +1,11 @@
 module Main where
 import Data.Ratio                               ( (%) )
 import Math.Algebra.Hspray                      ( (^+^), (*^), (^*^), (^**^), Spray, lone
-                                                , evalSpray, isSymmetricSpray )
-import Math.Algebra.Jack                        ( jack, zonal, schur, skewSchur )
+                                                , evalSpray, isSymmetricSpray, evalSymbolicSpray' )
+import Math.Algebra.Jack                        ( jack, jack', zonal, schur, skewSchur )
 import Math.Algebra.Jack.HypergeoPQ             ( hypergeoPQ )
 import Math.Algebra.JackPol                     ( zonalPol, jackPol, schurPol, skewSchurPol )
+import Math.Algebra.JackSymbolicPol             ( jackSymbolicPol' )
 import Math.HypergeoMatrix                      ( hypergeomat )
 import Test.Tasty                               ( defaultMain
                                                 , testGroup
@@ -19,7 +20,13 @@ main = defaultMain $ testGroup
 
   "Tests"
 
-  [ testCase "jackPol" $ do
+  [ 
+  testCase "jackSymbolicPol" $ do
+    let jp = jackSymbolicPol' 3 [3, 1] 'J'
+        v  = evalSymbolicSpray' jp 2 [-3, 4, 5]
+    assertEqual "" v 1488
+    
+  , testCase "jackPol" $ do
     let jp = jackPol 2 [3, 1] (2 % 1) 'J' :: Spray Rational
         v  = evalSpray jp [1, 1]
     assertEqual "" v (48 % 1)

@@ -37,7 +37,7 @@ import           Math.Algebra.Hspray        ( (*^), (^**^), (^*^), (^+^)
                                             , zeroSpray, unitSpray )
 
 -- | Symbolic Jack polynomial
-jackPol 
+jackPol' 
   :: Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> Rational  -- ^ Jack parameter
