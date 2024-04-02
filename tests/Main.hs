@@ -20,16 +20,16 @@ main = defaultMain $ testGroup
   "Tests"
 
   [ testCase "jackPol" $ do
-    let jp = jackPol 2 [3, 1] (2 % 1) "J" :: Spray Rational
+    let jp = jackPol 2 [3, 1] (2 % 1) 'J' :: Spray Rational
         v  = evalSpray jp [1, 1]
     assertEqual "" v (48 % 1)
 
   , testCase "jackPol is symmetric" $ do
-    let jp = jackPol 3 [3, 2, 1] (2 % 1) "J" :: Spray Rational
+    let jp = jackPol 3 [3, 2, 1] (2 % 1) 'J' :: Spray Rational
     assertBool "" (isSymmetricSpray jp)
 
   , testCase "jack" $ do
-    assertEqual "" (jack [1, 1] [3, 1] (2 % 1) "J") (48 % 1 :: Rational)
+    assertEqual "" (jack [1, 1] [3, 1] (2 % 1) 'J') (48 % 1 :: Rational)
 
   , testCase "schurPol" $ do
     let sp1 = schurPol 4 [4]

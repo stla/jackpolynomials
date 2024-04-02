@@ -12,7 +12,8 @@ See README for examples and references.
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Math.Algebra.JackPol
-  (jackPol, zonalPol, schurPol, skewSchurPol)
+  ( jackPol', zonalPol', schurPol', skewSchurPol'
+  , jackPol, zonalPol, schurPol, skewSchurPol )
   where
 import Prelude hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger)
 import           Algebra.Additive           
@@ -36,11 +37,20 @@ import           Math.Algebra.Hspray        ( (*^), (^**^), (^*^), (^+^)
                                             , zeroSpray, unitSpray )
 
 -- | Symbolic Jack polynomial
+jackPol 
+  :: Int       -- ^ number of variables
+  -> Partition -- ^ partition of integers
+  -> Rational  -- ^ Jack parameter
+  -> Char      -- ^ which Jack polynomial, @'J'@, @'P'@ or @'Q'@
+  -> Spray Rational
+jackPol' = jackPol
+
+-- | Symbolic Jack polynomial
 jackPol :: forall a. (AlgField.C a, Ord a) 
   => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
-  -> a         -- ^ alpha parameter
-  -> String    -- ^ which Jack polynomial, @"J"@, @"P"@ or @"Q"@
+  -> a         -- ^ Jack parameter
+  -> Char      -- ^ which Jack polynomial, @'J'@, @'P'@ or @'Q'@
   -> Spray a
 jackPol n lambda alpha which =
   case _isPartition lambda && alpha > zero of
@@ -48,10 +58,10 @@ jackPol n lambda alpha which =
       then error "jackPol: alpha must be strictly positive"
       else error "jackPol: invalid integer partition"
     True -> case which of 
-      "J" -> resultJ
-      "P" -> jackCoeffP lambda alpha *> resultJ
-      "Q" -> jackCoeffQ lambda alpha *> resultJ
-      _   -> error "jackPol: please use \"J\", \"P\" or \"Q\" for last argument"
+      'J' -> resultJ
+      'P' -> jackCoeffP lambda alpha *> resultJ
+      'Q' -> jackCoeffQ lambda alpha *> resultJ
+      _   -> error "jackPol: please use 'J', 'P' or 'Q' for last argument"
       where
       resultJ = jac (length x) 0 lambda lambda arr0 one
       nll = _N lambda lambda
@@ -98,6 +108,13 @@ jackPol n lambda alpha which =
                     go ss (ii + 1)
 
 -- | Symbolic zonal polynomial
+zonalPol' 
+  :: Int       -- ^ number of variables
+  -> Partition -- ^ partition of integers
+  -> Spray Rational
+zonalPol' = zonalPol
+
+-- | Symbolic zonal polynomial
 zonalPol :: forall a. (AlgField.C a, Ord a) 
   => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
@@ -107,7 +124,14 @@ zonalPol n lambda = fromInteger c * (AlgField.recip jlambda *> jck)
     k = fromIntegral $ sum lambda
     jlambda = _productHookLengths lambda (fromInteger 2) :: a
     c = 2^k * (product [2 .. k])
-    jck = jackPol n lambda (fromInteger 2) "J"
+    jck = jackPol n lambda (fromInteger 2) 'J'
+
+-- | Symbolic Schur polynomial
+schurPol' 
+  :: Int       -- ^ number of variables
+  -> Partition -- ^ partition of integers
+  -> Spray Rational
+schurPol' = schurPol
 
 -- | Symbolic Schur polynomial
 schurPol :: forall a. (Ord a, AlgRing.C a)
@@ -150,7 +174,15 @@ schurPol n lambda =
                               let arr' = arr // [((_N lambda nu, m), Just ss)] in
                               go (ss ^+^ ((x!!(m-1)) ^*^ sch (m-1) 1 nu' arr')) (ii + 1)
                     else
-                      go ss (ii+1)
+                      go ss (ii + 1)
+
+-- | Symbolic skew Schur polynomial
+skewSchurPol' 
+  :: Int       -- ^ number of variables
+  -> Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
+  -> Spray Rational
+skewSchurPol' = skewSchurPol
 
 -- | Symbolic skew Schur polynomial
 skewSchurPol :: forall a. (Ord a, AlgRing.C a)

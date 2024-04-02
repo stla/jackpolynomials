@@ -16,22 +16,31 @@ ___
 
 ```haskell
 import Math.Algebra.Jack
-import Data.Ratio
-jack [1, 1] [3, 1] (2%1) "J"
+jack' [1, 1] [3, 1] 2 'J'
 -- 48 % 1
 ```
 
 ```haskell
 import Math.Algebra.JackPol
-import Data.Ratio
 import Math.Algebra.Hspray
-jp = jackPol 2 [3, 1] (2%1) "J"
+jp = jackPol' 2 [3, 1] 2 'J'
 putStrLn $ prettySpray' jp
 -- (18 % 1) x1^3x2 + (12 % 1) x1^2x2^2 + (18 % 1) x1x2^3
 evalSpray jp [1, 1]
 -- 48 % 1
 ```
 
+As of version `1.2.0.0`, it is possible to get Jack polynomials with a symbolic Jack parameter:
+
+```haskell
+import Math.Algebra.JackSymbolicPol
+import Math.Algebra.Hspray
+jp = jackSymbolicPol' 2 [3, 1] 'J'
+putStrLn $ prettySymbolicQSpray "a" jp
+-- ((2) + (4)a + (2)a^2)*x1^3x2 + ((4) + (4)a)*x1^2x2^2 + ((2) + (4)a + (2)a^2)*x1x2^3
+prettySpray' $ evalSymbolicSpray jp 2
+-- (18 % 1) x1^3x2 + (12 % 1) x1^2x2^2 + (18 % 1) x1x2^3
+```
 
 ## References
 

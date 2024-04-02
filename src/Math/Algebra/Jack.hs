@@ -12,7 +12,7 @@ See README for examples and references.
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Math.Algebra.Jack
-  (jack, zonal, schur, skewSchur)
+  (jack', zonal', schur', skewSchur', jack, zonal, schur, skewSchur)
   where
 import Prelude hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger)
 import           Algebra.Additive           
@@ -32,11 +32,20 @@ import Math.Algebra.Jack.Internal ( (.^), _N, _productHookLengths
                                   , isSkewPartition, _fromInt )
 
 -- | Evaluation of Jack polynomial
+jack' 
+  :: [Rational] -- ^ values of the variables
+  -> Partition  -- ^ partition of integers
+  -> Rational   -- ^ Jack parameter
+  -> Char       -- ^ which Jack polynomial, @'J'@, @'P'@ or @'Q'@
+  -> Rational
+jack' = jack
+
+-- | Evaluation of Jack polynomial
 jack :: forall a. (AlgField.C a, Ord a) 
   => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers
-  -> a         -- ^ alpha parameter
-  -> String    -- ^ which Jack polynomial, @"J"@, @"P"@ or @"Q"@
+  -> a         -- ^ Jack parameter
+  -> Char      -- ^ which Jack polynomial, @'J'@, @'P'@ or @'Q'@
   -> a
 jack []       _      _     _     = error "jack: empty list of variables"
 jack x@(x0:_) lambda alpha which =
@@ -45,10 +54,10 @@ jack x@(x0:_) lambda alpha which =
       then error "jack: alpha must be strictly positive"
       else error "jack: invalid integer partition"
     True -> case which of 
-      "J" -> resultJ
-      "P" -> jackCoeffP lambda alpha * resultJ
-      "Q" -> jackCoeffQ lambda alpha * resultJ
-      _   -> error "jack: please use \"J\", \"P\" or \"Q\" for last argument"
+      'J' -> resultJ
+      'P' -> jackCoeffP lambda alpha * resultJ
+      'Q' -> jackCoeffQ lambda alpha * resultJ
+      _   -> error "jack: please use 'J', 'P' or 'Q' for last argument"
       where
       resultJ = jac (length x) 0 lambda lambda arr0 one
       nll = _N lambda lambda
@@ -95,6 +104,13 @@ jack x@(x0:_) lambda alpha which =
                     go ss (ii + 1)
 
 -- | Evaluation of zonal polynomial
+zonal' 
+  :: [Rational] -- ^ values of the variables
+  -> Partition  -- ^ partition of integers
+  -> Rational
+zonal' = zonal
+
+-- | Evaluation of zonal polynomial
 zonal :: (AlgField.C a, Ord a) 
   => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers
@@ -104,7 +120,14 @@ zonal x lambda = fromInteger c * jck / jlambda
     k = fromIntegral $ sum lambda
     jlambda = _productHookLengths lambda (fromInteger 2)
     c = product [2 .. k] * (2^k)
-    jck = jack x lambda (fromInteger 2) "J"
+    jck = jack x lambda (fromInteger 2) 'J'
+
+-- | Evaluation of Schur polynomial
+schur'
+  :: [Rational] -- ^ values of the variables
+  -> Partition  -- ^ partition of integers 
+  -> Rational
+schur' = schur
 
 -- | Evaluation of Schur polynomial
 schur :: forall a. AlgRing.C a 
@@ -148,7 +171,15 @@ schur x@(x0:_) lambda =
                               let arr' = arr // [((_N lambda nu, m), Just ss)] in
                               go (ss + x!!(m-1) * sch (m-1) 1 nu' arr') (ii + 1)
                     else
-                      go ss (ii+1)
+                      go ss (ii + 1)
+
+-- | Evaluation of a skew Schur polynomial
+skewSchur' 
+  :: [Rational] -- ^ values of the variables
+  -> Partition  -- ^ the outer partition of the skew partition
+  -> Partition  -- ^ the inner partition of the skew partition
+  -> Rational
+skewSchur' = skewSchur
 
 -- | Evaluation of a skew Schur polynomial
 skewSchur :: forall a. AlgRing.C a 
