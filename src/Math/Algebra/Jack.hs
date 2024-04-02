@@ -41,7 +41,7 @@ jack'
 jack' = jack
 
 -- | Evaluation of Jack polynomial
-jack :: forall a. (AlgField.C a, Ord a) 
+jack :: forall a. AlgField.C a
   => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers
   -> a         -- ^ Jack parameter
@@ -49,10 +49,8 @@ jack :: forall a. (AlgField.C a, Ord a)
   -> a
 jack []       _      _     _     = error "jack: empty list of variables"
 jack x@(x0:_) lambda alpha which =
-  case _isPartition lambda && alpha > fromInteger 0 of
-    False -> if _isPartition lambda
-      then error "jack: alpha must be strictly positive"
-      else error "jack: invalid integer partition"
+  case _isPartition lambda of
+    False -> error "jack: invalid integer partition"
     True -> case which of 
       'J' -> resultJ
       'C' -> jackCoeffC lambda alpha * resultJ
@@ -112,7 +110,7 @@ zonal'
 zonal' = zonal
 
 -- | Evaluation of zonal polynomial
-zonal :: (AlgField.C a, Ord a) 
+zonal :: AlgField.C a
   => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers
   -> a

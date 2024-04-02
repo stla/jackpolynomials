@@ -17,7 +17,7 @@ module Math.Algebra.JackPol
   where
 import           Prelude 
   hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger)
-import           Algebra.Additive           ( (+), (-), sum, zero )
+import           Algebra.Additive           ( (+), (-), sum )
 import           Algebra.Module             ( (*>) )
 import           Algebra.Ring               ( (*), product, one, fromInteger )
 import qualified Algebra.Module             as AlgMod
@@ -46,17 +46,15 @@ jackPol'
 jackPol' = jackPol
 
 -- | Symbolic Jack polynomial
-jackPol :: forall a. (AlgField.C a, Ord a) 
+jackPol :: forall a. (Eq a, AlgField.C a)
   => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> a         -- ^ Jack parameter
   -> Char      -- ^ which Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> Spray a
 jackPol n lambda alpha which =
-  case _isPartition lambda && alpha > zero of
-    False -> if _isPartition lambda
-      then error "jackPol: alpha must be strictly positive"
-      else error "jackPol: invalid integer partition"
+  case _isPartition lambda of
+    False -> error "jackPol: invalid integer partition"
     True -> case which of 
       'J' -> resultJ
       'C' -> jackCoeffC lambda alpha *> resultJ
@@ -116,7 +114,7 @@ zonalPol'
 zonalPol' = zonalPol
 
 -- | Symbolic zonal polynomial
-zonalPol :: forall a. (AlgField.C a, Ord a) 
+zonalPol :: forall a. (Eq a, AlgField.C a) 
   => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> Spray a
