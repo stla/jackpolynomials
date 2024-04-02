@@ -5,6 +5,7 @@ module Math.Algebra.Jack.Internal
   , jackCoeffP
   , jackCoeffQ
   , jackCoeffC
+  , jackSymbolicCoeffC
   , jackSymbolicCoeffPinv
   , jackSymbolicCoeffQinv
   , _betaratio
@@ -110,9 +111,9 @@ jackCoeffQ lambda alpha = one / product upper
   where
     (_, upper) = hookLengths lambda alpha
 
-symbolicHookLengthsProduct :: forall a. AlgField.C a 
+symbolicHookLengthsProducts :: forall a. AlgRing.C a 
   => Partition -> (Polynomial a, Polynomial a)
-symbolicHookLengthsProduct lambda = (product lower, product upper)
+symbolicHookLengthsProducts lambda = (product lower, product upper)
   where
     alpha = outerVariable :: Polynomial a
     (i, j) = _ij lambda
@@ -128,11 +129,25 @@ symbolicHookLengthsProduct lambda = (product lower, product upper)
           constPoly (x!!(jj-1) - fromIntegral (ii - 1)) 
             + constPoly (y!!(ii-1) - fromIntegral jj) * alpha
 
+symbolicHookLengthsProduct :: AlgRing.C a => Partition -> Polynomial a
+symbolicHookLengthsProduct lambda = fst hlproducts * snd hlproducts
+  where
+    hlproducts = symbolicHookLengthsProducts lambda
+
+jackSymbolicCoeffC :: forall a. AlgField.C a => Partition -> RatioOfPolynomials a
+jackSymbolicCoeffC lambda = 
+  (constPoly (fromInteger factorialk) * alpha^k) :% jlambda
+  where
+    alpha      = outerVariable :: Polynomial a
+    k          = fromIntegral (sum lambda)
+    factorialk = product [2 .. k]
+    jlambda    = symbolicHookLengthsProduct lambda
+
 jackSymbolicCoeffPinv :: AlgField.C a => Partition -> Polynomial a
-jackSymbolicCoeffPinv lambda = fst $ symbolicHookLengthsProduct lambda
+jackSymbolicCoeffPinv lambda = fst $ symbolicHookLengthsProducts lambda
 
 jackSymbolicCoeffQinv :: AlgField.C a => Partition -> Polynomial a 
-jackSymbolicCoeffQinv lambda = snd $ symbolicHookLengthsProduct lambda
+jackSymbolicCoeffQinv lambda = snd $ symbolicHookLengthsProducts lambda
 
 _betaratio :: AlgField.C a => Partition -> Partition -> Int -> a -> a
 _betaratio kappa mu k alpha = alpha * prod1 * prod2 * prod3

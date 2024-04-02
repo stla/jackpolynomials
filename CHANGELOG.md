@@ -31,7 +31,7 @@
 
 1.2.0.0
 -------
-* it is now possible to choose which Jack polynomial to get or evaluate, `J`, `P` or `Q` 
+* it is now possible to choose which Jack polynomial to get or evaluate, `J`, `C`, `P` or `Q` 
 (the previous versions returned `J` only)
 
-* it is now possible to get Jack polynomials with a symbolic Jack paramter
+* it is now possible to get Jack polynomials with a symbolic Jack parameter

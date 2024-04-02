@@ -24,6 +24,7 @@ import           Control.Lens               ( (.~), element )
 import           Data.Array                 ( Array, (!), (//), listArray )
 import           Data.Maybe                 ( fromJust, isJust )
 import           Math.Algebra.Jack.Internal ( _betaRatioOfPolynomials
+                                            , jackSymbolicCoeffC
                                             , jackSymbolicCoeffPinv
                                             , jackSymbolicCoeffQinv
                                             , _N, _isPartition, Partition )
@@ -38,7 +39,7 @@ import           Number.Ratio               ( fromValue, recip )
 jackSymbolicPol' 
   :: Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
-  -> Char      -- ^ which Jack polynomial, @'J'@, @'P'@ or @'Q'@
+  -> Char      -- ^ which Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> SymbolicQSpray
 jackSymbolicPol' = jackSymbolicPol
 
@@ -46,16 +47,17 @@ jackSymbolicPol' = jackSymbolicPol
 jackSymbolicPol :: forall a. (Eq a, AlgField.C a) 
   => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
-  -> Char      -- ^ which Jack polynomial, @'J'@, @'P'@ or @'Q'@
+  -> Char      -- ^ which Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> SymbolicSpray a
 jackSymbolicPol n lambda which =
   case _isPartition lambda of
     False -> error "jackSymbolicPol: invalid integer partition"
     True -> case which of 
       'J' -> resultJ
+      'C' -> jackSymbolicCoeffC lambda *^ resultJ
       'P' -> recip (fromValue (jackSymbolicCoeffPinv lambda)) *^ resultJ 
       'Q' -> recip (fromValue (jackSymbolicCoeffQinv lambda)) *^ resultJ
-      _   -> error "jackSymbolicPol: please use 'J', 'P' or 'Q' for last argument"
+      _   -> error "jackSymbolicPol: please use 'J', 'C', 'P' or 'Q' for last argument"
       where
       alpha = outerVariable :: Polynomial a
       resultJ = jac (length x) 0 lambda lambda arr0 one

@@ -36,7 +36,7 @@ jack'
   :: [Rational] -- ^ values of the variables
   -> Partition  -- ^ partition of integers
   -> Rational   -- ^ Jack parameter
-  -> Char       -- ^ which Jack polynomial, @'J'@, @'P'@ or @'Q'@
+  -> Char       -- ^ which Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> Rational
 jack' = jack
 
@@ -45,7 +45,7 @@ jack :: forall a. (AlgField.C a, Ord a)
   => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers
   -> a         -- ^ Jack parameter
-  -> Char      -- ^ which Jack polynomial, @'J'@, @'P'@ or @'Q'@
+  -> Char      -- ^ which Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> a
 jack []       _      _     _     = error "jack: empty list of variables"
 jack x@(x0:_) lambda alpha which =
@@ -55,9 +55,10 @@ jack x@(x0:_) lambda alpha which =
       else error "jack: invalid integer partition"
     True -> case which of 
       'J' -> resultJ
+      'C' -> jackCoeffC lambda alpha * resultJ
       'P' -> jackCoeffP lambda alpha * resultJ
       'Q' -> jackCoeffQ lambda alpha * resultJ
-      _   -> error "jack: please use 'J', 'P' or 'Q' for last argument"
+      _   -> error "jack: please use 'J', 'C', 'P' or 'Q' for last argument"
       where
       resultJ = jac (length x) 0 lambda lambda arr0 one
       nll = _N lambda lambda

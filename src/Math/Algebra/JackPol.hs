@@ -19,7 +19,7 @@ import           Prelude
   hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger)
 import           Algebra.Additive           ( (+), (-), sum, zero )
 import           Algebra.Module             ( (*>) )
-import           Algebra.Ring               ( (*), product, one, (^), fromInteger )
+import           Algebra.Ring               ( (*), product, one, fromInteger )
 import qualified Algebra.Module             as AlgMod
 import qualified Algebra.Field              as AlgField
 import qualified Algebra.Ring               as AlgRing
@@ -41,7 +41,7 @@ jackPol'
   :: Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> Rational  -- ^ Jack parameter
-  -> Char      -- ^ which Jack polynomial, @'J'@, @'P'@ or @'Q'@
+  -> Char      -- ^ which Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> Spray Rational
 jackPol' = jackPol
 
@@ -50,7 +50,7 @@ jackPol :: forall a. (AlgField.C a, Ord a)
   => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> a         -- ^ Jack parameter
-  -> Char      -- ^ which Jack polynomial, @'J'@, @'P'@ or @'Q'@
+  -> Char      -- ^ which Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> Spray a
 jackPol n lambda alpha which =
   case _isPartition lambda && alpha > zero of
@@ -59,9 +59,10 @@ jackPol n lambda alpha which =
       else error "jackPol: invalid integer partition"
     True -> case which of 
       'J' -> resultJ
+      'C' -> jackCoeffC lambda alpha *> resultJ
       'P' -> jackCoeffP lambda alpha *> resultJ
       'Q' -> jackCoeffQ lambda alpha *> resultJ
-      _   -> error "jackPol: please use 'J', 'P' or 'Q' for last argument"
+      _   -> error "jackPol: please use 'J', 'C', 'P' or 'Q' for last argument"
       where
       resultJ = jac (length x) 0 lambda lambda arr0 one
       nll = _N lambda lambda

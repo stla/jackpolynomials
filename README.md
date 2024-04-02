@@ -46,8 +46,8 @@ From the definition of Jack polynomials, as well as from their implementation in
 the coefficients of the Jack polynomials are fractions of polynomials in the Jack parameter. 
 However, in the above example, one can see that the coefficients of the Jack polynomial `jp` 
 are *polynomials* in the Jack parameter `a`. 
-This fact actually is always true for the $J$-Jack polynomials (not for $P$ and $Q$). This is 
-a consequence of the Knop & Sahi combinatorial formula.
+This fact actually is always true for the $J$-Jack polynomials (not for $C$, $P$ and $Q$). 
+This is a consequence of the Knop & Sahi combinatorial formula.
 But be aware that in spite of this fact, the coefficients of the polynomials returned by 
 Haskell are *fractions* of polynomials (the type of these polynomials is `SymbolicSpray`, 
 defined in the **hspray** package).
