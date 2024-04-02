@@ -33,7 +33,10 @@ import           Math.Algebra.Jack.Internal ( (.^)
                                             , _N, _isPartition, Partition )
 import           Math.Algebra.Hspray        ( (*^), (^**^), (^*^), (^+^)
                                             , lone, Spray, SymbolicSpray
+                                            , Polynomial, outerVariable
+                                            , constPoly, RatioOfPolynomials
                                             , zeroSpray, unitSpray )
+import           Number.Ratio               ( T( (:%) ), fromValue )
 
 -- | Jack polynomial with symbolic Jack parameter
 jackSymbolicPol :: forall a. (AlgField.C a, Ord a) 
@@ -46,19 +49,23 @@ jackSymbolicPol n lambda which =
     False -> error "jackSymbolicPol: invalid integer partition"
     True -> case which of 
       "J" -> resultJ
-      "P" -> jackCoeffP lambda alpha *> resultJ
-      "Q" -> jackCoeffQ lambda alpha *> resultJ
-      _   -> error "jackPol: please use \"J\", \"P\" or \"Q\" for last argument"
+      "P" -> resultJ / fromValue (jackSymbolicCoeffPinv lambda) 
+      "Q" -> resultJ / fromValue (jackSymbolicCoeffQinv lambda)
+      _   -> error "jackSymbolicPol: please use \"J\", \"P\" or \"Q\" for last argument"
       where
+      alpha = outerVariable :: Polynomial a
       resultJ = jac (length x) 0 lambda lambda arr0 one
       nll = _N lambda lambda
-      x = map lone [1 .. n] :: [Spray a]
+      x = map lone [1 .. n] :: [SymbolicSpray a]
       arr0 = listArray ((1, 1), (nll, n)) (replicate (nll * n) Nothing)
-      theproduct :: Int -> a
+      theproduct :: Int -> RatioOfPolynomials a
       theproduct nu0 = if nu0 <= 1
-        then one
-        else product $ map (\i -> i .^ alpha + one) [1 .. nu0-1]
-      jac :: Int -> Int -> Partition -> Partition -> Array (Int,Int) (Maybe (Spray a)) -> a -> Spray a
+        then fromValue (constPoly one)
+        else fromValue $ product $ map 
+              (\i -> constPoly (fromIntegral i) * alpha + constPoly one) 
+              [1 .. nu0-1]
+      jac :: Int -> Int -> Partition -> Partition 
+             -> Array (Int,Int) (Maybe (SymbolicSpray a)) -> RatioOfPolynomials a -> SymbolicSpray a
       jac m k mu nu arr beta
         | null nu || nu!!0 == 0 || m == 0 = unitSpray
         | length nu > m && nu!!m > 0      = zeroSpray
@@ -69,7 +76,7 @@ jackSymbolicPol n lambda which =
           where
             s = go (beta *^ (jac (m-1) 0 nu nu arr one ^*^ ((x!!(m-1)) ^**^ (sum mu - sum nu))))
                 (max 1 k)
-            go :: Spray a -> Int -> Spray a
+            go :: SymbolicSpray a -> Int -> SymbolicSpray a
             go !ss ii
               | length nu < ii || nu!!(ii-1) == 0 = ss
               | otherwise =
@@ -77,7 +84,7 @@ jackSymbolicPol n lambda which =
                 if length nu == ii && u > 0 || u > nu!!ii
                   then
                     let nu'   = (element (ii-1) .~ u-1) nu in
-                    let gamma = beta * _betaratio mu nu ii alpha in
+                    let gamma = _betaRatioOfPolynomials mu nu ii * beta in
                     if u > 1
                       then
                         go (ss ^+^ jac m ii mu nu' arr gamma) (ii + 1)
@@ -93,76 +100,4 @@ jackSymbolicPol n lambda which =
                             go (ss ^+^ jck') (ii + 1)
                   else
                     go ss (ii + 1)
-
--- | Symbolic zonal polynomial
-zonalPol :: forall a. (AlgField.C a, Ord a) 
-  => Int       -- ^ number of variables
-  -> Partition -- ^ partition of integers
-  -> Spray a
-zonalPol n lambda = fromInteger c * (AlgField.recip jlambda *> jck)
-  where
-    k = fromIntegral $ sum lambda
-    jlambda = _productHookLengths lambda (fromInteger 2) :: a
-    c = 2^k * (product [2 .. k])
-    jck = jackPol n lambda (fromInteger 2) "J"
-
--- | Symbolic Schur polynomial
-schurPol :: forall a. (Ord a, AlgRing.C a)
-  => Int       -- ^ number of variables
-  -> Partition -- ^ partition of integers
-  -> Spray a
-schurPol n lambda =
-  case _isPartition lambda of
-    False -> error "schurPol: invalid integer partition"
-    True -> sch n 1 lambda arr0
-      where
-        x = map lone [1 .. n] :: [Spray a]
-        nll = _N lambda lambda
-        arr0 = listArray ((1, 1), (nll, n)) (replicate (nll * n) Nothing)
-        sch :: Int -> Int -> [Int] -> Array (Int,Int) (Maybe (Spray a)) -> Spray a
-        sch m k nu arr
-          | null nu || nu!!0 == 0 || m == 0 = unitSpray
-          | length nu > m && nu!!m > 0 = zeroSpray
-          | m == 1 = x!!0 ^**^ nu!!0
-          | isJust (arr ! (_N lambda nu, m)) = fromJust $ arr ! (_N lambda nu, m)
-          | otherwise = s
-            where
-              s = go (sch (m-1) 1 nu arr) k
-              go :: Spray a -> Int -> Spray a
-              go !ss ii
-                | length nu < ii || nu!!(ii-1) == 0 = ss
-                | otherwise =
-                  let u = nu!!(ii-1) in
-                  if length nu == ii && u > 0 || u > nu !! ii
-                    then
-                      let nu' = (element (ii-1) .~ u-1) nu in
-                      if u > 1
-                        then
-                          go (ss ^+^ ((x!!(m-1)) ^*^ sch m ii nu' arr)) (ii + 1)
-                        else
-                          if nu'!!0 == 0
-                            then
-                              go (ss ^+^ (x!!(m-1))) (ii + 1)
-                            else
-                              let arr' = arr // [((_N lambda nu, m), Just ss)] in
-                              go (ss ^+^ ((x!!(m-1)) ^*^ sch (m-1) 1 nu' arr')) (ii + 1)
-                    else
-                      go ss (ii+1)
-
--- | Symbolic skew Schur polynomial
-skewSchurPol :: forall a. (Ord a, AlgRing.C a)
-  => Int       -- ^ number of variables
-  -> Partition -- ^ outer partition of the skew partition
-  -> Partition -- ^ inner partition of the skew partition
-  -> Spray a
-skewSchurPol n lambda mu =
-  case isSkewPartition lambda mu of
-    False -> error "skewSchurPol: invalid skew partition"
-    True  -> DM.foldlWithKey' f zeroSpray lrCoefficients
-  where
-    lrCoefficients = skewSchurLRCoefficients lambda mu
-    f :: Spray a -> Partition -> Int -> Spray a
-    f spray nu k = spray ^+^ (_fromInt' k) AlgMod.*> (schurPol n nu)
-    _fromInt' :: Int -> a
-    _fromInt' = _fromInt
 

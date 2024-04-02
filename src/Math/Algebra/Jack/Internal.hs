@@ -102,7 +102,8 @@ jackCoeffQ lambda alpha = one / product upper
   where
     (_, upper) = hookLengths lambda alpha
 
-symbolicHookLengthsProduct :: AlgField.C a => Partition -> (Polynomial a, Polynomial a)
+symbolicHookLengthsProduct :: forall a. AlgField.C a 
+  => Partition -> (Polynomial a, Polynomial a)
 symbolicHookLengthsProduct lambda = (product lower, product upper)
   where
     alpha = outerVariable :: Polynomial a
@@ -119,7 +120,7 @@ symbolicHookLengthsProduct lambda = (product lower, product upper)
           constPoly (x!!(jj-1) - fromIntegral (ii - 1)) 
             + constPoly (y!!(ii-1) - fromIntegral jj) * alpha
 
-jackSymbolicCoeffPinv :: AlgField.C a => Partition -> a -> a
+jackSymbolicCoeffPinv :: AlgField.C a => Partition -> Polynomial a
 jackSymbolicCoeffPinv lambda = fst $ symbolicHookLengthsProduct lambda
 
 jackSymbolicCoeffQinv :: AlgField.C a => Partition -> Polynomial a 
