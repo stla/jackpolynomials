@@ -4,9 +4,11 @@ import Math.Algebra.Hspray                      ( (^+^), (*^), (^*^), (^**^), Sp
                                                 , evalSpray, isSymmetricSpray
                                                 , evalSymbolicSpray, evalSymbolicSpray'
                                                 , Rational' )
-import Math.Algebra.Jack                        ( jack, zonal, schur, skewSchur )
+import Math.Algebra.Jack                        ( schur, skewSchur 
+                                                , jack', zonal' )
 import Math.Algebra.Jack.HypergeoPQ             ( hypergeoPQ )
-import Math.Algebra.JackPol                     ( zonalPol, jackPol, schurPol, skewSchurPol )
+import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol'
+                                                , schurPol, schurPol', skewSchurPol' )
 import Math.Algebra.JackSymbolicPol             ( jackSymbolicPol' )
 import Math.HypergeoMatrix                      ( hypergeomat )
 import Test.Tasty                               ( defaultMain
@@ -35,16 +37,16 @@ main = defaultMain $ testGroup
     assertEqual "" zp p
 
   , testCase "jackPol" $ do
-    let jp = jackPol 2 [3, 1] (2 % 1) 'J' :: Spray Rational
+    let jp = jackPol' 2 [3, 1] (2 % 1) 'J'
         v  = evalSpray jp [1, 1]
-    assertEqual "" v (48 % 1)
+    assertEqual "" v 48
 
   , testCase "jackPol is symmetric" $ do
-    let jp = jackPol 3 [3, 2, 1] (2 % 1) 'J' :: Spray Rational
+    let jp = jackPol' 3 [3, 2, 1] (2 % 1) 'J'
     assertBool "" (isSymmetricSpray jp)
 
   , testCase "jack" $ do
-    assertEqual "" (jack [1, 1] [3, 1] (2 % 1) 'J') (48 % 1 :: Rational)
+    assertEqual "" (jack' [1, 1] [3, 1] (2 % 1) 'J') 48
 
   , testCase "schurPol" $ do
     let sp1 = schurPol 4 [4]
@@ -56,7 +58,7 @@ main = defaultMain $ testGroup
     assertEqual "" v 4096
 
   , testCase "schurPol is symmetric" $ do
-    let sp = schurPol 3 [3, 2, 1] :: Spray Rational
+    let sp = schurPol' 3 [3, 2, 1] 
     assertBool "" (isSymmetricSpray sp)
 
   , testCase "schur" $ do
@@ -75,26 +77,26 @@ main = defaultMain $ testGroup
     let x = lone 1 :: Spray Rational
         y = lone 2 :: Spray Rational
         z = lone 3 :: Spray Rational
-        skp = skewSchurPol 3 [2, 2, 1] [1, 1]
+        skp = skewSchurPol' 3 [2, 2, 1] [1, 1]
         p = x^**^2 ^*^ y  ^+^  x^**^2 ^*^ z  ^+^  x ^*^ y^**^2  ^+^  3 *^ (x ^*^ y ^*^ z) 
             ^+^  x ^*^ z^**^2  ^+^  y^**^2 ^*^ z  ^+^  y ^*^ z^**^2
     assertEqual "" skp p 
 
   , testCase "skewSchurPol is symmetric" $ do
-    let skp = skewSchurPol 3 [3, 2, 1] [1, 1] :: Spray Rational
+    let skp = skewSchurPol' 3 [3, 2, 1] [1, 1]
     assertBool "" (isSymmetricSpray skp)
 
   , testCase "zonalPol" $ do
-    let zp1 = zonalPol 4 [3]       :: Spray Rational
-        zp2 = zonalPol 4 [2, 1]    :: Spray Rational
-        zp3 = zonalPol 4 [1, 1, 1] :: Spray Rational
+    let zp1 = zonalPol' 4 [3]       
+        zp2 = zonalPol' 4 [2, 1]    
+        zp3 = zonalPol' 4 [1, 1, 1] 
         v   = evalSpray (zp1 ^+^ zp2 ^+^ zp3) [2, 2, 2, 2]
     assertEqual "" v 512
 
   , testCase "zonal" $ do
-    let zp1 = zonal [2 % 1, 2 % 1, 2 % 1, 2 % 1] [3]
-        zp2 = zonal [2 % 1, 2 % 1, 2 % 1, 2 % 1] [2, 1]
-        zp3 = zonal [2 % 1, 2 % 1, 2 % 1, 2 % 1] [1, 1, 1] :: Rational
+    let zp1 = zonal' [2 % 1, 2 % 1, 2 % 1, 2 % 1] [3]
+        zp2 = zonal' [2 % 1, 2 % 1, 2 % 1, 2 % 1] [2, 1]
+        zp3 = zonal' [2 % 1, 2 % 1, 2 % 1, 2 % 1] [1, 1, 1] 
     assertEqual "" (zp1 + zp2 + zp3) 512
 
   , testCase "hypergeometric function" $ do
