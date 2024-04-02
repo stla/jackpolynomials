@@ -12,34 +12,37 @@ See README for examples and references.
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Math.Algebra.JackSymbolicPol
-  (jackSymbolicPol)
+  (jackSymbolicPol, jackSymbolicPol')
   where
-import Prelude hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger)
-import           Algebra.Additive           
-import           Algebra.Module             
-import           Algebra.Ring
+import Prelude hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger, recip)
+import           Algebra.Additive           ( (+), (-), sum )
+import           Algebra.Ring               ( (*), product, one )
 import           Algebra.ToInteger          ( fromIntegral ) 
-import qualified Algebra.Module             as AlgMod
 import qualified Algebra.Field              as AlgField
-import qualified Algebra.Ring               as AlgRing
 import           Control.Lens               ( (.~), element )
 import           Data.Array                 ( Array, (!), (//), listArray )
-import qualified Data.Map.Strict            as DM
 import           Data.Maybe                 ( fromJust, isJust )
-import           Math.Algebra.Jack.Internal ( (.^) 
-                                            , _betaRatioOfPolynomials
+import           Math.Algebra.Jack.Internal ( _betaRatioOfPolynomials
                                             , jackSymbolicCoeffPinv
                                             , jackSymbolicCoeffQinv
                                             , _N, _isPartition, Partition )
 import           Math.Algebra.Hspray        ( (*^), (^**^), (^*^), (^+^)
-                                            , lone, Spray, SymbolicSpray
+                                            , lone, SymbolicSpray, SymbolicQSpray
                                             , Polynomial, outerVariable
                                             , constPoly, RatioOfPolynomials
                                             , zeroSpray, unitSpray )
-import           Number.Ratio               ( T( (:%) ), fromValue )
+import           Number.Ratio               ( fromValue, recip )
 
 -- | Jack polynomial with symbolic Jack parameter
-jackSymbolicPol :: forall a. (AlgField.C a, Ord a) 
+jackSymbolicPol' 
+  :: Int       -- ^ number of variables
+  -> Partition -- ^ partition of integers
+  -> String    -- ^ which Jack polynomial, @"J"@, @"P"@ or @"Q"@
+  -> SymbolicQSpray
+jackSymbolicPol' = jackSymbolicPol
+
+-- | Jack polynomial with symbolic Jack parameter
+jackSymbolicPol :: forall a. (Eq a, AlgField.C a) 
   => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> String    -- ^ which Jack polynomial, @"J"@, @"P"@ or @"Q"@
@@ -49,8 +52,8 @@ jackSymbolicPol n lambda which =
     False -> error "jackSymbolicPol: invalid integer partition"
     True -> case which of 
       "J" -> resultJ
-      "P" -> resultJ / fromValue (jackSymbolicCoeffPinv lambda) 
-      "Q" -> resultJ / fromValue (jackSymbolicCoeffQinv lambda)
+      "P" -> recip (fromValue (jackSymbolicCoeffPinv lambda)) *^ resultJ 
+      "Q" -> recip (fromValue (jackSymbolicCoeffQinv lambda)) *^ resultJ
       _   -> error "jackSymbolicPol: please use \"J\", \"P\" or \"Q\" for last argument"
       where
       alpha = outerVariable :: Polynomial a
