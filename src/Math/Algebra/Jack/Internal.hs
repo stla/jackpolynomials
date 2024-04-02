@@ -1,4 +1,5 @@
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE BangPatterns        #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Math.Algebra.Jack.Internal
   (Partition
   , _productHookLengths
@@ -13,30 +14,32 @@ module Math.Algebra.Jack.Internal
   , isSkewPartition)
   where
 import Prelude hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral)
-import           Algebra.Additive                           ( (+), (-), sum )
-import           Algebra.Field                              ( (/) )
-import           Algebra.Ring                               ( (*), product, one )
-import           Algebra.ToInteger                          ( fromIntegral )
+import           Algebra.Additive                            ( (+), (-), sum )
+import           Algebra.Field                               ( (/) )
+import           Algebra.Ring                                ( (*), product, one )
+import           Algebra.ToInteger                           ( fromIntegral )
 import qualified Algebra.Additive                            as AlgAdd
 import qualified Algebra.Field                               as AlgField
 import qualified Algebra.Ring                                as AlgRing
 import           Data.List.Index                             ( iconcatMap )
-import qualified Math.Combinat.Partitions.Integer            as MCP
-import           Math.Combinat.Tableaux.LittlewoodRichardson (_lrRule)
 import qualified Data.Map.Strict                             as DM
+import Math.Algebra.Hspray
+import qualified Math.Combinat.Partitions.Integer            as MCP
+import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
+import           Number.Ratio                                ( (:%) )
 
 type Partition = [Int]
 
 _isPartition :: Partition -> Bool
-_isPartition []  = True
-_isPartition [x] = x > 0
+_isPartition []           = True
+_isPartition [x]          = x > 0
 _isPartition (x:xs@(y:_)) = (x >= y) && _isPartition xs
 
 _diffSequence :: [Int] -> [Int]
 _diffSequence = go where
   go (x:ys@(y:_)) = (x-y) : go ys 
-  go [x] = [x]
-  go []  = []
+  go [x]          = [x]
+  go []           = []
 
 _dualPartition :: Partition -> Partition
 _dualPartition [] = []
@@ -105,6 +108,40 @@ _betaratio kappa mu k alpha = alpha * prod1 * prod2 * prod3
     prod1 = product $ map (\x -> x / (x + alpha - one)) u
     prod2 = product $ map (\x -> (x + alpha) / x) v
     prod3 = product $ map (\x -> (x + alpha) / x) w
+
+_betaRatioOfPolynomials :: forall a. AlgField.C a 
+  => Partition -> Partition -> Int -> a -> RatioOfPolynomials a
+_betaRatioOfPolynomials kappa mu k alpha = 
+  alpha *> ((num1 * num2 * num3) :% (den1 * den2 * den 3))
+  where
+    mukm1 = mu !! (k-1)
+    x = outerVariable :: Polynomial a
+    t = constPoly (fromIntegral k) - constPoly (fromIntegral mukm1) * x
+    u = zipWith 
+        (
+        \s kap -> 
+          t - constPoly (fromIntegral $ s-1) + constPoly (fromIntegral kap) * x
+        )
+        [1 .. k] kappa 
+    v = zipWith 
+        (
+        \s m -> t - constPoly (fromIntegral s) + constPoly (fromIntegral m) * x
+        )
+        [1 .. k-1] mu 
+    w = zipWith 
+        (
+        \s m -> constPoly (fromIntegral m) - t - constPoly (fromIntegral s) * x
+        )
+        [1 .. mukm1-1] (_dualPartition mu)
+    num1 = product u
+    den1 = product $ map (\p -> p + x - constPoly one) u
+    num2 = product $ map (\p -> p + x) v
+    den2 = product v
+    num3 = product $ map (\p -> p + x) w
+    den3 = product w
+    -- prod1 = product $ map (\x -> x / (x + alpha - one)) u
+    -- prod2 = product $ map (\x -> (x + alpha) / x) v
+    -- prod3 = product $ map (\x -> (x + alpha) / x) w
 
 (.^) :: AlgAdd.C a => Int -> a -> a
 (.^) k x = if k >= 0

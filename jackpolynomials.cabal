@@ -19,12 +19,13 @@ library
   exposed-modules:     Math.Algebra.Jack.HypergeoPQ
                      , Math.Algebra.Jack
                      , Math.Algebra.JackPol
-  other-modules:       Math.Algebra.Jack.Internal
+                     , Math.Algebra.Jack.Internal
+--  other-modules:       Math.Algebra.Jack.Internal
   build-depends:       base >= 4.7 && < 5
                      , ilist >= 0.4.0.1 && < 0.4.1
                      , array >= 0.5.4.0 && < 0.6
                      , lens >= 5.0.1 && < 5.3
-                     , hspray >= 0.2.2.0 && < 1
+                     , hspray >= 0.2.5.0 && < 1
                      , numeric-prelude >= 0.4.4 && < 0.5
                      , combinat >= 0.2.10 && < 0.3
                      , containers >= 0.6.4.1 && < 0.8
@@ -49,7 +50,7 @@ test-suite unit-tests
                       , tasty >= 1.4 && < 1.6
                       , tasty-hunit >= 0.10 && < 0.11
                       , jackpolynomials
-                      , hspray >= 0.2.2.0 && < 1
+                      , hspray >= 0.2.5.0 && < 1
                       , hypergeomatrix >= 1.1.0.2 && < 2
   Default-Language:     Haskell2010
 
