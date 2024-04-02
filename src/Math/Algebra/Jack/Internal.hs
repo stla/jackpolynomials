@@ -5,6 +5,8 @@ module Math.Algebra.Jack.Internal
   , _productHookLengths
   , jackCoeffP
   , jackCoeffQ
+  , jackSymbolicCoeffPinv
+  , jackSymbolicCoeffQinv
   , _betaratio
   , _betaRatioOfPolynomials
   , _isPartition
@@ -99,6 +101,29 @@ jackCoeffQ :: AlgField.C a => Partition -> a -> a
 jackCoeffQ lambda alpha = one / product upper
   where
     (_, upper) = hookLengths lambda alpha
+
+symbolicHookLengthsProduct :: AlgField.C a => Partition -> (Polynomial a, Polynomial a)
+symbolicHookLengthsProduct lambda = (product lower, product upper)
+  where
+    alpha = outerVariable :: Polynomial a
+    (i, j) = _ij lambda
+    (lambda', lambdaConj') = _convParts lambda
+    upper = zipWith (fup lambdaConj' lambda') i j
+      where
+        fup x y ii jj =
+          constPoly (x!!(jj-1) - fromIntegral ii) 
+            + constPoly (y!!(ii-1) - fromIntegral (jj - 1)) * alpha
+    lower = zipWith (flow lambdaConj' lambda') i j
+      where
+        flow x y ii jj =
+          constPoly (x!!(jj-1) - fromIntegral (ii - 1)) 
+            + constPoly (y!!(ii-1) - fromIntegral jj) * alpha
+
+jackSymbolicCoeffPinv :: AlgField.C a => Partition -> a -> a
+jackSymbolicCoeffPinv lambda = fst $ symbolicHookLengthsProduct lambda
+
+jackSymbolicCoeffQinv :: AlgField.C a => Partition -> Polynomial a 
+jackSymbolicCoeffQinv lambda = snd $ symbolicHookLengthsProduct lambda
 
 _betaratio :: AlgField.C a => Partition -> Partition -> Int -> a -> a
 _betaratio kappa mu k alpha = alpha * prod1 * prod2 * prod3
