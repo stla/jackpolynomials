@@ -20,7 +20,6 @@ import           Prelude
 import           Algebra.Additive           ( (+), (-), sum, zero )
 import           Algebra.Module             ( (*>) )
 import           Algebra.Ring               ( (*), product, one, (^), fromInteger )
-import           Algebra.ToInteger          ( fromIntegral ) 
 import qualified Algebra.Module             as AlgMod
 import qualified Algebra.Field              as AlgField
 import qualified Algebra.Ring               as AlgRing
@@ -28,7 +27,7 @@ import           Control.Lens               ( (.~), element )
 import           Data.Array                 ( Array, (!), (//), listArray )
 import qualified Data.Map.Strict            as DM
 import           Data.Maybe                 ( fromJust, isJust )
-import           Math.Algebra.Jack.Internal ( (.^), _betaratio, _productHookLengths
+import           Math.Algebra.Jack.Internal ( (.^), _betaratio, jackCoeffC
                                             , _N, _isPartition, Partition
                                             , jackCoeffP, jackCoeffQ
                                             , skewSchurLRCoefficients
@@ -120,12 +119,10 @@ zonalPol :: forall a. (AlgField.C a, Ord a)
   => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> Spray a
-zonalPol n lambda = fromInteger c * (AlgField.recip jlambda *> jck)
+zonalPol n lambda = 
+  jackCoeffC lambda alpha *> jackPol n lambda alpha 'J'
   where
-    k = fromIntegral $ sum lambda
-    jlambda = _productHookLengths lambda (fromInteger 2) :: a
-    c = 2^k * (product [2 .. k])
-    jck = jackPol n lambda (fromInteger 2) 'J'
+    alpha = fromInteger 2
 
 -- | Symbolic Schur polynomial
 schurPol' 

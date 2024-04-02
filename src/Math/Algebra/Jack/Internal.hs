@@ -2,9 +2,9 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Math.Algebra.Jack.Internal
   (Partition
-  , _productHookLengths
   , jackCoeffP
   , jackCoeffQ
+  , jackCoeffC
   , jackSymbolicCoeffPinv
   , jackSymbolicCoeffQinv
   , _betaratio
@@ -16,10 +16,11 @@ module Math.Algebra.Jack.Internal
   , skewSchurLRCoefficients
   , isSkewPartition)
   where
-import Prelude hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral)
+import           Prelude 
+  hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger, recip)
 import           Algebra.Additive                            ( (+), (-), sum )
-import           Algebra.Field                               ( (/) )
-import           Algebra.Ring                                ( (*), product, one )
+import           Algebra.Field                               ( (/), recip )
+import           Algebra.Ring                                ( (*), product, one, (^), fromInteger )
 import           Algebra.ToInteger                           ( fromIntegral )
 import qualified Algebra.Additive                            as AlgAdd
 import qualified Algebra.Field                               as AlgField
@@ -73,7 +74,7 @@ _N lambda mu = sum $ zipWith (*) mu prods
   where
   prods = map (\i -> product $ drop i (map (+1) lambda)) [1 .. length lambda]
 
-hookLengths :: AlgField.C a => Partition -> a -> ([a], [a])
+hookLengths :: AlgRing.C a => Partition -> a -> ([a], [a])
 hookLengths lambda alpha = (lower, upper)
   where
     (i, j) = _ij lambda
@@ -85,12 +86,19 @@ hookLengths lambda alpha = (lower, upper)
     lower = zipWith (flow lambdaConj' lambda') i j
       where
         flow x y ii jj =
-          x!!(jj-1) - fromIntegral ii + one + alpha * (y!!(ii-1) - fromIntegral jj)
+          x!!(jj-1) - (fromIntegral $ ii - 1) + alpha * (y!!(ii-1) - fromIntegral jj)
 
-_productHookLengths :: AlgField.C a => Partition -> a -> a
+_productHookLengths :: AlgRing.C a => Partition -> a -> a
 _productHookLengths lambda alpha = product lower * product upper
   where
     (lower, upper) = hookLengths lambda alpha
+
+jackCoeffC :: AlgField.C a => Partition -> a -> a
+jackCoeffC lambda alpha = 
+  alpha^k * fromInteger (product [2 .. k]) * recip jlambda
+  where
+    k = fromIntegral (sum lambda)
+    jlambda = _productHookLengths lambda alpha
 
 jackCoeffP :: AlgField.C a => Partition -> a -> a
 jackCoeffP lambda alpha = one / product lower

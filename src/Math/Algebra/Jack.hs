@@ -17,7 +17,6 @@ module Math.Algebra.Jack
 import           Prelude 
   hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger)
 import           Algebra.Additive           ( (+), (-), sum, zero )
-import           Algebra.Field              ( (/) )
 import           Algebra.Ring               ( (*), product, one, (^), fromInteger )
 import           Algebra.ToInteger          ( fromIntegral ) 
 import qualified Algebra.Field              as AlgField
@@ -26,7 +25,7 @@ import           Control.Lens               ( (.~), element )
 import           Data.Array                 ( Array, (!), (//), listArray )
 import           Data.Maybe                 ( fromJust, isJust )
 import qualified Data.Map.Strict            as DM
-import           Math.Algebra.Jack.Internal ( (.^), _N, _productHookLengths
+import           Math.Algebra.Jack.Internal ( (.^), _N, jackCoeffC
                                             , jackCoeffP, jackCoeffQ
                                             , _betaratio, _isPartition
                                             , Partition, skewSchurLRCoefficients
@@ -116,12 +115,9 @@ zonal :: (AlgField.C a, Ord a)
   => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers
   -> a
-zonal x lambda = fromInteger c * jck / jlambda
+zonal x lambda = jackCoeffC lambda alpha * jack x lambda alpha 'J'
   where
-    k = fromIntegral $ sum lambda
-    jlambda = _productHookLengths lambda (fromInteger 2)
-    c = product [2 .. k] * (2^k)
-    jck = jack x lambda (fromInteger 2) 'J'
+    alpha = fromInteger 2
 
 -- | Evaluation of Schur polynomial
 schur'
