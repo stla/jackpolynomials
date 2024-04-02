@@ -13,13 +13,13 @@ module Math.Algebra.Jack.Internal
   , isSkewPartition)
   where
 import Prelude hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral)
-import           Algebra.Additive           
-import           Algebra.Field              
-import           Algebra.Ring
-import           Algebra.ToInteger           
-import qualified Algebra.Additive           as AlgAdd
-import qualified Algebra.Field              as AlgField
-import qualified Algebra.Ring               as AlgRing
+import           Algebra.Additive                           ( (+), (-), sum )
+import           Algebra.Field                              ( (/) )
+import           Algebra.Ring                               ( (*), product, one )
+import           Algebra.ToInteger                          ( fromIntegral )
+import qualified Algebra.Additive                            as AlgAdd
+import qualified Algebra.Field                               as AlgField
+import qualified Algebra.Ring                                as AlgRing
 import           Data.List.Index                             ( iconcatMap )
 import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.LittlewoodRichardson (_lrRule)
@@ -70,7 +70,7 @@ hookLengths lambda alpha = (lower, upper)
     upper = zipWith (fup lambdaConj' lambda') i j
       where
         fup x y ii jj =
-          x!!(jj-1) - fromIntegral ii + alpha * (y!!(ii-1) - fromIntegral jj + one)
+          x!!(jj-1) - fromIntegral ii + alpha * (y!!(ii-1) - fromIntegral (jj - 1))
     lower = zipWith (flow lambdaConj' lambda') i j
       where
         flow x y ii jj =
