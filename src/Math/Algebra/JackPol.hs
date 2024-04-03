@@ -119,9 +119,7 @@ zonalPol :: forall a. (Eq a, AlgField.C a)
   -> Partition -- ^ partition of integers
   -> Spray a
 zonalPol n lambda = 
-  jackCoeffC lambda alpha *> jackPol n lambda alpha 'J'
-  where
-    alpha = fromInteger 2
+  jackPol n lambda (fromInteger 2) 'C'
 
 -- | Symbolic Schur polynomial
 schurPol' 

@@ -114,9 +114,7 @@ zonal :: AlgField.C a
   => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers
   -> a
-zonal x lambda = jackCoeffC lambda alpha * jack x lambda alpha 'J'
-  where
-    alpha = fromInteger 2
+zonal x lambda = jack x lambda (fromInteger 2) 'C'
 
 -- | Evaluation of Schur polynomial
 schur'
