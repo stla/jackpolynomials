@@ -1,3 +1,15 @@
+{-|
+Module      : Math.Algebra.Jack.Auxiliary
+Description : Some utilities for Jack polynomials.
+Copyright   : (c) Stéphane Laurent, 2024
+License     : GPL-3
+Maintainer  : laurent_step@outlook.fr
+
+A Jack polynomial can have a very long expression which can be considerably 
+reduced if the polynomial is written in the basis formed by the monomial 
+symmetric polynomials instead. This is the motivation of this module.
+-}
+
 module Math.Algebra.Jack.Auxiliary
   ( msPolynomial
   , msCombination
@@ -33,7 +45,7 @@ import           Data.Text                        ( Text
 -- | Monomial symmetric polynomials
 --
 -- >>> putStrLn $ prettySpray' (msPolynomial 3 [2, 1])
--- (1) x1^2x2 + (1) x1^2x3 + ...... TODO
+-- (1) x1^2x2 + (1) x1^2x3 + (1) x1x2^2 + (1) x1x3^2 + (1) x2^2x3 + (1) x2x3^2
 msPolynomial 
   :: (AlgRing.C a, Eq a) 
   => Int       -- ^ number of variables
@@ -49,11 +61,10 @@ msPolynomial n lambda
       permutations = permuteMultiset (lambda ++ replicate (n-llambda) 0)
       coefficients = repeat AlgRing.one
 
--- | Symmetric polynomial as a linear combination of monomial symmetric polynomials
-msCombination 
-  :: AlgRing.C a
-  => Spray a
-  -> Map Partition a
+-- | Symmetric polynomial as a linear combination of monomial symmetric polynomials; 
+-- this function has been introduced mainly for usage in `prettySymmetricSpray`, but 
+-- has been exported because it can be useful
+msCombination :: AlgRing.C a => Spray a -> Map Partition a
 msCombination spray = DM.fromList (msCombination' spray)
 
 msCombination' :: AlgRing.C a => Spray a -> [(Partition, a)]
@@ -61,14 +72,11 @@ msCombination' spray =
   map (\lambda -> (lambda, getCoefficient lambda spray)) lambdas
   where
     lambdas = nub $ map (fromPartition . mkPartition . fst) (toList spray)
-    -- constantTerm = constantSpray (getConstantTerm spray) -- useless ?
 
--- | prettyMonomial [0, 2, 1] = M[0, 2, 1]
-prettyMonomial :: Partition -> Text
-prettyMonomial lambda = append (pack " M") (cons '[' $ snoc string ']')
-  where
-    string = intercalate (pack ", ") (map (pack . show) lambda)
-
+-- | Prints a symmetric spray as a linear combination of monomial symmetric polynomials
+--
+-- >>> putStrLn $ prettySymmetricSpray $ jackPol' 3 [3,1,1] 2 'J'
+-- (42 % 1) * M[3, 1, 1] + (28 % 1) * M[2, 2, 1]
 prettySymmetricSpray :: (Show a, AlgRing.C a) => Spray a -> String
 prettySymmetricSpray spray = unpack $ intercalate (pack " + ") termsText
   where
@@ -80,3 +88,7 @@ prettySymmetricSpray spray = unpack $ intercalate (pack " + ") termsText
       (prettyMonomial $ fst assoc)
       where
         coefText = pack $ show (snd assoc)
+        prettyMonomial :: Partition -> Text -- [0,2,1] -> "M[0, 2, 1]"
+        prettyMonomial lambda = append (pack " M") (cons '[' $ snoc text ']')
+          where
+            text = intercalate (pack ", ") (map (pack . show) lambda)
