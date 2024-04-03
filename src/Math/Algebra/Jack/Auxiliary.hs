@@ -65,18 +65,18 @@ msCombination' spray =
 
 -- | prettyMonomial [0, 2, 1] = M[0, 2, 1]
 prettyMonomial :: Partition -> Text
-prettyMonomial lambda = append (pack "M") (cons '[' $ snoc string ']')
+prettyMonomial lambda = append (pack " M") (cons '[' $ snoc string ']')
   where
     string = intercalate (pack ", ") (map (pack . show) lambda)
 
 prettySymmetricSpray :: (Show a, AlgRing.C a) => Spray a -> String
 prettySymmetricSpray spray = unpack $ intercalate (pack " + ") termsText
- where
-  assocs = msCombination' spray
-  termsText     = 
-    map termText (sortBy (flip compare `on` fst) assocs)
-  termText assoc = append
-    (snoc (snoc (cons '(' $ snoc coefText ')') ' ') '*')
-    (prettyMonomial $ fst assoc)
-   where
-    coefText = pack $ show (snd assoc)
+  where
+    assocs = msCombination' spray
+    termsText     = 
+      map termText (sortBy (flip compare `on` fst) assocs)
+    termText assoc = append
+      (snoc (snoc (cons '(' $ snoc coefText ')') ' ') '*')
+      (prettyMonomial $ fst assoc)
+      where
+        coefText = pack $ show (snd assoc)
