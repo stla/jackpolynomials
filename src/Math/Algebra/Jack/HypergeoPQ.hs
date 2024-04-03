@@ -1,7 +1,8 @@
 module Math.Algebra.Jack.HypergeoPQ
   ( hypergeoPQ
   ) where
-import Prelude hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger)
+import           Prelude 
+  hiding ( (*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger )
 import           Algebra.Additive           
 import           Algebra.Field              
 import           Algebra.Ring
