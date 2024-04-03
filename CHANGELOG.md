@@ -38,3 +38,5 @@
 
 1.2.1.0
 -------
+* some stuff dealing with symmetric polynomials, mainly a function to print them as a 
+linear combination of the monomial symmetric polynomials, and a function to check symmetry

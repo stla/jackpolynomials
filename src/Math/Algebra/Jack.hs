@@ -95,7 +95,7 @@ jack x@(x0:_) lambda alpha which =
                             go (ss + gamma * x!!(m-1)^ (fromIntegral $ sum mu)) (ii + 1)
                           else
                             let arr' = arr // [((_N lambda nu, m), Just ss)] in
-                            let jck = jac (m-1) 0 nu' nu' arr' one in
+                            let jck  = jac (m-1) 0 nu' nu' arr' one in
                             let jck' = jck * gamma *
                                         x!!(m-1) ^ (fromIntegral $ sum mu - sum nu') in
                             go (ss + jck') (ii + 1)
