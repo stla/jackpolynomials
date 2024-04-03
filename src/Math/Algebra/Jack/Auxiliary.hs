@@ -30,7 +30,7 @@ import           Math.Algebra.Hspray              (
                                                   , fromList
                                                   , getCoefficient
                                                   --, getConstantTerm
-                                                  -- , numberOfVariables
+                                                  , numberOfVariables
                                                   , toList
                                                   , zeroSpray
                                                   )
@@ -71,9 +71,10 @@ isSymmetricSpray :: (AlgRing.C a, Eq a) => Spray a -> Bool
 isSymmetricSpray spray = spray == spray' 
   where
     assocs = msCombination' spray
+    n      = numberOfVariables spray
     spray' = foldl1' (^+^) 
       (
-        map (\(lambda, x) -> x *^ msPolynomial 4 lambda) assocs
+        map (\(lambda, x) -> x *^ msPolynomial n lambda) assocs
       )
 
 -- | Symmetric polynomial as a linear combination of monomial symmetric polynomials; 

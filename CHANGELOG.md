@@ -35,3 +35,6 @@
 (the previous versions returned `J` only)
 
 * it is now possible to get Jack polynomials with a symbolic Jack parameter
+
+1.2.1.0
+-------
