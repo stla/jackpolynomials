@@ -11,22 +11,26 @@ symmetric polynomials instead. This is the motivation of this module.
 -}
 
 module Math.Algebra.Jack.Auxiliary
-  ( msPolynomial
+  ( isSymmetricSpray
+  , msPolynomial
   , msCombination
   , prettySymmetricSpray
   ) where
 import qualified Algebra.Ring                     as AlgRing
 import           Data.Function                    ( on )
-import           Data.List                        ( nub, sortBy )
+import           Data.List                        ( foldl1', nub, sortBy )
 import           Data.Map.Strict                  ( Map )
 import qualified Data.Map.Strict                  as DM
 import           Math.Algebra.Hspray              (
-                                                    Spray
+                                                    (^+^)
+                                                  , (*^)
+                                                  , Spray
                                                   --, Powers
                                                   --, constantSpray
                                                   , fromList
                                                   , getCoefficient
                                                   --, getConstantTerm
+                                                  -- , numberOfVariables
                                                   , toList
                                                   , zeroSpray
                                                   )
@@ -46,20 +50,31 @@ import           Data.Text                        ( Text
 --
 -- >>> putStrLn $ prettySpray' (msPolynomial 3 [2, 1])
 -- (1) x1^2x2 + (1) x1^2x3 + (1) x1x2^2 + (1) x1x3^2 + (1) x2^2x3 + (1) x2x3^2
-msPolynomial 
-  :: (AlgRing.C a, Eq a) 
+msPolynomial :: (AlgRing.C a, Eq a) 
   => Int       -- ^ number of variables
   -> Partition -- ^ integer partition
   -> Spray a
 msPolynomial n lambda
   | n < 0                     = error "msPolynomial: negative number of variables."
-  | not (_isPartition lambda) = error "msPolynomial: invalid partition"
+  | not (_isPartition lambda) = error "msPolynomial: invalid partition."
   | llambda > n               = zeroSpray
   | otherwise                 = fromList $ zip permutations coefficients
     where
       llambda      = length lambda
       permutations = permuteMultiset (lambda ++ replicate (n-llambda) 0)
       coefficients = repeat AlgRing.one
+
+-- | Checks whether a spray defines a symmetric polynomial; this is useless for 
+-- Jack polynomials, but this module contains everything needed to build this 
+-- function and it can be useful in another context
+isSymmetricSpray :: (AlgRing.C a, Eq a) => Spray a -> Bool
+isSymmetricSpray spray = spray == spray' 
+  where
+    assocs = msCombination' spray
+    spray' = foldl1' (^+^) 
+      (
+        map (\(lambda, x) -> x *^ msPolynomial 4 lambda) assocs
+      )
 
 -- | Symmetric polynomial as a linear combination of monomial symmetric polynomials; 
 -- this function has been introduced mainly for usage in `prettySymmetricSpray`, but 
