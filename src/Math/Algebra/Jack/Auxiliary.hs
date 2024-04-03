@@ -14,6 +14,7 @@ import           Math.Algebra.Hspray              (
                                                   , getCoefficient
                                                   --, getConstantTerm
                                                   , toList
+                                                  , zeroSpray
                                                   )
 import           Math.Algebra.Jack.Internal       ( Partition , _isPartition )
 import           Math.Combinat.Permutations       ( permuteMultiset )
@@ -31,10 +32,11 @@ msPolynomial
 msPolynomial n lambda
   | n < 0                     = error "msPolynomial: negative number of variables."
   | not (_isPartition lambda) = error "msPolynomial: invalid partition"
-  | otherwise = 
-      fromList $ zip permutations coefficients
+  | llambda > n               = zeroSpray
+  | otherwise                 = fromList $ zip permutations coefficients
     where
-      permutations = permuteMultiset lambda
+      llambda      = length lambda
+      permutations = permuteMultiset (lambda ++ replicate (n-llambda) 0)
       coefficients = repeat AlgRing.one
 
 msCombination 
