@@ -14,18 +14,24 @@ module Math.Algebra.Jack.Auxiliary
   ( isSymmetricSpray
   , msPolynomial
   , msCombination
-  , prettySymmetricSpray
+  , prettySymmetricNumSpray
+  , prettySymmetricQSpray
+  , prettySymmetricQSpray'
+  , prettySymmetricSymbolicQSpray
   ) where
 import qualified Algebra.Ring                     as AlgRing
-import           Data.Function                    ( on )
-import           Data.List                        ( foldl1', nub, sortBy )
+import           Data.List                        ( foldl1', nub )
 import           Data.Map.Strict                  ( Map )
 import qualified Data.Map.Strict                  as DM
 import           Data.Sequence                    ( Seq )
+import qualified Data.Sequence                    as DS
 import           Math.Algebra.Hspray              (
                                                     (^+^)
                                                   , (*^)
                                                   , Spray
+                                                  , QSpray
+                                                  , QSpray'
+                                                  , SymbolicQSpray
                                                   , fromList
                                                   , getCoefficient
                                                   , numberOfVariables
@@ -40,14 +46,6 @@ import           Math.Algebra.Hspray              (
 import           Math.Algebra.Jack.Internal       ( Partition , _isPartition )
 import           Math.Combinat.Permutations       ( permuteMultiset )
 import           Math.Combinat.Partitions.Integer ( fromPartition, mkPartition )
-import           Data.Text                        ( Text
-                                                  , append
-                                                  , cons
-                                                  , intercalate
-                                                  , pack
-                                                  , snoc
-                                                  , unpack
-                                                  )
 
 -- | Monomial symmetric polynomials
 --
@@ -68,8 +66,8 @@ msPolynomial n lambda
       coefficients = repeat AlgRing.one
 
 -- | Checks whether a spray defines a symmetric polynomial; this is useless for 
--- Jack polynomials, but this module contains everything needed to build this 
--- function and it can be useful in another context
+-- Jack polynomials because they always are symmetric, but this module contains 
+-- everything needed to build this function and it can be useful in another context
 isSymmetricSpray :: (AlgRing.C a, Eq a) => Spray a -> Bool
 isSymmetricSpray spray = spray == spray' 
   where
@@ -80,9 +78,7 @@ isSymmetricSpray spray = spray == spray'
         map (\(lambda, x) -> x *^ msPolynomial n lambda) assocs
       )
 
--- | Symmetric polynomial as a linear combination of monomial symmetric polynomials; 
--- this function has been introduced mainly for usage in `prettySymmetricSpray`, but 
--- has been exported because it can be useful
+-- | Symmetric polynomial as a linear combination of monomial symmetric polynomials
 msCombination :: AlgRing.C a => Spray a -> Map Partition a
 msCombination spray = DM.fromList (msCombination' spray)
 
@@ -92,55 +88,48 @@ msCombination' spray =
   where
     lambdas = nub $ map (fromPartition . mkPartition . fst) (toList spray)
 
+-- helper function for the showing stuff
 makeMSpray :: (Eq a, AlgRing.C a) => Spray a -> Spray a
 makeMSpray = fromList . msCombination'
 
+-- show symmetric monomial like M[3,2,1]
 showSymmetricMonomials :: [Seq Int] -> [String]
 showSymmetricMonomials = map showSymmetricMonomial
   where
     showSymmetricMonomial :: Seq Int -> String
-    showSymmetricMonomial lambda = 'M' : show lambda
+    showSymmetricMonomial lambda = 'M' : show (DS.toList lambda)
 
+-- | Prints a symmetric spray as a linear combination of monomial symmetric polynomials
+--
+-- >>> putStrLn $ prettySymmetricNumSpray $ schurPol' 3 [3, 1, 1]
+-- M[3, 1, 1] + M[2, 2, 1]
 prettySymmetricNumSpray :: (Num a, Ord a, Show a, AlgRing.C a) => Spray a -> String
 prettySymmetricNumSpray spray = 
   showNumSpray showSymmetricMonomials show mspray
   where
     mspray = makeMSpray spray
 
+-- | Prints a symmetric spray as a linear combination of monomial symmetric polynomials
+--
+-- >>> putStrLn $ prettySymmetricQSpray $ jackPol' 3 [3, 1, 1] 2 'J'
+-- 42*M[3, 1, 1] + 28*M[2, 2, 1]
 prettySymmetricQSpray :: QSpray -> String
 prettySymmetricQSpray spray = showQSpray showSymmetricMonomials mspray
   where
     mspray = makeMSpray spray
 
+-- | Same as `prettySymmetricQSpray` but for a `QSpray'` symmetric spray
 prettySymmetricQSpray' :: QSpray' -> String
 prettySymmetricQSpray' spray = showQSpray' showSymmetricMonomials mspray
   where
     mspray = makeMSpray spray
 
-prettySymmetricSymbolicQspray :: String -> SymbolicQSpray -> String
-prettySymmetricSymbolicQspray a spray = 
+-- | Prints a symmetric symbolic spray as a linear combination of monomial symmetric polynomials
+--
+-- >>> putStrLn $ prettySymmetricSymbolicQSpray "a" $ jackSymbolicPol' 3 [3, 1, 1] 'J'
+-- { 4*a^2 + 10*a + 6 }*M[3,1,1] + { 8*a + 12 }*M[2,2,1]
+prettySymmetricSymbolicQSpray :: String -> SymbolicQSpray -> String
+prettySymmetricSymbolicQSpray a spray = 
   showSpray (prettyRatioOfQPolynomials a) ("{ ", " }") showSymmetricMonomials mspray
   where
     mspray = makeMSpray spray
-
-
-
--- | Prints a symmetric spray as a linear combination of monomial symmetric polynomials
---
--- >>> putStrLn $ prettySymmetricSpray $ jackPol' 3 [3,1,1] 2 'J'
--- (42 % 1) * M[3, 1, 1] + (28 % 1) * M[2, 2, 1]
-prettySymmetricSpray :: (Show a, AlgRing.C a) => Spray a -> String
-prettySymmetricSpray spray = unpack $ intercalate (pack " + ") termsText
-  where
-    assocs = msCombination' spray
-    termsText     = 
-      map termText (sortBy (flip compare `on` fst) assocs)
-    termText assoc = append
-      (snoc (snoc (cons '(' $ snoc coefText ')') ' ') '*')
-      (prettyMonomial $ fst assoc)
-      where
-        coefText = pack $ show (snd assoc)
-        prettyMonomial :: Partition -> Text -- [0,2,1] -> "M[0, 2, 1]"
-        prettyMonomial lambda = append (pack " M") (cons '[' $ snoc text ']')
-          where
-            text = intercalate (pack ", ") (map (pack . show) lambda)

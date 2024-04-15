@@ -5,15 +5,15 @@
 
 packages:
 - completed:
-    commit: c4ea5cd7bb0ef3c88228c3914972fe5114cf900b
+    commit: ba503d128cdbc7cada4d3be313a01fb3602a1703
     git: https://github.com/stla/hspray.git
     name: hspray
     pantry-tree:
-      sha256: a2fc5f8256624d94ac5d40c6149c1fd33a32f8fe660b294b82b5ec81d44b4d8e
-      size: 2927
+      sha256: 8554bf50456c5d80994d015d9f4435e0e0ad4c2e11125af0ba51f1164d16fb84
+      size: 2985
     version: 0.2.6.0
   original:
-    commit: c4ea5cd7bb0ef3c88228c3914972fe5114cf900b
+    commit: ba503d128cdbc7cada4d3be313a01fb3602a1703
     git: https://github.com/stla/hspray.git
 - completed:
     hackage: hypergeomatrix-1.1.0.2@sha256:f9d811e544264de55a9ac0277eb4eea59facab881cd50272f4850f7447508f6d,1941

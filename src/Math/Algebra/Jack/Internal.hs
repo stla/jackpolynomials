@@ -194,9 +194,6 @@ _betaRatioOfPolynomials kappa mu k =
     den2 = product v
     num3 = product $ map (\p -> p + x) w
     den3 = product w
-    -- prod1 = product $ map (\x -> x / (x + alpha - one)) u
-    -- prod2 = product $ map (\x -> (x + alpha) / x) v
-    -- prod3 = product $ map (\x -> (x + alpha) / x) w
 
 (.^) :: AlgAdd.C a => Int -> a -> a
 (.^) k x = if k >= 0
