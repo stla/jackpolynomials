@@ -38,5 +38,6 @@
 
 1.2.1.0
 -------
-* some stuff dealing with symmetric polynomials, mainly a function to print them as a 
-linear combination of the monomial symmetric polynomials, and a function to check symmetry
+* a new module provides some stuff to deal with symmetric polynomials, mainly 
+some functions to print them as a linear combination of the monomial symmetric 
+polynomials, and a function to check the symmetry

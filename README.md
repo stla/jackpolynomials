@@ -14,11 +14,16 @@ allows to evaluate these polynomials. It can also compute their symbolic form.
 
 ___
 
+Evaluation of the Jack polynomial with parameter `2` associated to the integer 
+partition `[3, 1]` at `x1 = 1` and `x2 = 1`:
+
 ```haskell
 import Math.Algebra.Jack
 jack' [1, 1] [3, 1] 2 'J'
 -- 48 % 1
 ```
+
+The non-evaluated Jack polynomial:
 
 ```haskell
 import Math.Algebra.JackPol
@@ -29,6 +34,11 @@ putStrLn $ prettyQSpray jp
 evalSpray jp [1, 1]
 -- 48 % 1
 ```
+
+The first argument, here `2` is the number of variables of the polynomial.
+
+
+### Symbolic Jack polynomial
 
 As of version `1.2.0.0`, it is possible to get Jack polynomials with a symbolic Jack parameter:
 
