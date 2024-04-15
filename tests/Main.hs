@@ -1,13 +1,15 @@
 module Main where
 import Data.Ratio                               ( (%) )
 import Math.Algebra.Hspray                      ( (^+^), (*^), (^*^), (^**^), Spray, lone
-                                                , evalSpray, isSymmetricSpray
+                                                , evalSpray 
                                                 , evalSymbolicSpray, evalSymbolicSpray'
                                                 , Rational' )
+import qualified Math.Algebra.Hspray            as Hspray
 import Math.Algebra.Jack                        ( schur, skewSchur 
                                                 , jack', zonal' )
 import Math.Algebra.Jack.HypergeoPQ             ( hypergeoPQ )
-import Math.Algebra.Jack.SymmetricPolynomials   ( prettySymmetricSymbolicQSpray )
+import Math.Algebra.Jack.SymmetricPolynomials   ( isSymmetricSpray
+                                                , prettySymmetricSymbolicQSpray )
 import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol'
                                                 , schurPol, schurPol', skewSchurPol' )
 import Math.Algebra.JackSymbolicPol             ( jackSymbolicPol' )
@@ -37,6 +39,14 @@ main = defaultMain $ testGroup
         p  = evalSymbolicSpray jp 2 
     assertEqual "" zp p
 
+  , testCase "jackSymbolicPol Q is symmetric" $ do
+    let jp = jackSymbolicPol' 4 [3, 1] 'Q'
+    assertBool "" (isSymmetricSpray jp)
+
+  , testCase "jackSymbolicPol P is symmetric" $ do
+    let jp = jackSymbolicPol' 5 [3, 2, 1] 'P'
+    assertBool "" (isSymmetricSpray jp)
+
   , testCase "prettySymmetricSymbolicQSpray - jack J" $ do
     let jp = jackSymbolicPol' 3 [3, 1, 1] 'J'
     assertEqual "" 
@@ -54,9 +64,9 @@ main = defaultMain $ testGroup
         v  = evalSpray jp [1, 1]
     assertEqual "" v 48
 
-  , testCase "jackPol is symmetric" $ do
+  , testCase "jackPol is symmetric (Gröbner)" $ do
     let jp = jackPol' 3 [3, 2, 1] (2 % 1) 'J'
-    assertBool "" (isSymmetricSpray jp)
+    assertBool "" (Hspray.isSymmetricSpray jp)
 
   , testCase "jack" $ do
     assertEqual "" (jack' [1, 1] [3, 1] (2 % 1) 'J') 48
@@ -70,9 +80,9 @@ main = defaultMain $ testGroup
         v = evalSpray (sp1 ^+^ 3 *^ sp2 ^+^ 2 *^ sp3 ^+^ 3 *^ sp4 ^+^ sp5) [2, 2, 2, 2]
     assertEqual "" v 4096
 
-  , testCase "schurPol is symmetric" $ do
+  , testCase "schurPol is symmetric (Gröbner)" $ do
     let sp = schurPol' 3 [3, 2, 1] 
-    assertBool "" (isSymmetricSpray sp)
+    assertBool "" (Hspray.isSymmetricSpray sp)
 
   , testCase "schur" $ do
     let sp1 = schur [1, 1, 1, 1] [4]
@@ -95,9 +105,9 @@ main = defaultMain $ testGroup
             ^+^  x ^*^ z^**^2  ^+^  y^**^2 ^*^ z  ^+^  y ^*^ z^**^2
     assertEqual "" skp p 
 
-  , testCase "skewSchurPol is symmetric" $ do
+  , testCase "skewSchurPol is symmetric (Gröbner)" $ do
     let skp = skewSchurPol' 3 [3, 2, 1] [1, 1]
-    assertBool "" (isSymmetricSpray skp)
+    assertBool "" (Hspray.isSymmetricSpray skp)
 
   , testCase "zonalPol" $ do
     let zp1 = zonalPol' 4 [3]       
