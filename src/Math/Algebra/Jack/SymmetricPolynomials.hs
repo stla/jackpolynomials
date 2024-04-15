@@ -1,5 +1,5 @@
 {-|
-Module      : Math.Algebra.Jack.Auxiliary
+Module      : Math.Algebra.Jack.SymmetricPolynomials
 Description : Some utilities for Jack polynomials.
 Copyright   : (c) Stéphane Laurent, 2024
 License     : GPL-3
@@ -10,7 +10,7 @@ reduced if the polynomial is written in the basis formed by the monomial
 symmetric polynomials instead. This is the motivation of this module.
 -}
 
-module Math.Algebra.Jack.Auxiliary
+module Math.Algebra.Jack.SymmetricPolynomials
   ( isSymmetricSpray
   , msPolynomial
   , msCombination
@@ -20,11 +20,11 @@ module Math.Algebra.Jack.Auxiliary
   , prettySymmetricSymbolicQSpray
   ) where
 import qualified Algebra.Ring                     as AlgRing
+import qualified Data.Foldable                    as DF
 import           Data.List                        ( foldl1', nub )
 import           Data.Map.Strict                  ( Map )
 import qualified Data.Map.Strict                  as DM
 import           Data.Sequence                    ( Seq )
-import qualified Data.Sequence                    as DS
 import           Math.Algebra.Hspray              (
                                                     (^+^)
                                                   , (*^)
@@ -97,7 +97,7 @@ showSymmetricMonomials :: [Seq Int] -> [String]
 showSymmetricMonomials = map showSymmetricMonomial
   where
     showSymmetricMonomial :: Seq Int -> String
-    showSymmetricMonomial lambda = 'M' : show (DS.toList lambda)
+    showSymmetricMonomial lambda = 'M' : show (DF.toList lambda)
 
 -- | Prints a symmetric spray as a linear combination of monomial symmetric polynomials
 --
@@ -112,7 +112,7 @@ prettySymmetricNumSpray spray =
 -- | Prints a symmetric spray as a linear combination of monomial symmetric polynomials
 --
 -- >>> putStrLn $ prettySymmetricQSpray $ jackPol' 3 [3, 1, 1] 2 'J'
--- 42*M[3, 1, 1] + 28*M[2, 2, 1]
+-- 42*M[3,1,1] + 28*M[2,2,1]
 prettySymmetricQSpray :: QSpray -> String
 prettySymmetricQSpray spray = showQSpray showSymmetricMonomials mspray
   where

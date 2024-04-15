@@ -24,8 +24,8 @@ jack' [1, 1] [3, 1] 2 'J'
 import Math.Algebra.JackPol
 import Math.Algebra.Hspray
 jp = jackPol' 2 [3, 1] 2 'J'
-putStrLn $ prettySpray' jp
--- (18 % 1) x1^3x2 + (12 % 1) x1^2x2^2 + (18 % 1) x1x2^3
+putStrLn $ prettyQSpray jp
+-- 18*x^3.y + 12*x^2.y^2 + 18*x.y^3
 evalSpray jp [1, 1]
 -- 48 % 1
 ```
@@ -37,9 +37,9 @@ import Math.Algebra.JackSymbolicPol
 import Math.Algebra.Hspray
 jp = jackSymbolicPol' 2 [3, 1] 'J'
 putStrLn $ prettySymbolicQSpray "a" jp
--- ((2) + (4)a + (2)a^2)*x1^3x2 + ((4) + (4)a)*x1^2x2^2 + ((2) + (4)a + (2)a^2)*x1x2^3
-putStrLn $ prettySpray' $ evalSymbolicSpray jp 2
--- (18 % 1) x1^3x2 + (12 % 1) x1^2x2^2 + (18 % 1) x1x2^3
+-- { 2*a^2 + 4*a + 2 }*x^3.y + { 4*a + 4 }*x^2.y^2 + { 2*a^2 + 4*a + 2 }*x.y^3
+putStrLn $ prettyQSpray' $ evalSymbolicSpray jp 2
+-- 18*x^3.y + 12*x^2.y^2 + 18*x.y^3
 ```
 
 From the definition of Jack polynomials, as well as from their implementation in this package, 
@@ -51,6 +51,39 @@ This is a consequence of the Knop & Sahi combinatorial formula.
 But be aware that in spite of this fact, the coefficients of the polynomials returned by 
 Haskell are *fractions* of polynomials (the type of these polynomials is `SymbolicSpray`, 
 defined in the **hspray** package).
+
+
+### Showing symmetric polynomials
+
+As of version 1.2.1.0, there is a module providing some functions to print a 
+symmetric polynomial as a linear combination of the monomial symmetric 
+polynomials. This can considerably shorten the expression of a symmetric 
+polynomial as compared to its expression in the canonical basis, and the 
+motivation to add this module to the package is that any Jack polynomial is 
+a symmetric polynomial. Here is an example:
+
+```haskell
+import Math.Algebra.JackPol
+import Math.Algebra.Jack.SymmetricPolynomials
+jp = jackPol' 3 [3, 1, 1] 2 'J'
+putStrLn $ prettySymmetricQSpray jp
+-- 42*M[3,1,1] + 28*M[2,2,1]
+```
+
+And another example with a symbolic Jack polynomial:
+
+```haskell
+import Math.Algebra.JackSymbolicPol
+import Math.Algebra.Jack.SymmetricPolynomials
+jp = jackSymbolicPol' 3 [3, 1, 1] 'J'
+putStrLn $ prettySymmetricSymbolicQSpray "a" jp
+-- { 4*a^2 + 10*a + 6 }*M[3,1,1] + { 8*a + 12 }*M[2,2,1]
+```
+
+Of course you can use these functions for other polynomials, but carefully: 
+they do not check the symmetry. This new module provides the function 
+`isSymmetricSpray` to check the symmetry of a polynomial, much more efficient 
+than the function with the same name in the **hspray** package.
 
 
 ## References
