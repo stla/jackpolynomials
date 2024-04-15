@@ -21,16 +21,19 @@ import           Data.Function                    ( on )
 import           Data.List                        ( foldl1', nub, sortBy )
 import           Data.Map.Strict                  ( Map )
 import qualified Data.Map.Strict                  as DM
+import           Data.Sequence                    ( Seq )
 import           Math.Algebra.Hspray              (
                                                     (^+^)
                                                   , (*^)
                                                   , Spray
-                                                  --, Powers
-                                                  --, constantSpray
                                                   , fromList
                                                   , getCoefficient
-                                                  --, getConstantTerm
                                                   , numberOfVariables
+                                                  , prettyRatioOfQPolynomials
+                                                  , showNumSpray
+                                                  , showQSpray
+                                                  , showQSpray'
+                                                  , showSpray
                                                   , toList
                                                   , zeroSpray
                                                   )
@@ -88,6 +91,39 @@ msCombination' spray =
   map (\lambda -> (lambda, getCoefficient lambda spray)) lambdas
   where
     lambdas = nub $ map (fromPartition . mkPartition . fst) (toList spray)
+
+makeMSpray :: (Eq a, AlgRing.C a) => Spray a -> Spray a
+makeMSpray = fromList . msCombination'
+
+showSymmetricMonomials :: [Seq Int] -> [String]
+showSymmetricMonomials = map showSymmetricMonomial
+  where
+    showSymmetricMonomial :: Seq Int -> String
+    showSymmetricMonomial lambda = 'M' : show lambda
+
+prettySymmetricNumSpray :: (Num a, Ord a, Show a, AlgRing.C a) => Spray a -> String
+prettySymmetricNumSpray spray = 
+  showNumSpray showSymmetricMonomials show mspray
+  where
+    mspray = makeMSpray spray
+
+prettySymmetricQSpray :: QSpray -> String
+prettySymmetricQSpray spray = showQSpray showSymmetricMonomials mspray
+  where
+    mspray = makeMSpray spray
+
+prettySymmetricQSpray' :: QSpray' -> String
+prettySymmetricQSpray' spray = showQSpray' showSymmetricMonomials mspray
+  where
+    mspray = makeMSpray spray
+
+prettySymmetricSymbolicQspray :: String -> SymbolicQSpray -> String
+prettySymmetricSymbolicQspray a spray = 
+  showSpray (prettyRatioOfQPolynomials a) ("{ ", " }") showSymmetricMonomials mspray
+  where
+    mspray = makeMSpray spray
+
+
 
 -- | Prints a symmetric spray as a linear combination of monomial symmetric polynomials
 --
