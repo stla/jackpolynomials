@@ -50,7 +50,7 @@ import           Math.Combinat.Partitions.Integer ( fromPartition, mkPartition )
 -- | Monomial symmetric polynomials
 --
 -- >>> putStrLn $ prettySpray' (msPolynomial 3 [2, 1])
--- (1) x1^2x2 + (1) x1^2x3 + (1) x1x2^2 + (1) x1x3^2 + (1) x2^2x3 + (1) x2x3^2
+-- (1) x1^2.x2 + (1) x1^2.x3 + (1) x1.x2^2 + (1) x1.x3^2 + (1) x2^2.x3 + (1) x2.x3^2
 msPolynomial :: (AlgRing.C a, Eq a) 
   => Int       -- ^ number of variables
   -> Partition -- ^ integer partition
@@ -130,6 +130,7 @@ prettySymmetricQSpray' spray = showQSpray' showSymmetricMonomials mspray
 -- { 4*a^2 + 10*a + 6 }*M[3,1,1] + { 8*a + 12 }*M[2,2,1]
 prettySymmetricSymbolicQSpray :: String -> SymbolicQSpray -> String
 prettySymmetricSymbolicQSpray a spray = 
-  showSpray (prettyRatioOfQPolynomials a) ("{ ", " }") showSymmetricMonomials mspray
+  showSpray (prettyRatioOfQPolynomials a) ("{ ", " }") 
+            showSymmetricMonomials mspray
   where
     mspray = makeMSpray spray

@@ -35,12 +35,13 @@ evalSpray jp [1, 1]
 -- 48 % 1
 ```
 
-The first argument, here `2` is the number of variables of the polynomial.
+The first argument, here `2`, is the number of variables of the polynomial.
 
 
 ### Symbolic Jack polynomial
 
-As of version `1.2.0.0`, it is possible to get Jack polynomials with a symbolic Jack parameter:
+As of version `1.2.0.0`, it is possible to get Jack polynomials with a 
+symbolic Jack parameter:
 
 ```haskell
 import Math.Algebra.JackSymbolicPol
