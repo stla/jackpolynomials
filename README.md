@@ -38,7 +38,7 @@ evalSpray jp [1, 1]
 The first argument, here `2`, is the number of variables of the polynomial.
 
 
-### Symbolic Jack polynomial
+### Symbolic (or parametric) Jack polynomial
 
 As of version `1.2.0.0`, it is possible to get Jack polynomials with a 
 symbolic Jack parameter:
@@ -61,8 +61,9 @@ Jack parameter `a`. This fact actually is always true for the $J$-Jack
 polynomials (not for $C$, $P$ and $Q$). This is a consequence of the Knop & 
 Sahi combinatorial formula. But be aware that in spite of this fact, the 
 coefficients of the polynomials returned by Haskell are *fractions* of 
-polynomials (the type of these polynomials is `SymbolicSpray`, defined in 
-the **hspray** package).
+polynomials. The type of these polynomials is `SymbolicSpray`, defined in 
+the **hspray** package (which will be possibly renamed to `ParametricSpray` 
+in the future).
 
 
 ### Showing symmetric polynomials
