@@ -5,7 +5,7 @@ packages:
 
 extra-deps:
 - git: https://github.com/stla/hspray.git
-  commit: a5fd15c959d1acaebec4de64ff288695f3b40fb8
+  commit: 2a56094eff1f3bef526f7735574456f3b23721c8
 - hypergeomatrix-1.1.0.2
 - ilist-0.4.0.1@sha256:126019faf3d02f305c5762ae9602be1cbf76291153a1a7461270ad1429678111,3305
 - combinat-0.2.10.1
