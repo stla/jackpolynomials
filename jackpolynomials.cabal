@@ -63,6 +63,24 @@ test-suite unit-tests
                        -Wpartial-fields
                        -Wredundant-constraints
 
+benchmark benchmarks
+  type:                 exitcode-stdio-1.0
+  main-is:              Main.hs
+  hs-source-dirs:       benchmarks/
+  Build-Depends:        base >= 4.7 && < 5
+                      , miniterion >= 0.1.1.0 && < 0.2
+                      , jackpolynomials
+                      , hspray >= 0.2.6.0 && < 1
+  Default-Language:     Haskell2010
+  ghc-options:         -Wall
+                       -Wcompat
+                       -Widentities
+                       -Wincomplete-record-updates
+                       -Wincomplete-uni-patterns
+                       -Wmissing-home-modules
+                       -Wpartial-fields
+                       -Wredundant-constraints
+
 source-repository head
   type:     git
   location: https://github.com/stla/jackpolynomials
