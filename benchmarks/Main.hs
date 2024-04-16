@@ -1,6 +1,9 @@
 module Main (main) where
 import Math.Algebra.Hspray                      ( evalSymbolicSpray
                                                 , Rational'
+                                                , QSpray
+                                                , QSpray'
+                                                , SymbolicQSpray
                                                 )
 import Math.Algebra.JackPol                     ( jackPol'
                                                 )
@@ -10,28 +13,36 @@ import Miniterion                               ( bench
                                                 , defaultMain
                                                 , whnf )
 
-n :: Int
-n = 5
+nT :: Int
+nT = 5
 
-lambda :: [Int]
-lambda = [4, 2, 2, 1]
+lambdaT :: [Int]
+lambdaT = [4, 2, 2, 1]
 
-alpha :: Rational
-alpha = 2
+alphaT :: Rational
+alphaT = 2
 
-alpha' :: Rational'
-alpha' = 2
+alphaT' :: Rational'
+alphaT' = 2
 
+jP :: (Int, [Int], Rational) -> QSpray 
+jP (n, lambda, alpha) = jackPol' n lambda alpha 'J'
+
+jSP :: (Int, [Int]) -> SymbolicQSpray
+jSP (n, lambda) = jackSymbolicPol' n lambda 'J'
+
+jSPeval :: (Int, [Int], Rational') -> QSpray'
+jSPeval (n, lambda, alpha') = evalSymbolicSpray (jackSymbolicPol' n lambda 'J') alpha' 
 
 main :: IO ()
 main = 
   defaultMain
     [ bgroup "Jack"
       [ bench "jackPol with the given alpha"       $ 
-          whnf jackPol' n lambda alpha
+          whnf jP (nT, lambdaT, alphaT)
       , bench "jackSymbolicPol"                    $ 
-          whnf jackSymbolicPol' n lambda
+          whnf jSP (nT, lambdaT)
       , bench "jackSymbolicPol evaluated at alpha" $ 
-          whnf evalSymbolicSpray (jackSymbolicPol' n lambda) alpha'
+          whnf jSPeval (nT, lambdaT, alphaT')
       ]
     ]
