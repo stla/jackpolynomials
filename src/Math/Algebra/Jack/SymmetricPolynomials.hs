@@ -5,9 +5,11 @@ Copyright   : (c) Stéphane Laurent, 2024
 License     : GPL-3
 Maintainer  : laurent_step@outlook.fr
 
-A Jack polynomial can have a very long expression which can be considerably 
-reduced if the polynomial is written in the basis formed by the monomial 
-symmetric polynomials instead. This is the motivation of this module.
+A Jack polynomial can have a very long expression in the canonical basis. 
+A considerably shorter expression is obtained by writing the polynomial as 
+a linear combination of the monomial symmetric polynomials instead, which is 
+always possible since Jack polynomials are symmetric. This is the motivation 
+of this module.
 -}
 
 module Math.Algebra.Jack.SymmetricPolynomials
@@ -67,7 +69,7 @@ msPolynomial n lambda
 
 -- | Checks whether a spray defines a symmetric polynomial; this is useless for 
 -- Jack polynomials because they always are symmetric, but this module contains 
--- everything needed to build this function and it can be useful in another context
+-- everything needed to build this function which can be useful in another context
 isSymmetricSpray :: (AlgRing.C a, Eq a) => Spray a -> Bool
 isSymmetricSpray spray = spray == spray' 
   where
@@ -102,7 +104,7 @@ showSymmetricMonomials = map showSymmetricMonomial
 -- | Prints a symmetric spray as a linear combination of monomial symmetric polynomials
 --
 -- >>> putStrLn $ prettySymmetricNumSpray $ schurPol' 3 [3, 1, 1]
--- M[3, 1, 1] + M[2, 2, 1]
+-- M[3,1,1] + M[2,2,1]
 prettySymmetricNumSpray :: (Num a, Ord a, Show a, AlgRing.C a) => Spray a -> String
 prettySymmetricNumSpray spray = 
   showNumSpray showSymmetricMonomials show mspray
@@ -127,7 +129,7 @@ prettySymmetricQSpray' spray = showQSpray' showSymmetricMonomials mspray
 -- | Prints a symmetric one-parameter spray as a linear combination of monomial 
 -- symmetric polynomials
 --
--- >>> putStrLn $ prettySymmetricOneParameterQSpray "a" $ jackOneParameterPol' 3 [3, 1, 1] 'J'
+-- >>> putStrLn $ prettySymmetricOneParameterQSpray "a" $ jackSymbolicPol' 3 [3, 1, 1] 'J'
 -- { 4*a^2 + 10*a + 6 }*M[3,1,1] + { 8*a + 12 }*M[2,2,1]
 prettySymmetricOneParameterQSpray :: String -> OneParameterQSpray -> String
 prettySymmetricOneParameterQSpray a spray = 
