@@ -1,5 +1,5 @@
 name:                jackpolynomials
-version:             1.2.1.0
+version:             1.2.2.0
 synopsis:            Jack, zonal, Schur and skew Schur polynomials
 description:         This library can evaluate Jack polynomials, zonal polynomials, Schur and skew Schur polynomials. It is also able to compute them in symbolic form.
 homepage:            https://github.com/stla/jackpolynomials#readme
@@ -7,7 +7,7 @@ license:             GPL-3
 license-file:        LICENSE
 author:              Stéphane Laurent
 maintainer:          laurent_step@outlook.fr
-copyright:           2022 Stéphane Laurent
+copyright:           2022-2024 Stéphane Laurent
 category:            Math, Algebra
 build-type:          Simple
 extra-source-files:  README.md
@@ -26,7 +26,7 @@ library
                      , ilist >= 0.4.0.1 && < 0.4.1
                      , array >= 0.5.4.0 && < 0.6
                      , lens >= 5.0.1 && < 5.3
-                     , hspray >= 0.2.8.0 && < 1
+                     , hspray >= 0.3.0.0 && < 0.4.0.0
                      , numeric-prelude >= 0.4.4 && < 0.5
                      , combinat >= 0.2.10 && < 0.3
                      , containers >= 0.6.4.1 && < 0.8
@@ -51,7 +51,7 @@ test-suite unit-tests
                       , tasty >= 1.4 && < 1.6
                       , tasty-hunit >= 0.10 && < 0.11
                       , jackpolynomials
-                      , hspray >= 0.2.8.0 && < 1
+                      , hspray >= 0.3.0.0 && < 0.4.0.0
                       , hypergeomatrix >= 1.1.0.2 && < 2
   Default-Language:     Haskell2010
   ghc-options:         -Wall
@@ -70,7 +70,7 @@ benchmark benchmarks
   Build-Depends:        base >= 4.7 && < 5
                       , miniterion >= 0.1.1.0 && < 0.2
                       , jackpolynomials
-                      , hspray >= 0.2.8.0 && < 1
+                      , hspray >= 0.3.0.0 && < 0.4.0.0
   Default-Language:     Haskell2010
   ghc-options:         -Wall
                        -Wcompat

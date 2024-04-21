@@ -1,6 +1,6 @@
 # jackpolynomials
 
-*Jack, zonal, Schur and skew Schur polynomials.*
+***Jack, zonal, Schur and skew Schur polynomials.***
 
 <!-- badges: start -->
 [![Stack-lts](https://github.com/stla/jackpolynomials/actions/workflows/Stack-lts.yml/badge.svg)](https://github.com/stla/jackpolynomials/actions/workflows/Stack-lts.yml)
@@ -10,12 +10,12 @@
 Schur polynomials have applications in combinatorics and zonal polynomials have
 applications in multivariate statistics. They are particular cases of
 [Jack polynomials](https://en.wikipedia.org/wiki/Jack_function). This package
-allows to evaluate these polynomials. It can also compute their symbolic form.
+allows to evaluate these polynomials and to compute them in symbolic form.
 
 ___
 
 Evaluation of the Jack polynomial with parameter `2` associated to the integer 
-partition `[3, 1]` at `x1 = 1` and `x2 = 1`:
+partition `[3, 1]`, at `x1 = 1` and `x2 = 1`:
 
 ```haskell
 import Math.Algebra.Jack
@@ -47,23 +47,37 @@ symbolic Jack parameter:
 import Math.Algebra.JackSymbolicPol
 import Math.Algebra.Hspray
 jp = jackSymbolicPol' 2 [3, 1] 'J'
-putStrLn $ prettySymbolicQSpray "a" jp
+putStrLn $ prettyOneParameterQSpray "a" jp
 -- { 2*a^2 + 4*a + 2 }*x^3.y + { 4*a + 4 }*x^2.y^2 + { 2*a^2 + 4*a + 2 }*x.y^3
-putStrLn $ prettyQSpray' $ evalSymbolicSpray jp 2
+putStrLn $ prettyQSpray' $ evalOneParameterSpray jp 2
 -- 18*x^3.y + 12*x^2.y^2 + 18*x.y^3
 ```
 
+This is possible thanks to an upgrade of the **hspray** package which now 
+provides the type `OneParameterSpray` (and more). An object of this type 
+represents a multivariate polynomial whose coefficients depend on a parameter 
+which is symbolically treated. The type of the Jack polynomial returned by 
+the `jackSymbolicPol` function is `OneParameterSpray a`, and it is 
+`OneParameterQSpray` for the `jackSymbolicPol'` function. The type 
+`OneParameterQSpray` is an alias of `OneParameterSpray Rational'` where 
+`Rational'` is a type defined in the **numeric-prelude** package, 
+analogous to the well known `Rational` type.
+
 From the definition of Jack polynomials, as well as from their implementation 
-in this package, the coefficients of the Jack polynomials are fractions of 
-polynomials in the Jack parameter. However, in the above example, one can see 
-that the coefficients of the Jack polynomial `jp` are *polynomials* in the 
-Jack parameter `a`. This fact actually is always true for the $J$-Jack 
-polynomials (not for $C$, $P$ and $Q$). This is a consequence of the Knop & 
-Sahi combinatorial formula. But be aware that in spite of this fact, the 
-coefficients of the polynomials returned by Haskell are *fractions* of 
-polynomials. The type of these polynomials is `SymbolicSpray`, defined in 
-the **hspray** package (which will be possibly renamed to `ParametricSpray` 
-in the future).
+in this package, the coefficients of the Jack polynomials are 
+*fractions of polynomials* in the Jack parameter. However, in the above 
+example, one can see that the coefficients of the Jack polynomial `jp` are 
+*polynomials* in the Jack parameter `a`. This fact actually is always true for 
+the $J$-Jack polynomials (not for $C$, $P$ and $Q$). This is a consequence of 
+the Knop & Sahi combinatorial formula. But be aware that in spite of this fact, 
+the coefficients of the polynomials returned by Haskell are *fractions* of 
+polynomials, in the sense that this is the nature of the `OneParameterQSpray` 
+objects. 
+
+Note that if you use the function `jackSymbolicPol` to get a 
+`OneParameterSpray Double` object in the output, it is not guaranted that you 
+will visually get some polynomials in the Jack parameter for the coefficients, 
+because the arithmetic operations are not exact with the `Double` type
 
 
 ### Showing symmetric polynomials
@@ -89,7 +103,7 @@ And another example, with a symbolic Jack polynomial:
 import Math.Algebra.JackSymbolicPol
 import Math.Algebra.Jack.SymmetricPolynomials
 jp = jackSymbolicPol' 3 [3, 1, 1] 'J'
-putStrLn $ prettySymmetricSymbolicQSpray "a" jp
+putStrLn $ prettySymmetricOneParameterQSpray "a" jp
 -- { 4*a^2 + 10*a + 6 }*M[3,1,1] + { 8*a + 12 }*M[2,2,1]
 ```
 

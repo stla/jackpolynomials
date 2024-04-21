@@ -124,7 +124,8 @@ prettySymmetricQSpray' spray = showQSpray' showSymmetricMonomials mspray
   where
     mspray = makeMSpray spray
 
--- | Prints a symmetric symbolic spray as a linear combination of monomial symmetric polynomials
+-- | Prints a symmetric one-parameter spray as a linear combination of monomial 
+-- symmetric polynomials
 --
 -- >>> putStrLn $ prettySymmetricOneParameterQSpray "a" $ jackOneParameterPol' 3 [3, 1, 1] 'J'
 -- { 4*a^2 + 10*a + 6 }*M[3,1,1] + { 8*a + 12 }*M[2,2,1]

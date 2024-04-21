@@ -41,3 +41,7 @@
 * a new module provides some stuff to deal with symmetric polynomials, mainly 
 some functions to print them as a linear combination of the monomial symmetric 
 polynomials, and a function to check the symmetry
+
+1.2.2.0
+-------
+* slight modifications due to the upgrade of **hspray**
