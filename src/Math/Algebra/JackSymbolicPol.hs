@@ -29,8 +29,8 @@ import           Math.Algebra.Jack.Internal ( _betaRatioOfPolynomials
                                             , jackSymbolicCoeffQinv
                                             , _N, _isPartition, Partition )
 import           Math.Algebra.Hspray        ( (*^), (^**^), (^*^), (^+^)
-                                            , lone, SymbolicSpray, SymbolicQSpray
-                                            , Polynomial, outerVariable
+                                            , lone, OneParameterSpray, OneParameterQSpray
+                                            , Polynomial, soleParameter
                                             , constPoly, RatioOfPolynomials
                                             , zeroSpray, unitSpray )
 import           Number.Ratio               ( fromValue, recip )
@@ -40,7 +40,7 @@ jackSymbolicPol'
   :: Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> Char      -- ^ which Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
-  -> SymbolicQSpray
+  -> OneParameterQSpray
 jackSymbolicPol' = jackSymbolicPol
 
 -- | Jack polynomial with symbolic Jack parameter
@@ -48,7 +48,7 @@ jackSymbolicPol :: forall a. (Eq a, AlgField.C a)
   => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> Char      -- ^ which Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
-  -> SymbolicSpray a
+  -> OneParameterSpray a
 jackSymbolicPol n lambda which =
   case _isPartition lambda of
     False -> error "jackSymbolicPol: invalid integer partition"
@@ -57,12 +57,13 @@ jackSymbolicPol n lambda which =
       'C' -> jackSymbolicCoeffC lambda *^ resultJ
       'P' -> recip (fromValue (jackSymbolicCoeffPinv lambda)) *^ resultJ 
       'Q' -> recip (fromValue (jackSymbolicCoeffQinv lambda)) *^ resultJ
-      _   -> error "jackSymbolicPol: please use 'J', 'C', 'P' or 'Q' for last argument"
+      _   -> error 
+        "jackSymbolicPol: please use 'J', 'C', 'P' or 'Q' for last argument"
       where
-      alpha = outerVariable :: Polynomial a
+      alpha = soleParameter :: Polynomial a
       resultJ = jac (length x) 0 lambda lambda arr0 one
       nll = _N lambda lambda
-      x = map lone [1 .. n] :: [SymbolicSpray a]
+      x = map lone [1 .. n] :: [OneParameterSpray a]
       arr0 = listArray ((1, 1), (nll, n)) (replicate (nll * n) Nothing)
       theproduct :: Int -> RatioOfPolynomials a
       theproduct nu0 = if nu0 <= 1
@@ -71,7 +72,8 @@ jackSymbolicPol n lambda which =
               (\i -> constPoly (fromIntegral i) * alpha + constPoly one) 
               [1 .. nu0-1]
       jac :: Int -> Int -> Partition -> Partition 
-             -> Array (Int,Int) (Maybe (SymbolicSpray a)) -> RatioOfPolynomials a -> SymbolicSpray a
+             -> Array (Int,Int) (Maybe (OneParameterSpray a)) 
+             -> RatioOfPolynomials a -> OneParameterSpray a
       jac m k mu nu arr beta
         | null nu || nu!!0 == 0 || m == 0 = unitSpray
         | length nu > m && nu!!m > 0      = zeroSpray
@@ -82,7 +84,7 @@ jackSymbolicPol n lambda which =
           where
             s = go (beta *^ (jac (m-1) 0 nu nu arr one ^*^ ((x!!(m-1)) ^**^ (sum mu - sum nu))))
                 (max 1 k)
-            go :: SymbolicSpray a -> Int -> SymbolicSpray a
+            go :: OneParameterSpray a -> Int -> OneParameterSpray a
             go !ss ii
               | length nu < ii || nu!!(ii-1) == 0 = ss
               | otherwise =

@@ -2,14 +2,14 @@ module Main where
 import Data.Ratio                               ( (%) )
 import Math.Algebra.Hspray                      ( (^+^), (*^), (^*^), (^**^), Spray, lone
                                                 , evalSpray 
-                                                , evalSymbolicSpray, evalSymbolicSpray'
+                                                , evalOneParameterSpray, evalOneParameterSpray'
                                                 , Rational' )
 import qualified Math.Algebra.Hspray            as Hspray
 import Math.Algebra.Jack                        ( schur, skewSchur 
                                                 , jack', zonal' )
 import Math.Algebra.Jack.HypergeoPQ             ( hypergeoPQ )
 import Math.Algebra.Jack.SymmetricPolynomials   ( isSymmetricSpray
-                                                , prettySymmetricSymbolicQSpray )
+                                                , prettySymmetricOneParameterQSpray )
 import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol'
                                                 , schurPol, schurPol', skewSchurPol' )
 import Math.Algebra.JackSymbolicPol             ( jackSymbolicPol' )
@@ -30,13 +30,13 @@ main = defaultMain $ testGroup
   [ 
   testCase "jackSymbolicPol" $ do
     let jp = jackSymbolicPol' 3 [3, 1] 'J'
-        v  = evalSymbolicSpray' jp 2 [-3, 4, 5]
+        v  = evalOneParameterSpray' jp 2 [-3, 4, 5]
     assertEqual "" v 1488
 
   , testCase "jackSymbolicPol C" $ do
     let jp = jackSymbolicPol' 4 [3, 1] 'C'
         zp = zonalPol 4 [3, 1] :: Spray Rational'
-        p  = evalSymbolicSpray jp 2 
+        p  = evalOneParameterSpray jp 2 
     assertEqual "" zp p
 
   , testCase "jackSymbolicPol Q is symmetric" $ do
@@ -47,16 +47,16 @@ main = defaultMain $ testGroup
     let jp = jackSymbolicPol' 5 [3, 2, 1] 'P'
     assertBool "" (isSymmetricSpray jp)
 
-  , testCase "prettySymmetricSymbolicQSpray - jack J" $ do
+  , testCase "prettySymmetricOneParameterQSpray - jack J" $ do
     let jp = jackSymbolicPol' 3 [3, 1, 1] 'J'
     assertEqual "" 
-      (prettySymmetricSymbolicQSpray "a" jp) 
+      (prettySymmetricOneParameterQSpray "a" jp) 
       ("{ 4*a^2 + 10*a + 6 }*M[3,1,1] + { 8*a + 12 }*M[2,2,1]")
 
-  , testCase "prettySymmetricSymbolicQSpray - jack C" $ do
+  , testCase "prettySymmetricOneParameterQSpray - jack C" $ do
     let jp = jackSymbolicPol' 3 [3, 1, 1] 'C'
     assertEqual "" 
-      (prettySymmetricSymbolicQSpray "a" jp) 
+      (prettySymmetricOneParameterQSpray "a" jp) 
       ("{ [ 20*a^2 ] %//% [ a^2 + (5/3)*a + (2/3) ] }*M[3,1,1] + { [ 40*a^2 ] %//% [ a^3 + (8/3)*a^2 + (7/3)*a + (2/3) ] }*M[2,2,1]")
 
   , testCase "jackPol" $ do

@@ -31,7 +31,7 @@ import qualified Data.Map.Strict                             as DM
 import           Math.Algebra.Hspray                         ( 
                                                                RatioOfPolynomials
                                                              , Polynomial
-                                                             , outerVariable
+                                                             , soleParameter
                                                              , constPoly
                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
@@ -115,7 +115,7 @@ symbolicHookLengthsProducts :: forall a. AlgRing.C a
   => Partition -> (Polynomial a, Polynomial a)
 symbolicHookLengthsProducts lambda = (product lower, product upper)
   where
-    alpha = outerVariable :: Polynomial a
+    alpha = soleParameter :: Polynomial a
     (i, j) = _ij lambda
     (lambda', lambdaConj') = _convParts lambda
     upper = zipWith (fup lambdaConj' lambda') i j
@@ -138,7 +138,7 @@ jackSymbolicCoeffC :: forall a. AlgField.C a => Partition -> RatioOfPolynomials 
 jackSymbolicCoeffC lambda = 
   (constPoly (fromInteger factorialk) * alpha^k) :% jlambda
   where
-    alpha      = outerVariable :: Polynomial a
+    alpha      = soleParameter :: Polynomial a
     k          = fromIntegral (sum lambda)
     factorialk = product [2 .. k]
     jlambda    = symbolicHookLengthsProduct lambda
@@ -170,7 +170,7 @@ _betaRatioOfPolynomials kappa mu k =
   ((x * num1 * num2 * num3) :% (den1 * den2 * den3))
   where
     mukm1 = mu !! (k-1)
-    x = outerVariable :: Polynomial a
+    x = soleParameter :: Polynomial a
     t = constPoly (fromIntegral k) - constPoly (fromIntegral mukm1) * x
     u = zipWith 
         (
