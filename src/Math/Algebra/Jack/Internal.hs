@@ -195,12 +195,19 @@ _betaRatioOfPolynomials kappa mu k =
     num3 = product $ map (\p -> p + x) w
     den3 = product w
 
-(.^) :: AlgAdd.C a => Int -> a -> a
-(.^) k x = if k >= 0
-  then AlgAdd.sum (replicate k x)
-  else AlgAdd.negate $ AlgAdd.sum (replicate (-k) x)
+infixr 7 .^
+-- | scale by an integer (I do not find this operation in __numeric-prelude__)
+(.^) :: (AlgAdd.C a, Eq a) => Int -> a -> a
+k .^ x = if k >= 0
+  then powerOperation (AlgAdd.+) AlgAdd.zero x k
+  else (.^) (-k) (AlgAdd.negate x)
+  where 
+    powerOperation op =
+      let go acc _ 0 = acc
+          go acc a n = go (if even n then acc else op acc a) (op a a) (div n 2)
+      in go
 
-_fromInt :: AlgRing.C a => Int -> a
+_fromInt :: (AlgRing.C a, Eq a) => Int -> a
 _fromInt k = k .^ AlgRing.one
 
 skewSchurLRCoefficients :: Partition -> Partition -> DM.Map Partition Int

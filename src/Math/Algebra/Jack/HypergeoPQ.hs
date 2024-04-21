@@ -33,7 +33,7 @@ _allPartitions m = [] : map reverse (concat ps)
   parts n = [n] : [ x : p | x <- [1 .. n], p <- ps !! (n - x), x <= p!!0 ]
 
 -- | Inefficient hypergeometric function of a matrix argument (for testing purpose)
-hypergeoPQ :: AlgField.C a => Int -> [a] -> [a] -> [a] -> a
+hypergeoPQ :: (Eq a, AlgField.C a) => Int -> [a] -> [a] -> [a] -> a
 hypergeoPQ m a b x = sum $ map (\kappa -> coeff kappa * zonal x kappa) kappas
  where
   kappas      = filter (\kap -> length kap <= length x) (_allPartitions m)

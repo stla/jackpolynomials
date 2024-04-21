@@ -41,7 +41,7 @@ jack'
 jack' = jack
 
 -- | Evaluation of Jack polynomial
-jack :: forall a. AlgField.C a
+jack :: forall a. (Eq a, AlgField.C a)
   => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers
   -> a         -- ^ Jack parameter
@@ -110,7 +110,7 @@ zonal'
 zonal' = zonal
 
 -- | Evaluation of zonal polynomial
-zonal :: AlgField.C a
+zonal :: (Eq a, AlgField.C a)
   => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers
   -> a
@@ -176,7 +176,7 @@ skewSchur'
 skewSchur' = skewSchur
 
 -- | Evaluation of a skew Schur polynomial
-skewSchur :: forall a. AlgRing.C a 
+skewSchur :: forall a. (Eq a, AlgRing.C a) 
   => [a]       -- ^ values of the variables
   -> Partition -- ^ the outer partition of the skew partition
   -> Partition -- ^ the inner partition of the skew partition
