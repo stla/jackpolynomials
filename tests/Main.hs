@@ -3,6 +3,8 @@ import Data.Ratio                               ( (%) )
 import Math.Algebra.Hspray                      ( (^+^), (*^), (^*^), (^**^), Spray, lone
                                                 , evalSpray 
                                                 , evalOneParameterSpray, evalOneParameterSpray'
+                                                , fromOneParameterQSpray
+                                                , canCoerceToSimpleParametricSpray
                                                 , Rational' )
 import qualified Math.Algebra.Hspray            as Hspray
 import Math.Algebra.Jack                        ( schur, skewSchur 
@@ -28,10 +30,15 @@ main = defaultMain $ testGroup
   "Tests"
 
   [ 
-  testCase "jackSymbolicPol" $ do
+  testCase "jackSymbolicPol J" $ do
     let jp = jackSymbolicPol' 3 [3, 1] 'J'
         v  = evalOneParameterSpray' jp 2 [-3, 4, 5]
     assertEqual "" v 1488
+
+  , testCase "jackSymbolicPol J has polynomial coefficients only" $ do
+    let jp = jackSymbolicPol' 3 [3, 1] 'J'
+        jp' = fromOneParameterQSpray jp
+    assertBool "" (canCoerceToSimpleParametricSpray jp')
 
   , testCase "jackSymbolicPol C" $ do
     let jp = jackSymbolicPol' 4 [3, 1] 'C'
