@@ -49,7 +49,7 @@ import Math.Algebra.Hspray
 jp = jackSymbolicPol' 2 [3, 1] 'J'
 putStrLn $ prettyOneParameterQSpray "a" jp
 -- { 2*a^2 + 4*a + 2 }*x^3.y + { 4*a + 4 }*x^2.y^2 + { 2*a^2 + 4*a + 2 }*x.y^3
-putStrLn $ prettyQSpray' $ evalOneParameterSpray jp 2
+putStrLn $ prettyQSpray' $ substituteTheParameter jp 2
 -- 18*x^3.y + 12*x^2.y^2 + 18*x.y^3
 ```
 
