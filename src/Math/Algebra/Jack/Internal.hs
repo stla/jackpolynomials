@@ -28,7 +28,7 @@ import qualified Algebra.Ring                                as AlgRing
 import           Data.List.Index                             ( iconcatMap )
 import qualified Data.Map.Strict                             as DM
 import           Math.Algebra.Hspray                         ( 
-                                                               RatioOfSprays, (%:%)
+                                                               RatioOfSprays, (%:%), (%//%)
                                                              , Spray, constantSpray
                                                              , lone, unitSpray
                                                              , (*^), (^**^), (^*^), (^+^), (.^), (^-^)

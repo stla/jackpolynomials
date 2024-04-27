@@ -11,7 +11,7 @@ import Math.Algebra.Jack                        ( schur, skewSchur
                                                 , jack', zonal' )
 import Math.Algebra.Jack.HypergeoPQ             ( hypergeoPQ )
 import Math.Algebra.Jack.SymmetricPolynomials   ( isSymmetricSpray
-                                                , prettySymmetricOneParameterQSpray )
+                                                , prettySymmetricParametricQSpray )
 import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol'
                                                 , schurPol, schurPol', skewSchurPol' )
 import Math.Algebra.JackSymbolicPol             ( jackSymbolicPol' )
@@ -53,18 +53,18 @@ main = defaultMain $ testGroup
     let jp = jackSymbolicPol' 5 [3, 2, 1] 'P'
     assertBool "" (isSymmetricSpray jp)
 
-{-   , testCase "prettySymmetricOneParameterQSpray - jack J" $ do
+  , testCase "prettySymmetricParametricQSpray - jack J" $ do
     let jp = jackSymbolicPol' 3 [3, 1, 1] 'J'
     assertEqual "" 
-      (prettySymmetricOneParameterQSpray "a" jp) 
-      ("{ 4*a^2 + 10*a + 6 }*M[3,1,1] + { 8*a + 12 }*M[2,2,1]")
+      (prettySymmetricParametricQSpray ["a"] jp) 
+      ("{ [ 4*a^2 + 10*a + 6 ] }*M[3,1,1] + { [ 8*a + 12 ] }*M[2,2,1]")
 
-  , testCase "prettySymmetricOneParameterQSpray - jack C" $ do
+  , testCase "prettySymmetricParametricQSpray - jack C" $ do
     let jp = jackSymbolicPol' 3 [3, 1, 1] 'C'
     assertEqual "" 
-      (prettySymmetricOneParameterQSpray "a" jp) 
+      (prettySymmetricParametricQSpray ["a"] jp) 
       ("{ [ 20*a^2 ] %//% [ a^2 + (5/3)*a + (2/3) ] }*M[3,1,1] + { [ 40*a^2 ] %//% [ a^3 + (8/3)*a^2 + (7/3)*a + (2/3) ] }*M[2,2,1]")
- -}
+ 
   , testCase "jackPol" $ do
     let jp = jackPol' 2 [3, 1] (2 % 1) 'J'
         v  = evalSpray jp [1, 1]

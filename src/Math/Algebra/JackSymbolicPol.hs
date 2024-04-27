@@ -31,7 +31,7 @@ import           Math.Algebra.Jack.Internal ( _betaRatioOfSprays
                                             , _N, _isPartition, Partition )
 import           Math.Algebra.Hspray        ( (*^), (^**^), (^*^), (^+^), (.^)
                                             , lone, ParametricSpray, ParametricQSpray
-                                            , Spray, asRatioOfSprays
+                                            , Spray, asRatioOfSprays, constantSpray
                                             , RatioOfSprays, unitRatioOfSprays
                                             , zeroSpray, unitSpray )
 

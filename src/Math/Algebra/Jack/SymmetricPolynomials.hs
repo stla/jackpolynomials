@@ -19,7 +19,7 @@ module Math.Algebra.Jack.SymmetricPolynomials
   , prettySymmetricNumSpray
   , prettySymmetricQSpray
   , prettySymmetricQSpray'
-  , prettySymmetricOneParameterQSpray
+  , prettySymmetricParametricQSpray
   ) where
 import qualified Algebra.Ring                     as AlgRing
 import qualified Data.Foldable                    as DF
@@ -33,11 +33,11 @@ import           Math.Algebra.Hspray              (
                                                   , Spray
                                                   , QSpray
                                                   , QSpray'
-                                                  , OneParameterQSpray
+                                                  , ParametricQSpray
                                                   , fromList
                                                   , getCoefficient
                                                   , numberOfVariables
-                                                  , prettyRatioOfQPolynomials
+                                                  , prettyRatioOfQSpraysXYZ
                                                   , showNumSpray
                                                   , showQSpray
                                                   , showQSpray'
@@ -131,9 +131,9 @@ prettySymmetricQSpray' spray = showQSpray' showSymmetricMonomials mspray
 --
 -- >>> putStrLn $ prettySymmetricOneParameterQSpray "a" $ jackSymbolicPol' 3 [3, 1, 1] 'J'
 -- { 4*a^2 + 10*a + 6 }*M[3,1,1] + { 8*a + 12 }*M[2,2,1]
-prettySymmetricOneParameterQSpray :: String -> OneParameterQSpray -> String
-prettySymmetricOneParameterQSpray a spray = 
-  showSpray (prettyRatioOfQPolynomials a) ("{ ", " }") 
+prettySymmetricParametricQSpray :: [String] -> ParametricQSpray -> String
+prettySymmetricParametricQSpray letters spray = 
+  showSpray (prettyRatioOfQSpraysXYZ letters) ("{ ", " }") 
             showSymmetricMonomials mspray
   where
     mspray = makeMSpray spray
