@@ -5,6 +5,13 @@
 
 packages:
 - completed:
+    hackage: hspray-0.4.0.0@sha256:4409dd58cc4dab910ba55191804d8b76abcadf80c57a5ec7fc08031b5daec9c5,3757
+    pantry-tree:
+      sha256: 6070c558577a62a2b6c5a69d695065dd76c528f58c3cf0be57431ce37ca3ed8b
+      size: 492
+  original:
+    hackage: hspray-0.4.0.0
+- completed:
     hackage: hypergeomatrix-1.1.0.2@sha256:f9d811e544264de55a9ac0277eb4eea59facab881cd50272f4850f7447508f6d,1941
     pantry-tree:
       sha256: f098f12a91745421b180ef708e31594a2d29bf2376eded1fad234c9e0f9fcca5

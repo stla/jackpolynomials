@@ -12,12 +12,12 @@ See README for examples and references.
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Math.Algebra.JackSymbolicPol
-  (jackSymbolicPol, jackSymbolicPol')
+  ( jackSymbolicPol, jackSymbolicPol' )
   where
 import           Prelude 
   hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger, recip)
 import           Algebra.Additive           ( (+), (-), sum )
-import           Algebra.Ring               ( (*), product, one )
+import           Algebra.Ring               ( (*), product )
 import           Algebra.Field              ( recip )
 import qualified Algebra.Field              as AlgField
 import           Control.Lens               ( (.~), element )
@@ -29,7 +29,8 @@ import           Math.Algebra.Jack.Internal ( _betaRatioOfSprays
                                             , jackSymbolicCoeffQinv
                                             , _N, _isPartition, Partition )
 import           Math.Algebra.Hspray        ( (*^), (^**^), (^*^), (^+^), (.^)
-                                            , lone, ParametricSpray, ParametricQSpray
+                                            , lone, lone'
+                                            , ParametricSpray, ParametricQSpray
                                             , Spray, asRatioOfSprays
                                             , RatioOfSprays, unitRatioOfSprays
                                             , zeroSpray, unitSpray )
@@ -60,9 +61,9 @@ jackSymbolicPol n lambda which =
         "jackSymbolicPol: please use 'J', 'C', 'P' or 'Q' for last argument"
       where
       alpha = lone 1 :: Spray a
-      resultJ = jac (length x) 0 lambda lambda arr0 one
+      resultJ = jac n 0 lambda lambda arr0 unitRatioOfSprays
       nll = _N lambda lambda
-      x = map lone [1 .. n] :: [ParametricSpray a]
+      -- x = map lone [1 .. n] :: [ParametricSpray a]
       arr0 = listArray ((1, 1), (nll, n)) (replicate (nll * n) Nothing)
       theproduct :: Int -> RatioOfSprays a
       theproduct nu0 = if nu0 <= 1
@@ -74,22 +75,22 @@ jackSymbolicPol n lambda which =
              -> Array (Int,Int) (Maybe (ParametricSpray a)) 
              -> RatioOfSprays a -> ParametricSpray a
       jac m k mu nu arr beta
-        | null nu || nu!!0 == 0 || m == 0 = unitSpray
-        | length nu > m && nu!!m > 0      = zeroSpray
-        | m == 1                          = 
-            theproduct (nu!!0) *^ (x!!0 ^**^ nu!!0) 
+        | null nu || nu !! 0 == 0 || m == 0 = unitSpray
+        | length nu > m && nu !! m > 0      = zeroSpray
+        | m == 1                            = 
+            theproduct (nu !! 0) *^ (lone' 1 (nu !! 0)) 
         | k == 0 && isJust (arr ! (_N lambda nu, m)) =
                       fromJust $ arr ! (_N lambda nu, m)
         | otherwise = s
           where
             s = go (beta *^ (jac (m-1) 0 nu nu arr unitRatioOfSprays ^*^ 
-                  ((x!!(m-1)) ^**^ (sum mu - sum nu)))) (max 1 k)
+                  (lone' m (sum mu - sum nu)))) (max 1 k)
             go :: ParametricSpray a -> Int -> ParametricSpray a
             go !ss ii
               | length nu < ii || nu!!(ii-1) == 0 = ss
               | otherwise =
                 let u = nu!!(ii-1) in
-                if length nu == ii && u > 0 || u > nu!!ii
+                if length nu == ii && u > 0 || u > nu !! ii
                   then
                     let nu'   = (element (ii-1) .~ u-1) nu in
                     let gamma = _betaRatioOfSprays mu nu ii * beta in
@@ -97,15 +98,16 @@ jackSymbolicPol n lambda which =
                       then
                         go (ss ^+^ jac m ii mu nu' arr gamma) (ii + 1)
                       else
-                        if nu'!!0 == 0
+                        if nu' !! 0 == 0
                           then
-                            go (ss ^+^ (gamma *^ (x!!(m-1) ^**^ sum mu))) 
+                            go (ss ^+^ (gamma *^ (lone' m (sum mu)))) 
                                 (ii + 1)
                           else
                             let arr' = arr // [((_N lambda nu, m), Just ss)] in
-                            let jck  = jac (m-1) 0 nu' nu' arr' one in
+                            let jck = 
+                                  jac (m-1) 0 nu' nu' arr' unitRatioOfSprays in
                             let jck' = gamma *^ (jck ^*^ 
-                                        (x!!(m-1) ^**^ (sum mu - sum nu'))) in
+                                        (lone' m (sum mu - sum nu'))) in
                             go (ss ^+^ jck') (ii + 1)
                   else
                     go ss (ii + 1)
