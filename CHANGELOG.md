@@ -45,3 +45,8 @@ polynomials, and a function to check the symmetry
 1.2.2.0
 -------
 * slight modifications due to the upgrade of **hspray**
+
+1.3.0.0
+-------
+* the type of the Jack polynomials with a symbolic Jack parameter has changed 
+from `OneParameterSpray a` to `ParametricSpray a`

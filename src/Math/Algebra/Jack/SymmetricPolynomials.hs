@@ -58,8 +58,10 @@ msPolynomial :: (AlgRing.C a, Eq a)
   -> Partition -- ^ integer partition
   -> Spray a
 msPolynomial n lambda
-  | n < 0                     = error "msPolynomial: negative number of variables."
-  | not (_isPartition lambda) = error "msPolynomial: invalid partition."
+  | n < 0                     = 
+      error "msPolynomial: negative number of variables."
+  | not (_isPartition lambda) = 
+      error "msPolynomial: invalid partition."
   | llambda > n               = zeroSpray
   | otherwise                 = fromList $ zip permutations coefficients
     where
@@ -105,7 +107,8 @@ showSymmetricMonomials = map showSymmetricMonomial
 --
 -- >>> putStrLn $ prettySymmetricNumSpray $ schurPol' 3 [3, 1, 1]
 -- M[3,1,1] + M[2,2,1]
-prettySymmetricNumSpray :: (Num a, Ord a, Show a, AlgRing.C a) => Spray a -> String
+prettySymmetricNumSpray :: 
+  (Num a, Ord a, Show a, AlgRing.C a) => Spray a -> String
 prettySymmetricNumSpray spray = 
   showNumSpray showSymmetricMonomials show mspray
   where

@@ -12,7 +12,7 @@ See README for examples and references.
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Math.Algebra.JackSymbolicPol
-  (jackSymbolicPol', jackSymbolicPol)
+  (jackSymbolicPol, jackSymbolicPol')
   where
 import           Prelude 
   hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger, recip)
@@ -76,13 +76,14 @@ jackSymbolicPol n lambda which =
       jac m k mu nu arr beta
         | null nu || nu!!0 == 0 || m == 0 = unitSpray
         | length nu > m && nu!!m > 0      = zeroSpray
-        | m == 1                          = theproduct (nu!!0) *^ (x!!0 ^**^ nu!!0) 
+        | m == 1                          = 
+            theproduct (nu!!0) *^ (x!!0 ^**^ nu!!0) 
         | k == 0 && isJust (arr ! (_N lambda nu, m)) =
                       fromJust $ arr ! (_N lambda nu, m)
         | otherwise = s
           where
-            s = go (beta *^ (jac (m-1) 0 nu nu arr unitRatioOfSprays ^*^ ((x!!(m-1)) ^**^ (sum mu - sum nu))))
-                (max 1 k)
+            s = go (beta *^ (jac (m-1) 0 nu nu arr unitRatioOfSprays ^*^ 
+                  ((x!!(m-1)) ^**^ (sum mu - sum nu)))) (max 1 k)
             go :: ParametricSpray a -> Int -> ParametricSpray a
             go !ss ii
               | length nu < ii || nu!!(ii-1) == 0 = ss
@@ -98,7 +99,8 @@ jackSymbolicPol n lambda which =
                       else
                         if nu'!!0 == 0
                           then
-                            go (ss ^+^ (gamma *^ (x!!(m-1) ^**^ sum mu))) (ii + 1)
+                            go (ss ^+^ (gamma *^ (x!!(m-1) ^**^ sum mu))) 
+                                (ii + 1)
                           else
                             let arr' = arr // [((_N lambda nu, m), Just ss)] in
                             let jck  = jac (m-1) 0 nu' nu' arr' one in
