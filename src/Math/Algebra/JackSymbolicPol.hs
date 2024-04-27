@@ -18,7 +18,6 @@ import           Prelude
   hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger, recip)
 import           Algebra.Additive           ( (+), (-), sum )
 import           Algebra.Ring               ( (*), product, one )
-import           Algebra.ToInteger          ( fromIntegral ) 
 import           Algebra.Field              ( recip )
 import qualified Algebra.Field              as AlgField
 import           Control.Lens               ( (.~), element )
@@ -31,7 +30,7 @@ import           Math.Algebra.Jack.Internal ( _betaRatioOfSprays
                                             , _N, _isPartition, Partition )
 import           Math.Algebra.Hspray        ( (*^), (^**^), (^*^), (^+^), (.^)
                                             , lone, ParametricSpray, ParametricQSpray
-                                            , Spray, asRatioOfSprays, constantSpray
+                                            , Spray, asRatioOfSprays
                                             , RatioOfSprays, unitRatioOfSprays
                                             , zeroSpray, unitSpray )
 

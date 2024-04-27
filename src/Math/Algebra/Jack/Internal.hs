@@ -20,22 +20,23 @@ import           Prelude
   hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger, recip)
 import           Algebra.Additive                            ( (+), (-), sum )
 import           Algebra.Field                               ( (/), recip )
-import           Algebra.Ring                                ( (*), product, one, (^), fromInteger )
-import           Algebra.ToInteger                           ( fromIntegral )
-import qualified Algebra.Additive                            as AlgAdd
 import qualified Algebra.Field                               as AlgField
+import           Algebra.Ring                                ( (*), product, one
+                                                             , (^), fromInteger 
+                                                             )
 import qualified Algebra.Ring                                as AlgRing
+import           Algebra.ToInteger                           ( fromIntegral )
 import           Data.List.Index                             ( iconcatMap )
 import qualified Data.Map.Strict                             as DM
 import           Math.Algebra.Hspray                         ( 
-                                                               RatioOfSprays, (%:%), (%//%)
+                                                               RatioOfSprays, (%:%)
                                                              , Spray, constantSpray
                                                              , lone, unitSpray
-                                                             , (*^), (^**^), (^*^), (^+^), (.^), (^-^)
+                                                             , (*^), (^**^), (^*^)
+                                                             , (^+^), (.^), (^-^)
                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
-import           Number.Ratio                                ( T( (:%) ) )
 
 type Partition = [Int]
 
@@ -179,12 +180,12 @@ _betaRatioOfSprays kappa mu k =
         [1 .. k] kappa 
     v = zipWith 
         (
-        \s m -> t - constantSpray (fromIntegral s) ^+^ (fromIntegral m) *^ x
+        \s m -> t ^-^ constantSpray (fromIntegral s) ^+^ (fromIntegral m) *^ x
         )
         [1 .. k-1] mu 
     w = zipWith 
         (
-        \s m -> constantSpray (fromIntegral m) - t - (fromIntegral s) *^ x
+        \s m -> constantSpray (fromIntegral m) ^-^ t ^-^ (fromIntegral s) *^ x
         )
         [1 .. mukm1-1] (_dualPartition mu)
     num1 = product u

@@ -1,6 +1,5 @@
 module Main (main) where
-import Math.Algebra.Hspray                      ( Rational'
-                                                , QSpray
+import Math.Algebra.Hspray                      ( QSpray
                                                 , QSpray'
                                                 , ParametricQSpray
                                                 , substituteParameters                                              
@@ -21,9 +20,6 @@ lambdaT = [4, 2, 2, 1]
 
 alphaT :: Rational
 alphaT = 2
-
-alphaT' :: Rational'
-alphaT' = 2
 
 jP :: (Int, [Int], Rational) -> QSpray 
 jP (n, lambda, alpha) = jackPol' n lambda alpha 'J'

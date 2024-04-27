@@ -1,11 +1,12 @@
-module Main where
+module Main (main) where
 import Data.Ratio                               ( (%) )
-import Math.Algebra.Hspray                      ( (^+^), (*^), (^*^), (^**^), Spray, lone
+import Math.Algebra.Hspray                      ( (^+^), (*^), (^*^), (^**^)
+                                                , Spray, lone
                                                 , evalSpray 
-                                                , evalParametricSpray, evalParametricSpray'
+                                                , evalParametricSpray'
                                                 , substituteParameters
                                                 , canCoerceToSimpleParametricSpray
-                                                , Rational' )
+                                                )
 import qualified Math.Algebra.Hspray            as Hspray
 import Math.Algebra.Jack                        ( schur, skewSchur 
                                                 , jack', zonal' )
