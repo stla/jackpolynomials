@@ -118,9 +118,6 @@ jackCoeffQ lambda alpha = one / product upper
   where
     (_, upper) = hookLengths lambda alpha
 
-getCoefficient' :: AlgAdd.C a => Powers -> Spray a -> a
-getCoefficient' powers spray = fromMaybe AlgAdd.zero (HM.lookup powers spray)
-
 -- | addition of a term to a spray
 addTerm :: (AlgAdd.C a, Eq a) => Spray a -> Term a -> Spray a
 addTerm spray (powers, coeff) = 
@@ -129,6 +126,9 @@ addTerm spray (powers, coeff) =
       HM.delete powers spray
     else
       HM.insertWith (AlgAdd.+) powers coeff spray
+  where 
+    getCoefficient' pows s = 
+      fromMaybe AlgAdd.zero (HM.lookup pows s)
 
 (+>) :: (AlgAdd.C a, Eq a) => a -> Spray a -> Spray a
 (+>) x spray = if x == AlgAdd.zero 
@@ -200,24 +200,20 @@ _betaRatioOfSprays kappa mu k =
   where
     mukm1 = mu !! (k-1)
     x = lone 1 :: Spray a
---    t = (fromIntegral k) +> ((fromIntegral $ -mukm1) *^ x)
     u = zipWith 
         (
         \s kap -> 
           (fromIntegral $ k - s + 1) +> ((fromIntegral $ kap - mukm1) *^ x)
---          t ^-^ ((fromIntegral $ s-1) +> ((fromIntegral $ -kap) *^ x))
         )
         [1 .. k] kappa 
     v = zipWith 
         (
         \s m -> (fromIntegral $ k - s) +> ((fromIntegral $ m - mukm1) *^ x)
---          t ^-^ ((fromIntegral s) +> ((fromIntegral $ -m) *^ x))
         )
         [1 .. k-1] mu 
     w = zipWith 
         (
         \s m -> (fromIntegral $ m - k) +> ((fromIntegral $ mukm1 - s) *^ x)
---          ((fromIntegral m) +> (AlgAdd.negate t)) ^-^ (fromIntegral s) *^ x
         )
         [1 .. mukm1-1] (_dualPartition mu)
     num1 = product u
