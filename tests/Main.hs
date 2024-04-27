@@ -4,7 +4,7 @@ import Math.Algebra.Hspray                      ( (^+^), (*^), (^*^), (^**^)
                                                 , Spray, lone
                                                 , evalSpray 
                                                 , evalParametricSpray'
-                                                , substituteTheParameter
+                                                , substituteParameters
                                                 , canCoerceToSimpleParametricSpray
                                                 )
 import qualified Math.Algebra.Hspray            as Hspray
@@ -43,7 +43,7 @@ main = defaultMain $ testGroup
   , testCase "jackSymbolicPol C" $ do
     let jp = jackSymbolicPol' 4 [3, 1] 'C'
         zp = zonalPol 4 [3, 1] :: Spray Rational
-        p  = substituteTheParameter jp [2] 
+        p  = substituteParameters jp [2] 
     assertEqual "" zp p
 
   , testCase "jackSymbolicPol Q is symmetric" $ do
