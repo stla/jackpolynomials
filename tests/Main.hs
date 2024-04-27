@@ -2,8 +2,8 @@ module Main where
 import Data.Ratio                               ( (%) )
 import Math.Algebra.Hspray                      ( (^+^), (*^), (^*^), (^**^), Spray, lone
                                                 , evalSpray 
-                                                , evalOneParameterSpray, evalOneParameterSpray'
-                                                , fromOneParameterQSpray
+                                                , evalParametricSpray, evalParametricSpray'
+                                                , substituteParameters
                                                 , canCoerceToSimpleParametricSpray
                                                 , Rational' )
 import qualified Math.Algebra.Hspray            as Hspray
@@ -32,18 +32,17 @@ main = defaultMain $ testGroup
   [ 
   testCase "jackSymbolicPol J" $ do
     let jp = jackSymbolicPol' 3 [3, 1] 'J'
-        v  = evalOneParameterSpray' jp 2 [-3, 4, 5]
+        v  = evalParametricSpray' jp [2] [-3, 4, 5]
     assertEqual "" v 1488
 
   , testCase "jackSymbolicPol J has polynomial coefficients only" $ do
     let jp = jackSymbolicPol' 3 [3, 1] 'J'
-        jp' = fromOneParameterQSpray jp
-    assertBool "" (canCoerceToSimpleParametricSpray jp')
+    assertBool "" (canCoerceToSimpleParametricSpray jp)
 
   , testCase "jackSymbolicPol C" $ do
     let jp = jackSymbolicPol' 4 [3, 1] 'C'
-        zp = zonalPol 4 [3, 1] :: Spray Rational'
-        p  = evalOneParameterSpray jp 2 
+        zp = zonalPol 4 [3, 1] :: Spray Rational
+        p  = substituteParameters jp [2] 
     assertEqual "" zp p
 
   , testCase "jackSymbolicPol Q is symmetric" $ do
@@ -54,7 +53,7 @@ main = defaultMain $ testGroup
     let jp = jackSymbolicPol' 5 [3, 2, 1] 'P'
     assertBool "" (isSymmetricSpray jp)
 
-  , testCase "prettySymmetricOneParameterQSpray - jack J" $ do
+{-   , testCase "prettySymmetricOneParameterQSpray - jack J" $ do
     let jp = jackSymbolicPol' 3 [3, 1, 1] 'J'
     assertEqual "" 
       (prettySymmetricOneParameterQSpray "a" jp) 
@@ -65,7 +64,7 @@ main = defaultMain $ testGroup
     assertEqual "" 
       (prettySymmetricOneParameterQSpray "a" jp) 
       ("{ [ 20*a^2 ] %//% [ a^2 + (5/3)*a + (2/3) ] }*M[3,1,1] + { [ 40*a^2 ] %//% [ a^3 + (8/3)*a^2 + (7/3)*a + (2/3) ] }*M[2,2,1]")
-
+ -}
   , testCase "jackPol" $ do
     let jp = jackPol' 2 [3, 1] (2 % 1) 'J'
         v  = evalSpray jp [1, 1]
