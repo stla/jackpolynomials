@@ -1,6 +1,5 @@
-module Main (main) where
+module Main ( main ) where
 import Math.Algebra.Hspray                      ( QSpray
-                                                , QSpray'
                                                 , ParametricQSpray
                                                 , substituteParameters                                              
                                                 )

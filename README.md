@@ -38,7 +38,7 @@ evalSpray jp [1, 1]
 The first argument, here `2`, is the number of variables of the polynomial.
 
 
-### Symbolic (or parametric) Jack polynomial
+### Symbolic Jack parameter
 
 As of version `1.2.0.0`, it is possible to get Jack polynomials with a 
 symbolic Jack parameter:
@@ -47,21 +47,18 @@ symbolic Jack parameter:
 import Math.Algebra.JackSymbolicPol
 import Math.Algebra.Hspray
 jp = jackSymbolicPol' 2 [3, 1] 'J'
-putStrLn $ prettyOneParameterQSpray "a" jp
--- { 2*a^2 + 4*a + 2 }*x^3.y + { 4*a + 4 }*x^2.y^2 + { 2*a^2 + 4*a + 2 }*x.y^3
+putStrLn $ prettyParametricQSpray jp
+-- { [ 2*a^2 + 4*a + 2 ] }*X^3.Y + { [ 4*a + 4 ] }*X^2.Y^2 + { [ 2*a^2 + 4*a + 2 ] }*X.Y^3
 putStrLn $ prettyQSpray' $ substituteTheParameter jp 2
 -- 18*x^3.y + 12*x^2.y^2 + 18*x.y^3
 ```
 
-This is possible thanks to an upgrade of the **hspray** package which now 
-provides the type `OneParameterSpray` (and more). An object of this type 
-represents a multivariate polynomial whose coefficients depend on a parameter 
-which is symbolically treated. The type of the Jack polynomial returned by 
-the `jackSymbolicPol` function is `OneParameterSpray a`, and it is 
-`OneParameterQSpray` for the `jackSymbolicPol'` function. The type 
-`OneParameterQSpray` is an alias of `OneParameterSpray Rational'` where 
-`Rational'` is a type defined in the **numeric-prelude** package, 
-analogous to the well known `Rational` type.
+This is possible thanks to the **hspray** package which provides the type 
+`ParametricSpray`. An object of this type represents a multivariate polynomial 
+whose coefficients depend on some parameters which are symbolically treated. 
+The type of the Jack polynomial returned by the `jackSymbolicPol` function is 
+`ParametricSpray a`, and it is `ParametricQSpray` for the `jackSymbolicPol'` 
+function. The type `ParametricQSpray` is an alias of `ParametricSpray Rational`.
 
 From the definition of Jack polynomials, as well as from their implementation 
 in this package, the coefficients of the Jack polynomials are 
@@ -71,11 +68,11 @@ example, one can see that the coefficients of the Jack polynomial `jp` are
 the $J$-Jack polynomials (not for $C$, $P$ and $Q$). This is a consequence of 
 the Knop & Sahi combinatorial formula. But be aware that in spite of this fact, 
 the coefficients of the polynomials returned by Haskell are *fractions* of 
-polynomials, in the sense that this is the nature of the `OneParameterQSpray` 
+polynomials, in the sense that this is the nature of the `ParametricSpray` 
 objects. 
 
 Note that if you use the function `jackSymbolicPol` to get a 
-`OneParameterSpray Double` object in the output, it is not guaranted that you 
+`ParametricSpray Double` object in the output, it is not guaranted that you 
 will visually get some polynomials in the Jack parameter for the coefficients, 
 because the arithmetic operations are not exact with the `Double` type
 
@@ -103,8 +100,8 @@ And another example, with a symbolic Jack polynomial:
 import Math.Algebra.JackSymbolicPol
 import Math.Algebra.Jack.SymmetricPolynomials
 jp = jackSymbolicPol' 3 [3, 1, 1] 'J'
-putStrLn $ prettySymmetricOneParameterQSpray "a" jp
--- { 4*a^2 + 10*a + 6 }*M[3,1,1] + { 8*a + 12 }*M[2,2,1]
+putStrLn $ prettySymmetricParametricQSpray ["a"] jp
+-- { [ 4*a^2 + 10*a + 6 ] }*M[3,1,1] + { [ 8*a + 12 ] }*M[2,2,1]
 ```
 
 Of course you can use these functions for other polynomials, but carefully: 

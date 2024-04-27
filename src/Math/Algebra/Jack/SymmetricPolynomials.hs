@@ -129,7 +129,7 @@ prettySymmetricQSpray' spray = showQSpray' showSymmetricMonomials mspray
 -- | Prints a symmetric parametric spray as a linear combination of monomial 
 -- symmetric polynomials
 --
--- >>> putStrLn $ prettySymmetricParametricQSpray "a" $ jackSymbolicPol' 3 [3, 1, 1] 'J'
+-- >>> putStrLn $ prettySymmetricParametricQSpray ["a"] $ jackSymbolicPol' 3 [3, 1, 1] 'J'
 -- { [ 4*a^2 + 10*a + 6 ] }*M[3,1,1] + { [ 8*a + 12 ] }*M[2,2,1]
 prettySymmetricParametricQSpray :: [String] -> ParametricQSpray -> String
 prettySymmetricParametricQSpray letters spray = 
