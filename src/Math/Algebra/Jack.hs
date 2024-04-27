@@ -67,23 +67,24 @@ jack x@(x0:_) lambda alpha which =
       theproduct nu0 = if nu0 <= 1
         then one
         else product $ map (\i -> one + i .^ alpha) [1 .. nu0-1]
-      jac :: Int -> Int -> [Int] -> [Int] -> Array (Int,Int) (Maybe a) -> a -> a
+      jac :: 
+        Int -> Int -> [Int] -> [Int] -> Array (Int,Int) (Maybe a) -> a -> a
       jac m k mu nu arr beta
         | null nu || nu!!0 == 0 || m == 0 = one
         | length nu > m && nu!!m > 0      = zero
-        | m == 1 = x0 ^ (fromIntegral $ nu!!0) * theproduct (nu!!0)
+        | m == 1 = x0 ^ (fromIntegral $ nu !! 0) * theproduct (nu !! 0)
         | k == 0 && isJust (arr ! (_N lambda nu, m)) =
                       fromJust $ arr ! (_N lambda nu, m)
         | otherwise = s
           where
-            s = go (jac (m-1) 0 nu nu arr one * beta * x!!(m-1) ^ (fromIntegral $ sum mu - sum nu))
-                (max 1 k)
+            s = go (jac (m-1) 0 nu nu arr one * beta * 
+                    x!!(m-1) ^ (fromIntegral $ sum mu - sum nu)) (max 1 k)
             go :: a -> Int -> a
             go !ss ii
               | length nu < ii || nu!!(ii-1) == 0 = ss
               | otherwise =
                 let u = nu!!(ii-1) in
-                if length nu == ii && u > 0 || u > nu!!ii
+                if length nu == ii && u > 0 || u > nu !! ii
                   then
                     let nu' = (element (ii-1) .~ u-1) nu in
                     let gamma = beta * _betaratio mu nu ii alpha in
@@ -93,12 +94,15 @@ jack x@(x0:_) lambda alpha which =
                       else
                         if nu' !! 0 == 0
                           then
-                            go (ss + gamma * x!!(m-1)^ (fromIntegral $ sum mu)) (ii + 1)
+                            go (ss + gamma * x!!(m-1)^ (fromIntegral $ sum mu)) 
+                                (ii + 1)
                           else
                             let arr' = arr // [((_N lambda nu, m), Just ss)] in
                             let jck  = jac (m-1) 0 nu' nu' arr' one in
-                            let jck' = jck * gamma *
-                                        x!!(m-1) ^ (fromIntegral $ sum mu - sum nu') in
+                            let jck' = 
+                                  jck * gamma *
+                                  x!!(m-1) ^ (fromIntegral $ sum mu - sum nu')
+                            in
                             go (ss + jck') (ii + 1)
                   else
                     go ss (ii + 1)
@@ -140,10 +144,11 @@ schur x@(x0:_) lambda =
         arr0 = listArray ((1, 1), (nll, n)) (replicate (nll * n) Nothing)
         sch :: Int -> Int -> [Int] -> Array (Int,Int) (Maybe a) -> a
         sch m k nu arr
-          | null nu || nu!!0 == 0 || m == 0 = one
-          | length nu > m && nu!!m > 0 = zero
-          | m == 1 = product (replicate (nu!!0) x0)
-          | isJust (arr ! (_N lambda nu, m)) = fromJust $ arr ! (_N lambda nu, m)
+          | null nu || nu !! 0 == 0 || m == 0 = one
+          | length nu > m && nu !! m > 0 = zero
+          | m == 1 = product (replicate (nu !! 0) x0)
+          | isJust (arr ! (_N lambda nu, m)) = 
+              fromJust $ arr ! (_N lambda nu, m)
           | otherwise = s
             where
               s = go (sch (m-1) 1 nu arr) k
@@ -163,8 +168,10 @@ schur x@(x0:_) lambda =
                             then
                               go (ss + x!!(m-1)) (ii + 1)
                             else
-                              let arr' = arr // [((_N lambda nu, m), Just ss)] in
-                              go (ss + x!!(m-1) * sch (m-1) 1 nu' arr') (ii + 1)
+                              let arr' = 
+                                    arr // [((_N lambda nu, m), Just ss)] in
+                              go (ss + x!!(m-1) * sch (m-1) 1 nu' arr') 
+                                  (ii + 1)
                     else
                       go ss (ii + 1)
 

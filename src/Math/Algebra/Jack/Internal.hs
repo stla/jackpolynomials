@@ -83,11 +83,13 @@ hookLengths lambda alpha = (lower, upper)
     upper = zipWith (fup lambdaConj' lambda') i j
       where
         fup x y ii jj =
-          x!!(jj-1) - fromIntegral ii + alpha * (y!!(ii-1) - fromIntegral (jj - 1))
+          x!!(jj-1) - fromIntegral ii + 
+            alpha * (y!!(ii-1) - fromIntegral (jj - 1))
     lower = zipWith (flow lambdaConj' lambda') i j
       where
         flow x y ii jj =
-          x!!(jj-1) - (fromIntegral $ ii - 1) + alpha * (y!!(ii-1) - fromIntegral jj)
+          x!!(jj-1) - (fromIntegral $ ii - 1) + 
+            alpha * (y!!(ii-1) - fromIntegral jj)
 
 _productHookLengths :: AlgRing.C a => Partition -> a -> a
 _productHookLengths lambda alpha = product lower * product upper
@@ -134,7 +136,8 @@ symbolicHookLengthsProduct lambda = fst hlproducts ^*^ snd hlproducts
   where
     hlproducts = symbolicHookLengthsProducts lambda
 
-jackSymbolicCoeffC :: forall a. (Eq a, AlgField.C a) => Partition -> RatioOfSprays a
+jackSymbolicCoeffC :: 
+  forall a. (Eq a, AlgField.C a) => Partition -> RatioOfSprays a
 jackSymbolicCoeffC lambda = 
   ((fromIntegral factorialk) *^ alpha^**^k) %:% jlambda
   where
@@ -144,10 +147,14 @@ jackSymbolicCoeffC lambda =
     jlambda    = symbolicHookLengthsProduct lambda
 
 jackSymbolicCoeffPinv :: (Eq a, AlgField.C a) => Partition -> Spray a
-jackSymbolicCoeffPinv lambda = fst $ symbolicHookLengthsProducts lambda
+jackSymbolicCoeffPinv lambda = lower 
+  where 
+    (lower, _) = symbolicHookLengthsProducts lambda
 
 jackSymbolicCoeffQinv :: (Eq a, AlgField.C a) => Partition -> Spray a 
-jackSymbolicCoeffQinv lambda = snd $ symbolicHookLengthsProducts lambda
+jackSymbolicCoeffQinv lambda = upper 
+  where 
+    (_, upper) = symbolicHookLengthsProducts lambda
 
 _betaratio :: AlgField.C a => Partition -> Partition -> Int -> a -> a
 _betaratio kappa mu k alpha = alpha * prod1 * prod2 * prod3
@@ -175,7 +182,7 @@ _betaRatioOfSprays kappa mu k =
     u = zipWith 
         (
         \s kap -> 
-          t - constantSpray (fromIntegral $ s-1) ^+^ (fromIntegral kap) *^ x
+          t ^-^ constantSpray (fromIntegral $ s-1) ^+^ (fromIntegral kap) *^ x
         )
         [1 .. k] kappa 
     v = zipWith 

@@ -18,10 +18,8 @@ module Math.Algebra.JackPol
 import           Prelude 
   hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger)
 import           Algebra.Additive           ( (+), (-), sum )
-import           Algebra.Module             ( (*>) )
-import           Algebra.Ring               ( (*), product, one, fromInteger )
-import qualified Algebra.Module             as AlgMod
 import qualified Algebra.Field              as AlgField
+import           Algebra.Ring               ( (*), product, one, fromInteger )
 import qualified Algebra.Ring               as AlgRing
 import           Control.Lens               ( (.~), element )
 import           Data.Array                 ( Array, (!), (//), listArray )
@@ -57,9 +55,9 @@ jackPol n lambda alpha which =
     False -> error "jackPol: invalid integer partition"
     True -> case which of 
       'J' -> resultJ
-      'C' -> jackCoeffC lambda alpha *> resultJ
-      'P' -> jackCoeffP lambda alpha *> resultJ
-      'Q' -> jackCoeffQ lambda alpha *> resultJ
+      'C' -> jackCoeffC lambda alpha *^ resultJ
+      'P' -> jackCoeffP lambda alpha *^ resultJ
+      'Q' -> jackCoeffQ lambda alpha *^ resultJ
       _   -> error "jackPol: please use 'J', 'C', 'P' or 'Q' for last argument"
       where
       resultJ = jac (length x) 0 lambda lambda arr0 one
@@ -70,23 +68,25 @@ jackPol n lambda alpha which =
       theproduct nu0 = if nu0 <= 1
         then one
         else product $ map (\i -> i .^ alpha + one) [1 .. nu0-1]
-      jac :: Int -> Int -> Partition -> Partition -> Array (Int,Int) (Maybe (Spray a)) -> a -> Spray a
+      jac :: Int -> Int -> Partition -> Partition 
+              -> Array (Int,Int) (Maybe (Spray a)) -> a -> Spray a
       jac m k mu nu arr beta
         | null nu || nu!!0 == 0 || m == 0 = unitSpray
-        | length nu > m && nu!!m > 0      = zeroSpray
-        | m == 1                          = theproduct (nu!!0) *^ (x!!0 ^**^ nu!!0) 
+        | length nu > m && nu !! m > 0    = zeroSpray
+        | m == 1                          = 
+            theproduct (nu!!0) *^ (x!!0 ^**^ nu!!0) 
         | k == 0 && isJust (arr ! (_N lambda nu, m)) =
                       fromJust $ arr ! (_N lambda nu, m)
         | otherwise = s
           where
-            s = go (beta *^ (jac (m-1) 0 nu nu arr one ^*^ ((x!!(m-1)) ^**^ (sum mu - sum nu))))
-                (max 1 k)
+            s = go (beta *^ (jac (m-1) 0 nu nu arr one ^*^ 
+                      ((x!!(m-1)) ^**^ (sum mu - sum nu)))) (max 1 k)
             go :: Spray a -> Int -> Spray a
             go !ss ii
               | length nu < ii || nu!!(ii-1) == 0 = ss
               | otherwise =
                 let u = nu!!(ii-1) in
-                if length nu == ii && u > 0 || u > nu!!ii
+                if length nu == ii && u > 0 || u > nu !! ii
                   then
                     let nu'   = (element (ii-1) .~ u-1) nu in
                     let gamma = beta * _betaratio mu nu ii alpha in
@@ -96,7 +96,8 @@ jackPol n lambda alpha which =
                       else
                         if nu'!!0 == 0
                           then
-                            go (ss ^+^ (gamma *^ (x!!(m-1) ^**^ sum mu))) (ii + 1)
+                            go (ss ^+^ (gamma *^ (x!!(m-1) ^**^ sum mu))) 
+                                (ii + 1)
                           else
                             let arr' = arr // [((_N lambda nu, m), Just ss)] in
                             let jck  = jac (m-1) 0 nu' nu' arr' one in
@@ -141,12 +142,14 @@ schurPol n lambda =
         x = map lone [1 .. n] :: [Spray a]
         nll = _N lambda lambda
         arr0 = listArray ((1, 1), (nll, n)) (replicate (nll * n) Nothing)
-        sch :: Int -> Int -> [Int] -> Array (Int,Int) (Maybe (Spray a)) -> Spray a
+        sch :: 
+          Int -> Int -> [Int] -> Array (Int,Int) (Maybe (Spray a)) -> Spray a
         sch m k nu arr
           | null nu || nu!!0 == 0 || m == 0 = unitSpray
           | length nu > m && nu!!m > 0 = zeroSpray
           | m == 1 = x!!0 ^**^ nu!!0
-          | isJust (arr ! (_N lambda nu, m)) = fromJust $ arr ! (_N lambda nu, m)
+          | isJust (arr ! (_N lambda nu, m)) = 
+              fromJust $ arr ! (_N lambda nu, m)
           | otherwise = s
             where
               s = go (sch (m-1) 1 nu arr) k
@@ -160,14 +163,17 @@ schurPol n lambda =
                       let nu' = (element (ii-1) .~ u-1) nu in
                       if u > 1
                         then
-                          go (ss ^+^ ((x!!(m-1)) ^*^ sch m ii nu' arr)) (ii + 1)
+                          go (ss ^+^ ((x!!(m-1)) ^*^ sch m ii nu' arr)) 
+                              (ii + 1)
                         else
-                          if nu'!!0 == 0
+                          if nu' !! 0 == 0
                             then
                               go (ss ^+^ (x!!(m-1))) (ii + 1)
                             else
-                              let arr' = arr // [((_N lambda nu, m), Just ss)] in
-                              go (ss ^+^ ((x!!(m-1)) ^*^ sch (m-1) 1 nu' arr')) (ii + 1)
+                              let arr' = 
+                                    arr // [((_N lambda nu, m), Just ss)] in
+                              go (ss ^+^ ((x!!(m-1)) ^*^ sch (m-1) 1 nu' arr')) 
+                                  (ii + 1)
                     else
                       go ss (ii + 1)
 
@@ -192,7 +198,4 @@ skewSchurPol n lambda mu =
   where
     lrCoefficients = skewSchurLRCoefficients lambda mu
     f :: Spray a -> Partition -> Int -> Spray a
-    f spray nu k = spray ^+^ (_fromInt' k) AlgMod.*> (schurPol n nu)
-    _fromInt' :: Int -> a
-    _fromInt' = _fromInt
-
+    f spray nu k = spray ^+^ (_fromInt k) *^ (schurPol n nu)
