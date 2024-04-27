@@ -28,7 +28,7 @@ import           Math.Algebra.Jack.Internal ( _betaRatioOfSprays
                                             , jackSymbolicCoeffPinv
                                             , jackSymbolicCoeffQinv
                                             , _N, _isPartition, Partition )
-import           Math.Algebra.Hspray        ( (*^), (^**^), (^*^), (^+^), (.^)
+import           Math.Algebra.Hspray        ( (*^), (^*^), (^+^), (.^)
                                             , lone, lone'
                                             , ParametricSpray, ParametricQSpray
                                             , Spray, asRatioOfSprays

@@ -19,6 +19,7 @@ module Math.Algebra.Jack.Internal
 import           Prelude 
   hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger, recip)
 import           Algebra.Additive                            ( (+), (-), sum )
+import qualified Algebra.Additive                            as AlgAdd
 import           Algebra.Field                               ( (/), recip )
 import qualified Algebra.Field                               as AlgField
 import           Algebra.Ring                                ( (*), product, one
@@ -26,14 +27,18 @@ import           Algebra.Ring                                ( (*), product, one
                                                              )
 import qualified Algebra.Ring                                as AlgRing
 import           Algebra.ToInteger                           ( fromIntegral )
+import qualified Data.HashMap.Strict                         as HM
 import           Data.List.Index                             ( iconcatMap )
+import           Data.Maybe                                  ( fromMaybe )
 import qualified Data.Map.Strict                             as DM
+import qualified Data.Sequence                               as S
 import           Math.Algebra.Hspray                         ( 
                                                                RatioOfSprays, (%:%)
                                                              , Spray, constantSpray
                                                              , lone, unitSpray
                                                              , (*^), (^**^), (^*^)
                                                              , (^+^), (.^), (^-^)
+                                                             , Powers (..), Term
                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
@@ -113,6 +118,23 @@ jackCoeffQ lambda alpha = one / product upper
   where
     (_, upper) = hookLengths lambda alpha
 
+getCoefficient' :: AlgAdd.C a => Powers -> Spray a -> a
+getCoefficient' powers spray = fromMaybe AlgAdd.zero (HM.lookup powers spray)
+
+-- | addition of a term to a spray
+addTerm :: (AlgAdd.C a, Eq a) => Spray a -> Term a -> Spray a
+addTerm spray (powers, coeff) = 
+  if getCoefficient' powers spray AlgAdd.+ coeff == AlgAdd.zero
+    then 
+      HM.delete powers spray
+    else
+      HM.insertWith (AlgAdd.+) powers coeff spray
+
+(+>) :: (AlgAdd.C a, Eq a) => a -> Spray a -> Spray a
+(+>) x spray = if x == AlgAdd.zero 
+  then spray 
+  else addTerm spray (Powers S.empty 0, x)
+
 symbolicHookLengthsProducts :: forall a. (Eq a, AlgRing.C a) 
   => Partition -> (Spray a, Spray a)
 symbolicHookLengthsProducts lambda = (product lower, product upper)
@@ -123,18 +145,18 @@ symbolicHookLengthsProducts lambda = (product lower, product upper)
     upper = zipWith (fup lambdaConj' lambda') i j
       where
         fup x y ii jj =
-          constantSpray (x!!(jj-1) - fromIntegral ii) 
-            ^+^ (y!!(ii-1) - fromIntegral (jj - 1)) *^ alpha
+          (x!!(jj-1) - fromIntegral ii) +> 
+            ((y!!(ii-1) - fromIntegral (jj - 1)) *^ alpha)
     lower = zipWith (flow lambdaConj' lambda') i j
       where
         flow x y ii jj =
-          constantSpray (x!!(jj-1) - fromIntegral (ii - 1)) 
-            ^+^ (y!!(ii-1) - fromIntegral jj) *^ alpha
+          (x!!(jj-1) - fromIntegral (ii - 1)) +> 
+            ((y!!(ii-1) - fromIntegral jj) *^ alpha)
 
 symbolicHookLengthsProduct :: (Eq a, AlgRing.C a) => Partition -> Spray a
-symbolicHookLengthsProduct lambda = fst hlproducts ^*^ snd hlproducts
+symbolicHookLengthsProduct lambda = lower ^*^ upper
   where
-    hlproducts = symbolicHookLengthsProducts lambda
+    (lower, upper) = symbolicHookLengthsProducts lambda
 
 jackSymbolicCoeffC :: 
   forall a. (Eq a, AlgField.C a) => Partition -> RatioOfSprays a
@@ -174,25 +196,25 @@ _betaratio kappa mu k alpha = alpha * prod1 * prod2 * prod3
 _betaRatioOfSprays :: forall a. (Eq a, AlgField.C a)
   => Partition -> Partition -> Int -> RatioOfSprays a
 _betaRatioOfSprays kappa mu k = 
-  ((x * num1 * num2 * num3) %:% (den1 * den2 * den3))
+  ((x ^*^ num1 ^*^ num2 ^*^ num3) %:% (den1 ^*^ den2 ^*^ den3))
   where
     mukm1 = mu !! (k-1)
     x = lone 1 :: Spray a
-    t = constantSpray (fromIntegral k) ^-^ (fromIntegral mukm1) *^ x
+    t = (fromIntegral k) +> ((fromIntegral $ -mukm1) *^ x)
     u = zipWith 
         (
         \s kap -> 
-          t ^-^ constantSpray (fromIntegral $ s-1) ^+^ (fromIntegral kap) *^ x
+          t ^-^ ((fromIntegral $ s-1) +> ((fromIntegral $ -kap) *^ x))
         )
         [1 .. k] kappa 
     v = zipWith 
         (
-        \s m -> t ^-^ constantSpray (fromIntegral s) ^+^ (fromIntegral m) *^ x
+        \s m -> t ^-^ ((fromIntegral s) +> ((fromIntegral $ -m) *^ x))
         )
         [1 .. k-1] mu 
     w = zipWith 
         (
-        \s m -> constantSpray (fromIntegral m) ^-^ t ^-^ (fromIntegral s) *^ x
+        \s m -> ((fromIntegral m) +> (AlgAdd.negate t)) ^-^ (fromIntegral s) *^ x
         )
         [1 .. mukm1-1] (_dualPartition mu)
     num1 = product u

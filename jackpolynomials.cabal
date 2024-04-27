@@ -30,6 +30,7 @@ library
                      , numeric-prelude >= 0.4.4 && < 0.5
                      , combinat >= 0.2.10 && < 0.3
                      , containers >= 0.6.4.1 && < 0.8
+                     , unordered-containers >= 0.2.17.0 && < 0.3
   other-extensions:    ScopedTypeVariables
                      , BangPatterns
   default-language:    Haskell2010
