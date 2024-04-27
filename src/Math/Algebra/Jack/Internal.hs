@@ -34,7 +34,7 @@ import qualified Data.Map.Strict                             as DM
 import qualified Data.Sequence                               as S
 import           Math.Algebra.Hspray                         ( 
                                                                RatioOfSprays, (%:%)
-                                                             , Spray, constantSpray
+                                                             , Spray
                                                              , lone, unitSpray
                                                              , (*^), (^**^), (^*^)
                                                              , (^+^), (.^), (^-^)
@@ -200,21 +200,24 @@ _betaRatioOfSprays kappa mu k =
   where
     mukm1 = mu !! (k-1)
     x = lone 1 :: Spray a
-    t = (fromIntegral k) +> ((fromIntegral $ -mukm1) *^ x)
+--    t = (fromIntegral k) +> ((fromIntegral $ -mukm1) *^ x)
     u = zipWith 
         (
         \s kap -> 
-          t ^-^ ((fromIntegral $ s-1) +> ((fromIntegral $ -kap) *^ x))
+          (fromIntegral $ k - s + 1) +> ((fromIntegral $ kap - mukm1) *^ x)
+--          t ^-^ ((fromIntegral $ s-1) +> ((fromIntegral $ -kap) *^ x))
         )
         [1 .. k] kappa 
     v = zipWith 
         (
-        \s m -> t ^-^ ((fromIntegral s) +> ((fromIntegral $ -m) *^ x))
+        \s m -> (fromIntegral $ k - s) +> ((fromIntegral $ m - mukm1) *^ x)
+--          t ^-^ ((fromIntegral s) +> ((fromIntegral $ -m) *^ x))
         )
         [1 .. k-1] mu 
     w = zipWith 
         (
-        \s m -> ((fromIntegral m) +> (AlgAdd.negate t)) ^-^ (fromIntegral s) *^ x
+        \s m -> (fromIntegral $ m - k) +> ((fromIntegral $ mukm1 - s) *^ x)
+--          ((fromIntegral m) +> (AlgAdd.negate t)) ^-^ (fromIntegral s) *^ x
         )
         [1 .. mukm1-1] (_dualPartition mu)
     num1 = product u
