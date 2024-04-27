@@ -27,12 +27,12 @@ import           Control.Lens               ( (.~), element )
 import           Data.Array                 ( Array, (!), (//), listArray )
 import qualified Data.Map.Strict            as DM
 import           Data.Maybe                 ( fromJust, isJust )
-import           Math.Algebra.Jack.Internal ( (.^), _betaratio, jackCoeffC
+import           Math.Algebra.Jack.Internal ( _betaratio, jackCoeffC
                                             , _N, _isPartition, Partition
                                             , jackCoeffP, jackCoeffQ
                                             , skewSchurLRCoefficients
                                             , isSkewPartition, _fromInt )
-import           Math.Algebra.Hspray        ( (*^), (^**^), (^*^), (^+^)
+import           Math.Algebra.Hspray        ( (*^), (^**^), (^*^), (^+^), (.^)
                                             , lone, Spray
                                             , zeroSpray, unitSpray )
 

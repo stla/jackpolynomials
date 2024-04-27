@@ -1,9 +1,9 @@
 module Main (main) where
-import Math.Algebra.Hspray                      ( evalSymbolicSpray
-                                                , Rational'
+import Math.Algebra.Hspray                      ( Rational'
                                                 , QSpray
                                                 , QSpray'
-                                                , SymbolicQSpray
+                                                , ParametricQSpray
+                                                , substituteParameters                                              
                                                 )
 import Math.Algebra.JackPol                     ( jackPol'
                                                 )
@@ -28,11 +28,11 @@ alphaT' = 2
 jP :: (Int, [Int], Rational) -> QSpray 
 jP (n, lambda, alpha) = jackPol' n lambda alpha 'J'
 
-jSP :: (Int, [Int]) -> SymbolicQSpray
+jSP :: (Int, [Int]) -> ParametricQSpray
 jSP (n, lambda) = jackSymbolicPol' n lambda 'J'
 
-jSPeval :: (Int, [Int], Rational') -> QSpray'
-jSPeval (n, lambda, alpha') = evalSymbolicSpray (jackSymbolicPol' n lambda 'J') alpha' 
+jSPeval :: (Int, [Int], Rational) -> QSpray
+jSPeval (n, lambda, alpha) = substituteParameters (jackSymbolicPol' n lambda 'J') [alpha]
 
 main :: IO ()
 main = 
@@ -43,6 +43,6 @@ main =
       , bench "jackSymbolicPol"                    $ 
           whnf jSP (nT, lambdaT)
       , bench "jackSymbolicPol evaluated at alpha" $ 
-          whnf jSPeval (nT, lambdaT, alphaT')
+          whnf jSPeval (nT, lambdaT, alphaT)
       ]
     ]

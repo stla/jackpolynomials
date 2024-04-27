@@ -25,11 +25,12 @@ import           Control.Lens               ( (.~), element )
 import           Data.Array                 ( Array, (!), (//), listArray )
 import           Data.Maybe                 ( fromJust, isJust )
 import qualified Data.Map.Strict            as DM
-import           Math.Algebra.Jack.Internal ( (.^), _N, jackCoeffC
+import           Math.Algebra.Jack.Internal ( _N, jackCoeffC
                                             , jackCoeffP, jackCoeffQ
                                             , _betaratio, _isPartition
                                             , Partition, skewSchurLRCoefficients
                                             , isSkewPartition, _fromInt )
+import Math.Algebra.Hspray                  ( (.^) )
 
 -- | Evaluation of Jack polynomial
 jack' 

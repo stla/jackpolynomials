@@ -9,10 +9,9 @@ module Math.Algebra.Jack.Internal
   , jackSymbolicCoeffPinv
   , jackSymbolicCoeffQinv
   , _betaratio
-  , _betaRatioOfPolynomials
+  , _betaRatioOfSprays
   , _isPartition
   , _N
-  , (.^)
   , _fromInt
   , skewSchurLRCoefficients
   , isSkewPartition)
@@ -29,10 +28,10 @@ import qualified Algebra.Ring                                as AlgRing
 import           Data.List.Index                             ( iconcatMap )
 import qualified Data.Map.Strict                             as DM
 import           Math.Algebra.Hspray                         ( 
-                                                               RatioOfPolynomials
-                                                             , Polynomial
-                                                             , soleParameter
-                                                             , constPoly
+                                                               RatioOfSprays, (%:%)
+                                                             , Spray, constantSpray
+                                                             , lone, unitSpray
+                                                             , (*^), (^**^), (^*^), (^+^), (.^), (^-^)
                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
@@ -111,42 +110,42 @@ jackCoeffQ lambda alpha = one / product upper
   where
     (_, upper) = hookLengths lambda alpha
 
-symbolicHookLengthsProducts :: forall a. AlgRing.C a 
-  => Partition -> (Polynomial a, Polynomial a)
+symbolicHookLengthsProducts :: forall a. (Eq a, AlgRing.C a) 
+  => Partition -> (Spray a, Spray a)
 symbolicHookLengthsProducts lambda = (product lower, product upper)
   where
-    alpha = soleParameter :: Polynomial a
+    alpha = lone 1 :: Spray a
     (i, j) = _ij lambda
     (lambda', lambdaConj') = _convParts lambda
     upper = zipWith (fup lambdaConj' lambda') i j
       where
         fup x y ii jj =
-          constPoly (x!!(jj-1) - fromIntegral ii) 
-            + constPoly (y!!(ii-1) - fromIntegral (jj - 1)) * alpha
+          constantSpray (x!!(jj-1) - fromIntegral ii) 
+            ^+^ (y!!(ii-1) - fromIntegral (jj - 1)) *^ alpha
     lower = zipWith (flow lambdaConj' lambda') i j
       where
         flow x y ii jj =
-          constPoly (x!!(jj-1) - fromIntegral (ii - 1)) 
-            + constPoly (y!!(ii-1) - fromIntegral jj) * alpha
+          constantSpray (x!!(jj-1) - fromIntegral (ii - 1)) 
+            ^+^ (y!!(ii-1) - fromIntegral jj) *^ alpha
 
-symbolicHookLengthsProduct :: AlgRing.C a => Partition -> Polynomial a
-symbolicHookLengthsProduct lambda = fst hlproducts * snd hlproducts
+symbolicHookLengthsProduct :: (Eq a, AlgRing.C a) => Partition -> Spray a
+symbolicHookLengthsProduct lambda = fst hlproducts ^*^ snd hlproducts
   where
     hlproducts = symbolicHookLengthsProducts lambda
 
-jackSymbolicCoeffC :: forall a. AlgField.C a => Partition -> RatioOfPolynomials a
+jackSymbolicCoeffC :: forall a. (Eq a, AlgField.C a) => Partition -> RatioOfSprays a
 jackSymbolicCoeffC lambda = 
-  (constPoly (fromInteger factorialk) * alpha^k) :% jlambda
+  ((fromIntegral factorialk) *^ alpha^**^k) %:% jlambda
   where
-    alpha      = soleParameter :: Polynomial a
-    k          = fromIntegral (sum lambda)
+    alpha      = lone 1 :: Spray a
+    k          = sum lambda
     factorialk = product [2 .. k]
     jlambda    = symbolicHookLengthsProduct lambda
 
-jackSymbolicCoeffPinv :: AlgField.C a => Partition -> Polynomial a
+jackSymbolicCoeffPinv :: (Eq a, AlgField.C a) => Partition -> Spray a
 jackSymbolicCoeffPinv lambda = fst $ symbolicHookLengthsProducts lambda
 
-jackSymbolicCoeffQinv :: AlgField.C a => Partition -> Polynomial a 
+jackSymbolicCoeffQinv :: (Eq a, AlgField.C a) => Partition -> Spray a 
 jackSymbolicCoeffQinv lambda = snd $ symbolicHookLengthsProducts lambda
 
 _betaratio :: AlgField.C a => Partition -> Partition -> Int -> a -> a
@@ -164,48 +163,36 @@ _betaratio kappa mu k alpha = alpha * prod1 * prod2 * prod3
     prod2 = product $ map (\x -> (x + alpha) / x) v
     prod3 = product $ map (\x -> (x + alpha) / x) w
 
-_betaRatioOfPolynomials :: forall a. AlgField.C a
-  => Partition -> Partition -> Int -> RatioOfPolynomials a
-_betaRatioOfPolynomials kappa mu k = 
-  ((x * num1 * num2 * num3) :% (den1 * den2 * den3))
+_betaRatioOfSprays :: forall a. (Eq a, AlgField.C a)
+  => Partition -> Partition -> Int -> RatioOfSprays a
+_betaRatioOfSprays kappa mu k = 
+  ((x * num1 * num2 * num3) %:% (den1 * den2 * den3))
   where
     mukm1 = mu !! (k-1)
-    x = soleParameter :: Polynomial a
-    t = constPoly (fromIntegral k) - constPoly (fromIntegral mukm1) * x
+    x = lone 1 :: Spray a
+    t = constantSpray (fromIntegral k) ^-^ (fromIntegral mukm1) *^ x
     u = zipWith 
         (
         \s kap -> 
-          t - constPoly (fromIntegral $ s-1) + constPoly (fromIntegral kap) * x
+          t - constantSpray (fromIntegral $ s-1) ^+^ (fromIntegral kap) *^ x
         )
         [1 .. k] kappa 
     v = zipWith 
         (
-        \s m -> t - constPoly (fromIntegral s) + constPoly (fromIntegral m) * x
+        \s m -> t - constantSpray (fromIntegral s) ^+^ (fromIntegral m) *^ x
         )
         [1 .. k-1] mu 
     w = zipWith 
         (
-        \s m -> constPoly (fromIntegral m) - t - constPoly (fromIntegral s) * x
+        \s m -> constantSpray (fromIntegral m) - t - (fromIntegral s) *^ x
         )
         [1 .. mukm1-1] (_dualPartition mu)
     num1 = product u
-    den1 = product $ map (\p -> p + x - constPoly one) u
-    num2 = product $ map (\p -> p + x) v
+    den1 = product $ map (\p -> p ^+^ x ^-^ unitSpray) u
+    num2 = product $ map (\p -> p ^+^ x) v
     den2 = product v
-    num3 = product $ map (\p -> p + x) w
+    num3 = product $ map (\p -> p ^+^ x) w
     den3 = product w
-
-infixr 7 .^
--- | scale by an integer (I do not find this operation in __numeric-prelude__)
-(.^) :: (AlgAdd.C a, Eq a) => Int -> a -> a
-k .^ x = if k >= 0
-  then powerOperation (AlgAdd.+) AlgAdd.zero x k
-  else (.^) (-k) (AlgAdd.negate x)
-  where 
-    powerOperation op =
-      let go acc _ 0 = acc
-          go acc a n = go (if even n then acc else op acc a) (op a a) (div n 2)
-      in go
 
 _fromInt :: (AlgRing.C a, Eq a) => Int -> a
 _fromInt k = k .^ AlgRing.one
