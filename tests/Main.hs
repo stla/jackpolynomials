@@ -7,6 +7,7 @@ import Math.Algebra.Hspray                      ( (^+^), (*^), (^*^), (^**^)
                                                 , substituteParameters
                                                 , canCoerceToSimpleParametricSpray
                                                 , collinearSprays
+                                                , isHomogeneousSpray
                                                 )
 import qualified Math.Algebra.Hspray            as Hspray
 import Math.Algebra.Jack                        ( schur, skewSchur 
@@ -73,7 +74,11 @@ main = defaultMain $ testGroup
         v  = evalSpray jp [1, 1]
     assertEqual "" v 48
 
-  , testCase "jackPol is symmetric (Gröbner)" $ do
+  , testCase "jackPol is homogeneous" $ do
+    let jp = jackPol' 4 [3, 1] (2 % 1) 'J'
+    assertEqual "" (isHomogeneousSpray jp) (True, Just 4)
+
+  , testCase "jackPol is symmetric (Groebner)" $ do
     let jp = jackPol' 3 [3, 2, 1] (2 % 1) 'J'
     assertBool "" (Hspray.isSymmetricSpray jp)
 
@@ -83,7 +88,7 @@ main = defaultMain $ testGroup
   , testCase "Jack polynomial is eigenpolynomial for Laplace-Beltrami" $ do
     let
       alpha = 3 % 1
-      jp = jackPol' 3 [2, 1] alpha 'J'
+      jp = jackPol' 4 [2, 2] alpha 'J'
       jp' = laplaceBeltrami alpha jp
     assertBool "" (collinearSprays jp jp')
 
@@ -96,7 +101,7 @@ main = defaultMain $ testGroup
         v = evalSpray (sp1 ^+^ 3 *^ sp2 ^+^ 2 *^ sp3 ^+^ 3 *^ sp4 ^+^ sp5) [2, 2, 2, 2]
     assertEqual "" v 4096
 
-  , testCase "schurPol is symmetric (Gröbner)" $ do
+  , testCase "schurPol is symmetric (Groebner)" $ do
     let sp = schurPol' 3 [3, 2, 1] 
     assertBool "" (Hspray.isSymmetricSpray sp)
 
@@ -121,7 +126,7 @@ main = defaultMain $ testGroup
             ^+^  x ^*^ z^**^2  ^+^  y^**^2 ^*^ z  ^+^  y ^*^ z^**^2
     assertEqual "" skp p 
 
-  , testCase "skewSchurPol is symmetric (Gröbner)" $ do
+  , testCase "skewSchurPol is symmetric (Groebner)" $ do
     let skp = skewSchurPol' 3 [3, 2, 1] [1, 1]
     assertBool "" (Hspray.isSymmetricSpray skp)
 

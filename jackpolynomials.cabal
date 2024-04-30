@@ -26,7 +26,7 @@ library
                      , ilist >= 0.4.0.1 && < 0.4.1
                      , array >= 0.5.4.0 && < 0.6
                      , lens >= 5.0.1 && < 5.3
-                     , hspray >= 0.4.0.0 && < 0.5.0.0
+                     , hspray >= 0.4.1.0 && < 0.5.0.0
                      , numeric-prelude >= 0.4.4 && < 0.5
                      , combinat >= 0.2.10 && < 0.3
                      , containers >= 0.6.4.1 && < 0.8
@@ -52,7 +52,7 @@ test-suite unit-tests
                       , tasty >= 1.4 && < 1.6
                       , tasty-hunit >= 0.10 && < 0.11
                       , jackpolynomials
-                      , hspray >= 0.4.0.0 && < 0.5.0.0
+                      , hspray >= 0.4.1.0 && < 0.5.0.0
                       , hypergeomatrix >= 1.1.0.2 && < 2
   Default-Language:     Haskell2010
   ghc-options:         -Wall
@@ -71,7 +71,7 @@ benchmark benchmarks
   Build-Depends:        base >= 4.7 && < 5
                       , miniterion >= 0.1.1.0 && < 0.2
                       , jackpolynomials
-                      , hspray >= 0.4.0.0 && < 0.5.0.0
+                      , hspray >= 0.4.1.0 && < 0.5.0.0
   Default-Language:     Haskell2010
   ghc-options:         -Wall
                        -Wcompat
