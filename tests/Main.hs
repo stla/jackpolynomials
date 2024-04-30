@@ -6,7 +6,6 @@ import Math.Algebra.Hspray                      ( (^+^), (*^), (^*^), (^**^)
                                                 , evalParametricSpray'
                                                 , substituteParameters
                                                 , canCoerceToSimpleParametricSpray
-                                                , collinearSprays
                                                 , isHomogeneousSpray
                                                 )
 import qualified Math.Algebra.Hspray            as Hspray
@@ -106,14 +105,24 @@ main = defaultMain $ testGroup
   , testCase "Jack polynomial is eigenpolynomial for Calogero-Sutherland" $ do
     let
       eigenval :: Int -> Rational -> [Int] -> Rational
-      eigenval n a mu = 
-        sum $ map (\i -> let r = toRational (mu !! (i-1)) in a/2 * r*r + ((toRational $ n + 1 - 2*i) / 2) * r) [1 .. length mu]
+      eigenval n a mu = sum $ map 
+        (\i -> let r = toRational (mu !! (i-1)) in 
+                a/2 * r*r + ((toRational $ n + 1 - 2*i) / 2) * r) 
+        [1 .. length mu]
       alpha = 3 % 4
       lambda = [3, 1]
       ev = eigenval 4 alpha lambda
       jp = jackPol' 4 lambda alpha 'J'
       jp' = calogeroSutherland alpha jp
     assertEqual "" jp' (ev *^ jp)
+
+  , testCase "Jack P-polynomial for alpha=1 is Schur polynomial" $ do
+    let 
+      n = 5
+      lambda = [5, 4, 3, 2, 1]
+      jp = jackPol' n lambda 1 'P'
+      sp = schurPol' n lambda
+    assertEqual "" jp sp
 
   , testCase "schurPol" $ do
     let sp1 = schurPol 4 [4]
