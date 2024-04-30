@@ -20,6 +20,8 @@ import Math.Algebra.Jack.SymmetricPolynomials   ( isSymmetricSpray
 import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol'
                                                 , schurPol, schurPol', skewSchurPol' )
 import Math.Algebra.JackSymbolicPol             ( jackSymbolicPol' )
+import Math.Combinat.Classes                    ( HasDuality (..) )
+import Math.Combinat.Partitions.Integer         ( toPartition, fromPartition )
 import Math.HypergeoMatrix                      ( hypergeomat )
 import Test.Tasty                               ( defaultMain
                                                 , testGroup
@@ -89,9 +91,17 @@ main = defaultMain $ testGroup
   , testCase "Jack polynomial is eigenpolynomial for Laplace-Beltrami" $ do
     let
       alpha = 3 % 1
-      jp = jackPol' 4 [2, 2] alpha 'J'
+      lambda = [2, 2]
+      b :: [Int] -> Rational
+      b mu = toRational $ sum $ zipWith (*) mu [0 .. ]
+      eigenValue :: Int -> Rational -> [Int] -> Rational
+      eigenValue n a mu = 
+        let mu' = fromPartition $ dual (toPartition mu) in
+          a * b mu' - b mu + toRational ((n-1) * sum mu)
+      ev = eigenValue 4 alpha lambda
+      jp = jackPol' 4 lambda alpha 'J'
       jp' = laplaceBeltrami alpha jp
-    assertBool "" (collinearSprays jp jp')
+    assertEqual "" jp' (ev *^ jp)
 
   , testCase "Jack polynomial is eigenpolynomial for Calogero-Sutherland" $ do
     let

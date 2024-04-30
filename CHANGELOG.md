@@ -8,7 +8,7 @@
 
 1.1.0.0
 -------
-* replaced the 'mpolynomials' dependency with 'hspray'
+* replaced the **mpolynomials** dependency with **hspray**
 * unit tests
 
 1.1.0.1
@@ -50,3 +50,11 @@ polynomials, and a function to check the symmetry
 -------
 * the type of the Jack polynomials with a symbolic Jack parameter has changed 
 from `OneParameterSpray a` to `ParametricSpray a`
+
+1.4.0.0
+-------
+* upgraded the **hspray** dependency; an error has been fixed in this new 
+version 
+
+* added the Laplace-Beltrami operator and the Calogero-Sutherland operator; 
+the Jack polynomials are eigenpolynomials of these operators
