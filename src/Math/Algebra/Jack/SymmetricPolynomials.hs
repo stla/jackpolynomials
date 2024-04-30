@@ -183,8 +183,9 @@ calogeroSutherland alpha spray =
     n = numberOfVariables spray
     range = [1 .. n]
     dsprays = map (`derivative` spray) range
-    op1 i = lone' i 2 ^*^ derivative i (dsprays !! (i-1))
-    spray1 = AlgAdd.sum (map op1 range)
+    op0 p i = lone i ^*^ derivative i p 
+    op1 p i = op0 (op0 p i) i
+    spray1 = AlgAdd.sum (map (op1 spray) range)
     spray2 = _numerator $ AlgAdd.sum 
       [let (xi, xj, dxi, dxj) = 
             (lone i, lone j, dsprays !! (i-1), dsprays !! (j-1)) in 

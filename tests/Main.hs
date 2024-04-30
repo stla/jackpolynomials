@@ -94,21 +94,26 @@ main = defaultMain $ testGroup
       lambda = [2, 2]
       b :: [Int] -> Rational
       b mu = toRational $ sum $ zipWith (*) mu [0 .. ]
-      eigenValue :: Int -> Rational -> [Int] -> Rational
-      eigenValue n a mu = 
+      eigenvalue :: Int -> Rational -> [Int] -> Rational
+      eigenvalue n a mu = 
         let mu' = fromPartition $ dual (toPartition mu) in
           a * b mu' - b mu + toRational ((n-1) * sum mu)
-      ev = eigenValue 4 alpha lambda
+      ev = eigenvalue 4 alpha lambda
       jp = jackPol' 4 lambda alpha 'J'
       jp' = laplaceBeltrami alpha jp
     assertEqual "" jp' (ev *^ jp)
 
   , testCase "Jack polynomial is eigenpolynomial for Calogero-Sutherland" $ do
     let
+      eigenval :: Int -> Rational -> [Int] -> Rational
+      eigenval n a mu = 
+        sum $ map (\i -> let r = toRational (mu !! (i-1)) in a/2 * r*r + ((toRational $ n + 1 - 2*i) / 2) * r) [1 .. length mu]
       alpha = 3 % 4
-      jp = jackPol' 4 [3, 1] alpha 'J'
+      lambda = [3, 1]
+      ev = eigenval 4 alpha lambda
+      jp = jackPol' 4 lambda alpha 'J'
       jp' = calogeroSutherland alpha jp
-    assertBool "" (collinearSprays jp jp')
+    assertEqual "" jp' (ev *^ jp)
 
   , testCase "schurPol" $ do
     let sp1 = schurPol 4 [4]
