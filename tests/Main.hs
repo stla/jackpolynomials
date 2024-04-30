@@ -15,7 +15,8 @@ import Math.Algebra.Jack                        ( schur, skewSchur
 import Math.Algebra.Jack.HypergeoPQ             ( hypergeoPQ )
 import Math.Algebra.Jack.SymmetricPolynomials   ( isSymmetricSpray
                                                 , prettySymmetricParametricQSpray
-                                                , laplaceBeltrami )
+                                                , laplaceBeltrami
+                                                , calogeroSutherland )
 import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol'
                                                 , schurPol, schurPol', skewSchurPol' )
 import Math.Algebra.JackSymbolicPol             ( jackSymbolicPol' )
@@ -90,6 +91,13 @@ main = defaultMain $ testGroup
       alpha = 3 % 1
       jp = jackPol' 4 [2, 2] alpha 'J'
       jp' = laplaceBeltrami alpha jp
+    assertBool "" (collinearSprays jp jp')
+
+  , testCase "Jack polynomial is eigenpolynomial for Calogero-Sutherland" $ do
+    let
+      alpha = 3 % 4
+      jp = jackPol' 4 [3, 1] alpha 'J'
+      jp' = calogeroSutherland alpha jp
     assertBool "" (collinearSprays jp jp')
 
   , testCase "schurPol" $ do

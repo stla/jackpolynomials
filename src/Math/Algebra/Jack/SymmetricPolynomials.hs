@@ -21,6 +21,7 @@ module Math.Algebra.Jack.SymmetricPolynomials
   , prettySymmetricQSpray'
   , prettySymmetricParametricQSpray
   , laplaceBeltrami
+  , calogeroSutherland
   ) where
 import qualified Algebra.Additive                 as AlgAdd
 import qualified Algebra.Field                    as AlgField
@@ -35,6 +36,7 @@ import           Math.Algebra.Hspray              (
                                                   , (^-^)
                                                   , (*^)
                                                   , (^*^)
+                                                  , (/^)
                                                   , Spray
                                                   , QSpray
                                                   , QSpray'
@@ -168,3 +170,23 @@ laplaceBeltrami alpha spray =
     spray2 = _numerator $ AlgAdd.sum 
               [(lone' i 2 ^*^ dsprays !! (i-1)) %//% (lone i ^-^ lone j)
                 | i <- range, j <- range, i /= j]
+
+-- Calogero-Sutherland operator on the space of homogeneous symmetric polynomials;
+-- neither symmetry and homogeneity are checked
+calogeroSutherland :: (Eq a, AlgField.C a) => a -> Spray a -> Spray a
+calogeroSutherland alpha spray = 
+  if isConstant spray 
+    then zeroSpray
+    else halfSpray $ alpha *^ spray1 ^+^ spray2
+  where
+    halfSpray p = p /^ AlgRing.fromInteger 2
+    n = numberOfVariables spray
+    range = [1 .. n]
+    dsprays = map (`derivative` spray) range
+    op1 i = lone' i 2 ^*^ derivative i (dsprays !! (i-1))
+    spray1 = AlgAdd.sum (map op1 range)
+    spray2 = _numerator $ AlgAdd.sum 
+      [let (xi, xj, dxi, dxj) = 
+            (lone i, lone j, dsprays !! (i-1), dsprays !! (j-1)) in 
+          (xi ^+^ xj) ^*^ (xi ^*^ dxi ^-^ xj ^*^ dxj) %//% (xi ^-^ xj)
+       | i <- range, j <- [i+1 .. n]]

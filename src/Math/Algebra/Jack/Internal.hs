@@ -1,7 +1,7 @@
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Math.Algebra.Jack.Internal
-  (Partition
+  ( Partition
   , jackCoeffP
   , jackCoeffQ
   , jackCoeffC
@@ -14,12 +14,11 @@ module Math.Algebra.Jack.Internal
   , _N
   , _fromInt
   , skewSchurLRCoefficients
-  , isSkewPartition)
+  , isSkewPartition )
   where
 import           Prelude 
   hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger, recip)
 import           Algebra.Additive                            ( (+), (-), sum )
-import qualified Algebra.Additive                            as AlgAdd
 import           Algebra.Field                               ( (/), recip )
 import qualified Algebra.Field                               as AlgField
 import           Algebra.Ring                                ( (*), product, one
@@ -27,18 +26,14 @@ import           Algebra.Ring                                ( (*), product, one
                                                              )
 import qualified Algebra.Ring                                as AlgRing
 import           Algebra.ToInteger                           ( fromIntegral )
-import qualified Data.HashMap.Strict                         as HM
 import           Data.List.Index                             ( iconcatMap )
-import           Data.Maybe                                  ( fromMaybe )
 import qualified Data.Map.Strict                             as DM
-import qualified Data.Sequence                               as S
 import           Math.Algebra.Hspray                         ( 
                                                                RatioOfSprays, (%:%)
-                                                             , Spray
+                                                             , Spray, (+>)
                                                              , lone, unitSpray
                                                              , (*^), (^**^), (^*^)
                                                              , (^+^), (.^), (^-^)
-                                                             , Powers (..), Term
                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
@@ -117,23 +112,6 @@ jackCoeffQ :: AlgField.C a => Partition -> a -> a
 jackCoeffQ lambda alpha = one / product upper
   where
     (_, upper) = hookLengths lambda alpha
-
--- | addition of a term to a spray
-addTerm :: (AlgAdd.C a, Eq a) => Spray a -> Term a -> Spray a
-addTerm spray (powers, coeff) = 
-  if getCoefficient' powers spray AlgAdd.+ coeff == AlgAdd.zero
-    then 
-      HM.delete powers spray
-    else
-      HM.insertWith (AlgAdd.+) powers coeff spray
-  where 
-    getCoefficient' pows s = 
-      fromMaybe AlgAdd.zero (HM.lookup pows s)
-
-(+>) :: (AlgAdd.C a, Eq a) => a -> Spray a -> Spray a
-(+>) x spray = if x == AlgAdd.zero 
-  then spray 
-  else addTerm spray (Powers S.empty 0, x)
 
 symbolicHookLengthsProducts :: forall a. (Eq a, AlgRing.C a) 
   => Partition -> (Spray a, Spray a)
