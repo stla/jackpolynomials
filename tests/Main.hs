@@ -6,13 +6,15 @@ import Math.Algebra.Hspray                      ( (^+^), (*^), (^*^), (^**^)
                                                 , evalParametricSpray'
                                                 , substituteParameters
                                                 , canCoerceToSimpleParametricSpray
+                                                , collinearSprays
                                                 )
 import qualified Math.Algebra.Hspray            as Hspray
 import Math.Algebra.Jack                        ( schur, skewSchur 
                                                 , jack', zonal' )
 import Math.Algebra.Jack.HypergeoPQ             ( hypergeoPQ )
 import Math.Algebra.Jack.SymmetricPolynomials   ( isSymmetricSpray
-                                                , prettySymmetricParametricQSpray )
+                                                , prettySymmetricParametricQSpray
+                                                , laplaceBeltrami )
 import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol'
                                                 , schurPol, schurPol', skewSchurPol' )
 import Math.Algebra.JackSymbolicPol             ( jackSymbolicPol' )
@@ -77,6 +79,13 @@ main = defaultMain $ testGroup
 
   , testCase "jack" $ do
     assertEqual "" (jack' [1, 1] [3, 1] (2 % 1) 'J') 48
+
+  , testCase "Jack polynomial is eigenpolynomial for Laplace-Beltrami" $ do
+    let
+      alpha = 3 % 1
+      jp = jackPol' 3 [2, 1] alpha 'J'
+      jp' = laplaceBeltrami alpha jp
+    assertBool "" (collinearSprays jp jp')
 
   , testCase "schurPol" $ do
     let sp1 = schurPol 4 [4]
