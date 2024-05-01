@@ -30,7 +30,7 @@ import           Math.Algebra.Jack.Internal ( _betaratio, jackCoeffC
                                             , jackCoeffP, jackCoeffQ
                                             , skewSchurLRCoefficients
                                             , isSkewPartition, _fromInt )
-import           Math.Algebra.Hspray        ( (*^), (^**^), (^*^), (^+^), (.^)
+import           Math.Algebra.Hspray        ( FunctionLike (..), (.^)
                                             , lone, Spray
                                             , zeroSpray, unitSpray )
 

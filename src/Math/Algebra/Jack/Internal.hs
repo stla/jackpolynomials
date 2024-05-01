@@ -30,10 +30,9 @@ import           Data.List.Index                             ( iconcatMap )
 import qualified Data.Map.Strict                             as DM
 import           Math.Algebra.Hspray                         ( 
                                                                RatioOfSprays, (%:%)
-                                                             , Spray, (+>)
+                                                             , Spray, (.^)
                                                              , lone, unitSpray
-                                                             , (*^), (^**^), (^*^)
-                                                             , (^+^), (.^), (^-^)
+                                                             , FunctionLike (..)
                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )

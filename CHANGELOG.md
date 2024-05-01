@@ -53,8 +53,8 @@ from `OneParameterSpray a` to `ParametricSpray a`
 
 1.4.0.0
 -------
-* upgraded the **hspray** dependency; an error has been fixed in this new 
-version 
+* upgraded the **hspray** dependency (an error has been fixed in this new 
+version)
 
 * added the Laplace-Beltrami operator and the Calogero-Sutherland operator; 
 the Jack polynomials are eigenpolynomials of these operators

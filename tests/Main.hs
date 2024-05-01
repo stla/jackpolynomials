@@ -1,6 +1,6 @@
 module Main ( main ) where
 import Data.Ratio                               ( (%) )
-import Math.Algebra.Hspray                      ( (^+^), (*^), (^*^), (^**^)
+import Math.Algebra.Hspray                      ( FunctionLike (..)
                                                 , Spray, lone
                                                 , evalSpray 
                                                 , evalParametricSpray'

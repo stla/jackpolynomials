@@ -32,10 +32,7 @@ import           Data.Map.Strict                  ( Map )
 import qualified Data.Map.Strict                  as DM
 import           Data.Sequence                    ( Seq )
 import           Math.Algebra.Hspray              (
-                                                    (^+^)
-                                                  , (^-^)
-                                                  , (*^)
-                                                  , (^*^)
+                                                    FunctionLike (..)
                                                   , (/^)
                                                   , Spray
                                                   , QSpray
@@ -45,7 +42,6 @@ import           Math.Algebra.Hspray              (
                                                   , lone'
                                                   , fromList
                                                   , getCoefficient
-                                                  , HasVariables (..)
                                                   , isConstant
                                                   , (%//%)
                                                   , RatioOfSprays (..)
