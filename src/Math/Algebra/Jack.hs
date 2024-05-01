@@ -12,7 +12,7 @@ See README for examples and references.
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Math.Algebra.Jack
-  (jack', zonal', schur', skewSchur', jack, zonal, schur, skewSchur)
+  (Partition, jack', zonal', schur', skewSchur', jack, zonal, schur, skewSchur)
   where
 import           Prelude 
   hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger)
@@ -66,7 +66,7 @@ jack x@(x0:_) lambda alpha which =
       theproduct :: Int -> a
       theproduct nu0 = if nu0 <= 1
         then one
-        else product $ map (\i -> one + i .^ alpha) [1 .. nu0-1]
+        else product [one + i .^ alpha | i <- [1 .. nu0-1]]
       jac :: 
         Int -> Int -> [Int] -> [Int] -> Array (Int,Int) (Maybe a) -> a -> a
       jac m k mu nu arr beta

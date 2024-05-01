@@ -67,7 +67,7 @@ jackPol n lambda alpha which =
       theproduct :: Int -> a
       theproduct nu0 = if nu0 <= 1
         then one
-        else product $ map (\i -> i .^ alpha + one) [1 .. nu0-1]
+        else product [i .^ alpha + one | i <- [1 .. nu0-1]]
       jac :: Int -> Int -> Partition -> Partition 
               -> Array (Int,Int) (Maybe (Spray a)) -> a -> Spray a
       jac m k mu nu arr beta
@@ -146,8 +146,8 @@ schurPol n lambda =
           Int -> Int -> [Int] -> Array (Int,Int) (Maybe (Spray a)) -> Spray a
         sch m k nu arr
           | null nu || nu!!0 == 0 || m == 0 = unitSpray
-          | length nu > m && nu!!m > 0 = zeroSpray
-          | m == 1 = x!!0 ^**^ nu!!0
+          | length nu > m && nu !! m > 0 = zeroSpray
+          | m == 1 = x !! 0 ^**^ nu !! 0
           | isJust (arr ! (_N lambda nu, m)) = 
               fromJust $ arr ! (_N lambda nu, m)
           | otherwise = s

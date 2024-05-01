@@ -68,9 +68,8 @@ jackSymbolicPol n lambda which =
       theproduct :: Int -> RatioOfSprays a
       theproduct nu0 = if nu0 <= 1
         then unitRatioOfSprays
-        else asRatioOfSprays $ product $ map 
-              (\i -> i .^ alpha ^+^ unitSpray) 
-              [1 .. nu0-1]
+        else asRatioOfSprays $ product
+              [i .^ alpha ^+^ unitSpray | i <- [1 .. nu0-1]]
       jac :: Int -> Int -> Partition -> Partition 
              -> Array (Int,Int) (Maybe (ParametricSpray a)) 
              -> RatioOfSprays a -> ParametricSpray a
