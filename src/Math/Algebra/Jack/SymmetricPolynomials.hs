@@ -28,6 +28,7 @@ module Math.Algebra.Jack.SymmetricPolynomials
   , e_lambda_mu_term
   , partitionSequences
   , psCombination
+  , hallInnerProduct
   ) where
 import qualified Algebra.Additive                 as AlgAdd
 import qualified Algebra.Field                    as AlgField
@@ -39,6 +40,7 @@ import           Data.List.Extra                  ( unsnoc )
 import           Data.Map.Strict                  ( Map )
 import qualified Data.Map.Strict                  as DM
 import           Data.Maybe                       ( fromJust )
+import           Data.Map.Merge.Strict            ( merge, dropMissing, zipWithMatched )
 import           Data.Ratio                       ( (%) )
 import           Data.Sequence                    ( 
                                                     Seq
@@ -287,7 +289,7 @@ zlambda lambda alpha =
 
 psCombination :: QSpray -> Map Partition Rational
 psCombination spray = 
-  DM.filter (/= 0) DM.unionsWith (+) (map (DM.fromList . f) assocs)
+  DM.filter (/= 0) (DM.unionsWith (+) (map (DM.fromList . f) assocs))
   where
     constantTerm = getConstantTerm spray
     assocs = msCombination' (spray <+ (- constantTerm))
@@ -296,21 +298,11 @@ psCombination spray =
       where
         psCombo = mspInPSbasis lambda
 
-
--- PSPexpression <- function(qspray) {
---   constantTerm <- getConstantTerm(qspray)
---   mspdecomposition <- MSPcombination(qspray - constantTerm)
---   pspexpression <- qzero()
---   for(t in mspdecomposition) {
---     xs     <- MSPinPSbasis(t[["lambda"]])
---     coeffs <- t[["coeff"]] * c_bigq(lapply(xs, `[[`, "coeff"))
---     powers <- lapply(xs, function(x) {
---       lambda <- x[["lambda"]]
---       vapply(seq_len(lambda[1L]), function(j) {
---         sum(lambda == j)
---       }, integer(1L))
---     })
---     p             <- qsprayMaker(powers, coeffs)
---     pspexpression <- pspexpression + p
---   }
---   out <- pspexpression + constantTerm
+hallInnerProduct :: QSpray -> QSpray -> Rational -> Rational
+hallInnerProduct spray1 spray2 alpha = 
+  sum $ DM.elems
+    (merge dropMissing dropMissing (zipWithMatched f) psCombo1 psCombo2)
+  where
+    psCombo1 = psCombination spray1
+    psCombo2 = psCombination spray2
+    f lambda coeff1 coeff2 = coeff1 * coeff2 * zlambda lambda alpha
