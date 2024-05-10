@@ -29,9 +29,10 @@ import qualified Algebra.Field                    as AlgField
 import qualified Algebra.Ring                     as AlgRing
 import qualified Data.Foldable                    as DF
 import qualified Data.HashMap.Strict              as HM
-import           Data.List                        ( foldl1', nub )
+import           Data.List                        ( foldl1', nub, uncons )
 import           Data.Map.Strict                  ( Map )
 import qualified Data.Map.Strict                  as DM
+import           Data.Maybe                       ( fromJust )
 import           Data.Sequence                    ( 
                                                     Seq
                                                   , (|>) 
@@ -63,8 +64,9 @@ import           Math.Algebra.Hspray              (
                                                   , productOfSprays
                                                   )
 import           Math.Algebra.Jack.Internal       ( Partition , _isPartition )
-import           Math.Combinat.Permutations       ( permuteMultiset )
+import           Math.Combinat.Compositions       ( compositions1 )
 import           Math.Combinat.Partitions.Integer ( fromPartition, mkPartition )
+import           Math.Combinat.Permutations       ( permuteMultiset )
 
 -- | Monomial symmetric polynomials
 --
@@ -220,3 +222,46 @@ psPolynomial n lambda
       f j k = (Powers expts j, AlgRing.one)
         where
           expts = S.replicate (j-1) 0 |> k
+
+E_lambda_mu :: Partition -> Partition -> Rational
+E_lambda_mu lambda mu 
+  | ellLambda < ellMu = 0
+  | otherwise = if even (ellLambda - ellMu) then sum xs else - sum xs
+  where
+    ellLambda = length lambda
+    ellMu     = length mu
+    compos = compositions1 ellMu ellLambda
+    lambdas = permuteMultiset lambda
+    sequencesOfPartitions = 
+      [partitionSequences perm mu compo | perm <- lambdas, compo <- compos]
+    xs = [E_lambda_mu_term mu nus | nus <- sequencesOfPartitions]
+
+partitionSequences :: [Int] -> Partition -> [Int] -> [Partition]
+partitionSequences lambda mu compo = if test then nus else empty
+  where
+    headOfCompo = snd $ fromJust (uncons compo)
+    starts = scanl 0 1 headOfCompo 
+    ends   = zipWith (+) starts compo
+    nus = [[lambda !! k | k <- [starts !! i .. ends !! i - 1]] | i <- [0 .. length compo - 1]]
+    weights = [sum nu | nu <- nus]
+    
+
+
+partitionSequences <- function(lambda, mu, compo) {
+  starts <- cumsum(c(0L, head(compo, -1L))) + 1L
+  ends   <- cumsum(c(0L, head(compo, -1L))) + compo
+  nus <- lapply(seq_along(compo), function(i) {
+    lambda[(starts[i]):(ends[i])]
+  })
+  weights <- vapply(nus, function(nu) {
+    as.integer(sum(nu))
+  }, integer(1L))
+  test <- all(mu == weights) && all(vapply(nus, function(nu) {
+    all(diff(nu) <= 0L)
+  }, logical(1L)))
+  if(test) {
+    nus
+  } else {
+    NULL
+  }
+}
