@@ -1,5 +1,5 @@
 name:                jackpolynomials
-version:             1.4.0.1
+version:             1.4.1.0
 synopsis:            Jack, zonal, Schur and skew Schur polynomials
 description:         This library can evaluate Jack polynomials, zonal polynomials, Schur and skew Schur polynomials. It is also able to compute them in symbolic form.
 homepage:            https://github.com/stla/jackpolynomials#readme

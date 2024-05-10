@@ -8,8 +8,8 @@ Maintainer  : laurent_step@outlook.fr
 A Jack polynomial can have a very long expression in the canonical basis. 
 A considerably shorter expression is obtained by writing the polynomial as 
 a linear combination of the monomial symmetric polynomials instead, which is 
-always possible since Jack polynomials are symmetric. This is the motivation 
-of this module.
+always possible since Jack polynomials are symmetric. This is the initial 
+motivation of this module. 
 -}
 
 module Math.Algebra.Jack.SymmetricPolynomials
@@ -23,10 +23,6 @@ module Math.Algebra.Jack.SymmetricPolynomials
   , laplaceBeltrami
   , calogeroSutherland
   , psPolynomial
-  , mspInPSbasis
-  , e_lambda_mu
-  , e_lambda_mu_term
-  , partitionSequences
   , psCombination
   , hallInnerProduct
   ) where
@@ -37,10 +33,18 @@ import qualified Data.Foldable                    as DF
 import qualified Data.HashMap.Strict              as HM
 import           Data.List                        ( foldl1', nub )
 import           Data.List.Extra                  ( unsnoc )
-import           Data.Map.Strict                  ( Map )
+import           Data.Map.Strict                  ( 
+                                                    Map
+                                                  , unionsWith
+                                                  , insert
+                                                  )
 import qualified Data.Map.Strict                  as DM
 import           Data.Maybe                       ( fromJust )
-import           Data.Map.Merge.Strict            ( merge, dropMissing, zipWithMatched )
+import           Data.Map.Merge.Strict            ( 
+                                                    merge
+                                                  , dropMissing
+                                                  , zipWithMatched 
+                                                  )
 import           Data.Ratio                       ( (%) )
 import           Data.Sequence                    ( 
                                                     Seq
@@ -76,7 +80,11 @@ import           Math.Algebra.Hspray              (
                                                   )
 import           Math.Algebra.Jack.Internal       ( Partition , _isPartition )
 import           Math.Combinat.Compositions       ( compositions1 )
-import           Math.Combinat.Partitions.Integer ( fromPartition, mkPartition, partitions )
+import           Math.Combinat.Partitions.Integer ( 
+                                                    fromPartition
+                                                  , mkPartition
+                                                  , partitions 
+                                                  )
 import           Math.Combinat.Permutations       ( permuteMultiset )
 
 -- | Monomial symmetric polynomials
@@ -287,9 +295,12 @@ zlambda lambda alpha =
       product [factorial mj * part^mj | (part, mj) <- zip parts table]
     factorial n = product [2 .. n]
 
+-- | Symmetric polynomial as a linear combination of power sum polynomials
 psCombination :: QSpray -> Map Partition Rational
 psCombination spray = 
-  DM.filter (/= 0) (DM.unionsWith (+) (map (DM.fromList . f) assocs))
+  if constantTerm == 0 
+    then psMap
+    else insert [] constantTerm psMap
   where
     constantTerm = getConstantTerm spray
     assocs = msCombination' (spray <+ (- constantTerm))
@@ -297,8 +308,14 @@ psCombination spray =
     f (lambda, coeff) = map (second (* coeff)) (DM.toList psCombo)
       where
         psCombo = mspInPSbasis lambda
+    psMap = DM.filter (/= 0) (unionsWith (+) (map (DM.fromList . f) assocs))
 
-hallInnerProduct :: QSpray -> QSpray -> Rational -> Rational
+-- | Hall inner product between two symmetric polynomials
+hallInnerProduct :: 
+     QSpray   -- ^ rational spray
+  -> QSpray   -- ^ rational spray
+  -> Rational -- ^ Jack parameter; @1@ for the standard Hall inner product
+  -> Rational
 hallInnerProduct spray1 spray2 alpha = 
   sum $ DM.elems
     (merge dropMissing dropMissing (zipWithMatched f) psCombo1 psCombo2)

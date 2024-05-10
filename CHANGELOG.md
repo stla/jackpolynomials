@@ -58,3 +58,13 @@ version)
 
 * added the Laplace-Beltrami operator and the Calogero-Sutherland operator; 
 the Jack polynomials are eigenpolynomials of these operators
+
+1.4.1.0
+-------
+* new function `psPolynomial`, to get a power sum symmetric polynomial
+
+* new function `psCombination`, to get a symmetric polynomial as a linear 
+combination of power sum polynomials
+
+* new function `hallInnerProduct`, to compute the Hall inner product between 
+two symmetric polynomials
