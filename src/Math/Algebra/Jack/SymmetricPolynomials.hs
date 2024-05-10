@@ -66,7 +66,7 @@ import           Math.Algebra.Hspray              (
                                                   )
 import           Math.Algebra.Jack.Internal       ( Partition , _isPartition )
 import           Math.Combinat.Compositions       ( compositions1 )
-import           Math.Combinat.Partitions.Integer ( fromPartition, mkPartition )
+import           Math.Combinat.Partitions.Integer ( fromPartition, mkPartition, partitions )
 import           Math.Combinat.Permutations       ( permuteMultiset )
 
 -- | Monomial symmetric polynomials
@@ -254,7 +254,26 @@ e_lambda_mu_term mu nus = product toMultiply
     f :: Int -> Partition -> Rational
     f k nu = 
       (toInteger $ k * factorial (length nu - 1)) % 
-        (toInteger $ product (map factorial (parts nu)))
+        (toInteger $ product (map factorial (table nu)))
     factorial n = product [2 .. n]
-    parts kappa = [sum [fromEnum (k == j) | k <- kappa] | j <- nub kappa]
+    table kappa = [sum [fromEnum (k == j) | k <- kappa] | j <- nub kappa]
     toMultiply = zipWith f mu nus
+
+mspInPSbasis :: Partition -> Map Partition Rational
+mspInPSbasis mu = DM.fromList (zipWith f weights lambdas)
+  where
+    parts = map fromPartition (partitions (sum mu))
+    coeffs = [e_lambda_mu mu lambda | lambda <- lambdas]
+    (weights, lambdas) = unzip $ filter ((/= 0) . fst) 
+      [(e_lambda_mu mu lambda, lambda) | lambda <- parts]
+    f weight lambda = (lambda, toRational weight / zlambda lambda 1)
+
+zlambda :: (Eq a, Num a) => Partition -> a -> a
+zlambda lambda alpha = 
+  if alpha == 1 then p else p * alpha ^ (length lambda)
+  where
+    parts = nub lambda
+    table = [sum [fromEnum (k == j) | k <- lambda] | j <- table]
+    p = fromIntegral $ 
+      product [factorial mj * part^mj | (part, mj) <- zip parts table]
+    factorial n = product [2 .. n]
