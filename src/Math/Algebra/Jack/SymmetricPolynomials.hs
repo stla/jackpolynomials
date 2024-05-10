@@ -242,49 +242,57 @@ psPolynomial n lambda
         where
           expts = S.replicate (j-1) 0 |> k
 
-e_lambda_mu :: Partition -> Partition -> Rational
-e_lambda_mu lambda mu 
-  | ellLambda < ellMu = 0
-  | otherwise = if even (ellLambda - ellMu) then sum xs else - sum xs
-  where
-    ellLambda = length lambda
-    ellMu     = length mu
-    compos = compositions1 ellMu ellLambda
-    lambdas = permuteMultiset lambda
-    sequencesOfPartitions = filter (not . null)
-      [partitionSequences perm mu compo | perm <- lambdas, compo <- compos]
-    xs = [e_lambda_mu_term mu nus | nus <- sequencesOfPartitions]
-
-partitionSequences :: [Int] -> Partition -> [Int] -> [Partition]
-partitionSequences lambda mu compo = if test then nus else []
-  where
-    headOfCompo = fst $ fromJust (unsnoc compo)
-    starts = scanl (+) 0 headOfCompo 
-    ends   = zipWith (+) starts compo
-    nus = [[lambda !! k | k <- [starts !! i .. ends !! i - 1]] | i <- [0 .. length compo - 1]]
-    weights = [sum nu | nu <- nus]
-    decreasing xs = and [xs !! i >= xs !! (i+1) | i <- [0 .. length xs - 2]]
-    test = and (zipWith (==) mu weights) && all decreasing nus
-
-e_lambda_mu_term :: Partition -> [Partition] -> Rational
-e_lambda_mu_term mu nus = product toMultiply
-  where
-    f :: Int -> Partition -> Rational
-    f k nu = 
-      (toInteger $ k * factorial (length nu - 1)) % 
-        (toInteger $ product (map factorial (table nu)))
-    factorial n = product [2 .. n]
-    table kappa = [sum [fromEnum (k == j) | k <- kappa] | j <- nub kappa]
-    toMultiply = zipWith f mu nus
-
+-- | monomial symmetric polynomial as a linear combination of 
+-- power sum polynomials
 mspInPSbasis :: Partition -> Map Partition Rational
-mspInPSbasis mu = DM.fromList (zipWith f weights lambdas)
+mspInPSbasis kappa = DM.fromList (zipWith f weights lambdas)
   where
-    parts = map fromPartition (partitions (sum mu))
+    parts = map fromPartition (partitions (sum kappa))
     (weights, lambdas) = unzip $ filter ((/= 0) . fst) 
-      [(e_lambda_mu mu lambda, lambda) | lambda <- parts]
+      [(eLambdaMu kappa lambda, lambda) | lambda <- parts]
     f weight lambda = (lambda, toRational weight / zlambda lambda 1)
+    ----
+    eLambdaMu :: Partition -> Partition -> Rational
+    eLambdaMu lambda mu 
+      | ellLambda < ellMu = 0
+      | otherwise = if even (ellLambda - ellMu) then sum xs else - sum xs
+      where
+        ellLambda = length lambda
+        ellMu     = length mu
+        compos = compositions1 ellMu ellLambda
+        lambdaPerms = permuteMultiset lambda
+        sequencesOfPartitions = filter (not . null)
+          [partitionSequences perm mu compo 
+            | perm <- lambdaPerms, compo <- compos]
+        xs = [eMuNus mu nus | nus <- sequencesOfPartitions]
+    ----
+    partitionSequences :: [Int] -> Partition -> [Int] -> [Partition]
+    partitionSequences lambda mu compo = if test then nus else []
+      where
+        headOfCompo = fst $ fromJust (unsnoc compo)
+        starts = scanl (+) 0 headOfCompo 
+        ends   = zipWith (+) starts compo
+        nus = [ 
+                [ lambda !! k | k <- [starts !! i .. ends !! i - 1] ] 
+                | i <- [0 .. length compo - 1]
+              ]
+        nuWeights = [sum nu | nu <- nus]
+        decreasing xs = 
+          and [xs !! i >= xs !! (i+1) | i <- [0 .. length xs - 2]]
+        test = and (zipWith (==) mu nuWeights) && all decreasing nus
+    ---- 
+    eMuNus :: Partition -> [Partition] -> Rational
+    eMuNus mu nus = product toMultiply
+      where
+        w :: Int -> Partition -> Rational
+        w k nu = 
+          let table = [sum [fromEnum (i == j) | i <- nu] | j <- nub nu] in
+          (toInteger $ k * factorial (length nu - 1)) % 
+            (toInteger $ product (map factorial table))
+        factorial n = product [2 .. n]
+        toMultiply = zipWith w mu nus
 
+-- | the factor in the Hall inner product
 zlambda :: (Eq a, Num a) => Partition -> a -> a
 zlambda lambda alpha = 
   if alpha == 1 then p else p * alpha ^ (length lambda)
