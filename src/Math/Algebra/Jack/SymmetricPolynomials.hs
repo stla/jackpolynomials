@@ -27,6 +27,7 @@ module Math.Algebra.Jack.SymmetricPolynomials
   , e_lambda_mu
   , e_lambda_mu_term
   , partitionSequences
+  , psCombination
   ) where
 import qualified Algebra.Additive                 as AlgAdd
 import qualified Algebra.Field                    as AlgField
@@ -44,6 +45,7 @@ import           Data.Sequence                    (
                                                   , (|>) 
                                                   )
 import qualified Data.Sequence                    as S
+import           Data.Tuple.Extra                 ( second )
 import           Math.Algebra.Hspray              (
                                                     FunctionLike (..)
                                                   , (/^)
@@ -56,6 +58,7 @@ import           Math.Algebra.Hspray              (
                                                   , lone'
                                                   , fromList
                                                   , getCoefficient
+                                                  , getConstantTerm
                                                   , isConstant
                                                   , (%//%)
                                                   , RatioOfSprays (..)
@@ -281,3 +284,33 @@ zlambda lambda alpha =
     p = fromIntegral $ 
       product [factorial mj * part^mj | (part, mj) <- zip parts table]
     factorial n = product [2 .. n]
+
+psCombination :: QSpray -> Map Partition Rational
+psCombination spray = 
+  DM.filter (/= 0) DM.unionsWith (+) (map (DM.fromList . f) assocs)
+  where
+    constantTerm = getConstantTerm spray
+    assocs = msCombination' (spray <+ (- constantTerm))
+    f :: (Partition, Rational) -> [(Partition, Rational)]
+    f (lambda, coeff) = map (second (* coeff)) (DM.toList psCombo)
+      where
+        psCombo = mspInPSbasis lambda
+
+
+-- PSPexpression <- function(qspray) {
+--   constantTerm <- getConstantTerm(qspray)
+--   mspdecomposition <- MSPcombination(qspray - constantTerm)
+--   pspexpression <- qzero()
+--   for(t in mspdecomposition) {
+--     xs     <- MSPinPSbasis(t[["lambda"]])
+--     coeffs <- t[["coeff"]] * c_bigq(lapply(xs, `[[`, "coeff"))
+--     powers <- lapply(xs, function(x) {
+--       lambda <- x[["lambda"]]
+--       vapply(seq_len(lambda[1L]), function(j) {
+--         sum(lambda == j)
+--       }, integer(1L))
+--     })
+--     p             <- qsprayMaker(powers, coeffs)
+--     pspexpression <- pspexpression + p
+--   }
+--   out <- pspexpression + constantTerm
