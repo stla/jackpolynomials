@@ -15,7 +15,9 @@ import Math.Algebra.Jack.HypergeoPQ             ( hypergeoPQ )
 import Math.Algebra.Jack.SymmetricPolynomials   ( isSymmetricSpray
                                                 , prettySymmetricParametricQSpray
                                                 , laplaceBeltrami
-                                                , calogeroSutherland )
+                                                , calogeroSutherland
+                                                , hallInnerProduct
+                                                , psPolynomial )
 import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol'
                                                 , schurPol, schurPol', skewSchurPol' )
 import Math.Algebra.JackSymbolicPol             ( jackSymbolicPol' )
@@ -182,4 +184,30 @@ main = defaultMain $ testGroup
         h1 = hypergeoPQ 10 a b x :: Rational
     h2 <- hypergeomat 10 2 a b x
     assertEqual "" h1 h2
+
+  , testCase "Hall inner product" $ do
+    let
+      alpha = 2
+      poly1 = psPolynomial 4 [4]
+      poly2 = psPolynomial 4 [3, 1]
+      poly3 = psPolynomial 4 [2, 2]
+      poly4 = psPolynomial 4 [2, 1, 1]
+      poly5 = psPolynomial 4 [1, 1, 1, 1]
+      h1 = hallInnerProduct poly1 poly1 alpha
+      h2 = hallInnerProduct poly2 poly2 alpha
+      h3 = hallInnerProduct poly3 poly3 alpha
+      h4 = hallInnerProduct poly4 poly4 alpha
+      h5 = hallInnerProduct poly5 poly5 alpha
+      pow :: Rational -> Int -> Rational
+      pow = (^)
+    assertEqual ""
+      (h1, h2, h3, h4, h5) 
+      (
+        4 * alpha
+      , 3 * pow alpha 2
+      , 8 * pow alpha 2
+      , 4 * pow alpha 3
+      , 24 * pow alpha 4
+      )
+
   ]
