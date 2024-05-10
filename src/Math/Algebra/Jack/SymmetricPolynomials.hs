@@ -23,13 +23,18 @@ module Math.Algebra.Jack.SymmetricPolynomials
   , laplaceBeltrami
   , calogeroSutherland
   , psPolynomial
+  , mspInPSbasis
+  , e_lambda_mu
+  , e_lambda_mu_term
+  , partitionSequences
   ) where
 import qualified Algebra.Additive                 as AlgAdd
 import qualified Algebra.Field                    as AlgField
 import qualified Algebra.Ring                     as AlgRing
 import qualified Data.Foldable                    as DF
 import qualified Data.HashMap.Strict              as HM
-import           Data.List                        ( foldl1', nub, uncons )
+import           Data.List                        ( foldl1', nub )
+import           Data.List.Extra                  ( unsnoc )
 import           Data.Map.Strict                  ( Map )
 import qualified Data.Map.Strict                  as DM
 import           Data.Maybe                       ( fromJust )
@@ -233,14 +238,14 @@ e_lambda_mu lambda mu
     ellMu     = length mu
     compos = compositions1 ellMu ellLambda
     lambdas = permuteMultiset lambda
-    sequencesOfPartitions = 
+    sequencesOfPartitions = filter (not . null)
       [partitionSequences perm mu compo | perm <- lambdas, compo <- compos]
     xs = [e_lambda_mu_term mu nus | nus <- sequencesOfPartitions]
 
 partitionSequences :: [Int] -> Partition -> [Int] -> [Partition]
 partitionSequences lambda mu compo = if test then nus else []
   where
-    headOfCompo = snd $ fromJust (uncons compo)
+    headOfCompo = fst $ fromJust (unsnoc compo)
     starts = scanl (+) 0 headOfCompo 
     ends   = zipWith (+) starts compo
     nus = [[lambda !! k | k <- [starts !! i .. ends !! i - 1]] | i <- [0 .. length compo - 1]]
@@ -263,7 +268,6 @@ mspInPSbasis :: Partition -> Map Partition Rational
 mspInPSbasis mu = DM.fromList (zipWith f weights lambdas)
   where
     parts = map fromPartition (partitions (sum mu))
-    coeffs = [e_lambda_mu mu lambda | lambda <- lambdas]
     (weights, lambdas) = unzip $ filter ((/= 0) . fst) 
       [(e_lambda_mu mu lambda, lambda) | lambda <- parts]
     f weight lambda = (lambda, toRational weight / zlambda lambda 1)
@@ -273,7 +277,7 @@ zlambda lambda alpha =
   if alpha == 1 then p else p * alpha ^ (length lambda)
   where
     parts = nub lambda
-    table = [sum [fromEnum (k == j) | k <- lambda] | j <- table]
+    table = [sum [fromEnum (k == j) | k <- lambda] | j <- parts]
     p = fromIntegral $ 
       product [factorial mj * part^mj | (part, mj) <- zip parts table]
     factorial n = product [2 .. n]
