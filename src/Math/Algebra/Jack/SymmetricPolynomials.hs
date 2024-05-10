@@ -22,19 +22,26 @@ module Math.Algebra.Jack.SymmetricPolynomials
   , prettySymmetricParametricQSpray
   , laplaceBeltrami
   , calogeroSutherland
+  , psPolynomial
   ) where
 import qualified Algebra.Additive                 as AlgAdd
 import qualified Algebra.Field                    as AlgField
 import qualified Algebra.Ring                     as AlgRing
 import qualified Data.Foldable                    as DF
+import qualified Data.HashMap.Strict              as HM
 import           Data.List                        ( foldl1', nub )
 import           Data.Map.Strict                  ( Map )
 import qualified Data.Map.Strict                  as DM
-import           Data.Sequence                    ( Seq )
+import           Data.Sequence                    ( 
+                                                    Seq
+                                                  , (|>) 
+                                                  )
+import qualified Data.Sequence                    as S
 import           Math.Algebra.Hspray              (
                                                     FunctionLike (..)
                                                   , (/^)
                                                   , Spray
+                                                  , Powers (..)
                                                   , QSpray
                                                   , QSpray'
                                                   , ParametricQSpray
@@ -52,6 +59,8 @@ import           Math.Algebra.Hspray              (
                                                   , showSpray
                                                   , toList
                                                   , zeroSpray
+                                                  , unitSpray
+                                                  , productOfSprays
                                                   )
 import           Math.Algebra.Jack.Internal       ( Partition , _isPartition )
 import           Math.Combinat.Permutations       ( permuteMultiset )
@@ -187,3 +196,27 @@ calogeroSutherland alpha spray =
             (lone i, lone j, dsprays !! (i-1), dsprays !! (j-1)) in 
           (xi ^+^ xj) ^*^ (xi ^*^ dxi ^-^ xj ^*^ dxj) %//% (xi ^-^ xj)
        | i <- range, j <- [i+1 .. n]]
+
+-- | Power sum polynomials
+--
+-- >>> putStrLn $ prettyQSpray (psPolynomial 3 [2, 1])
+-- x^3 + x^2.y + x^2.z + x.y^2 + x.z^2 + y^3 + y^2.z + y.z^2 + z^3
+psPolynomial :: (AlgRing.C a, Eq a) 
+  => Int       -- ^ number of variables
+  -> Partition -- ^ integer partition
+  -> Spray a
+psPolynomial n lambda
+  | n < 0                     = 
+      error "psPolynomial: negative number of variables."
+  | not (_isPartition lambda) = 
+      error "psPolynomial: invalid partition."
+  | null lambda'              = unitSpray
+  | llambda > n               = zeroSpray
+  | otherwise                 = productOfSprays sprays
+    where
+      lambda' = fromPartition $ mkPartition lambda
+      llambda      = length lambda'
+      sprays = [HM.fromList $ [f i k | i <- [1 .. n]] | k <- lambda']
+      f j k = (Powers expts j, AlgRing.one)
+        where
+          expts = S.replicate (j-1) 0 |> k
