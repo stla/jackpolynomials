@@ -11,8 +11,7 @@ a linear combination of the monomial symmetric polynomials instead, which is
 always possible since Jack polynomials are symmetric. This is the initial 
 motivation of this module. 
 -}
-{-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Math.Algebra.Jack.SymmetricPolynomials
@@ -28,6 +27,8 @@ module Math.Algebra.Jack.SymmetricPolynomials
   , psPolynomial
   , psCombination
   , hallInnerProduct
+  , psCombination'
+  , hallInnerProduct'
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -67,7 +68,6 @@ import           Math.Algebra.Hspray              (
                                                   , QSpray'
                                                   , ParametricQSpray
                                                   , lone
-                                                  , qlone
                                                   , lone'
                                                   , fromList
                                                   , getCoefficient
@@ -315,7 +315,7 @@ zlambda lambda = p
 
 -- | Symmetric polynomial as a linear combination of power sum polynomials
 psCombination :: 
-  forall b. (Eq b, AlgField.C b) => Spray b -> Map Partition b
+  forall a. (Eq a, AlgField.C a) => Spray a -> Map Partition a
 psCombination spray =
   if constantTerm == AlgAdd.zero 
     then psMap
@@ -323,7 +323,7 @@ psCombination spray =
   where
     constantTerm = getConstantTerm spray
     assocs = msCombination' (spray <+ (AlgAdd.negate constantTerm))
-    f :: (Partition, b) -> [(Partition, b)] 
+    f :: (Partition, a) -> [(Partition, a)] 
     f (lambda, coeff) = 
       map (second ((AlgRing.* coeff) . AlgField.fromRational)) (DM.toList psCombo)
       where
@@ -333,7 +333,7 @@ psCombination spray =
 
 -- | Symmetric polynomial as a linear combination of power sum polynomials
 psCombination' :: 
-  forall b. (Eq b, AlgMod.C Rational b, AlgRing.C b) => Spray b -> Map Partition b
+  forall a. (Eq a, AlgMod.C Rational a, AlgRing.C a) => Spray a -> Map Partition a
 psCombination' spray =
   if constantTerm == AlgAdd.zero 
     then psMap
@@ -341,7 +341,7 @@ psCombination' spray =
   where
     constantTerm = getConstantTerm spray
     assocs = msCombination' (spray <+ (AlgAdd.negate constantTerm))
-    f :: (Partition, b) -> [(Partition, b)] 
+    f :: (Partition, a) -> [(Partition, a)] 
     f (lambda, coeff) = 
       map (second (\r -> r AlgMod.*> coeff)) (DM.toList psCombo)
       where
@@ -351,38 +351,40 @@ psCombination' spray =
 
 -- Hall inner product with parameter
 hallInnerProduct :: 
-  forall b. (Eq b, AlgField.C b)
-  => Spray b   -- ^ spray
-  -> Spray b   -- ^ spray
-  -> b         -- ^ parameter
-  -> b 
+  forall a. (Eq a, AlgField.C a)
+  => Spray a   -- ^ spray
+  -> Spray a   -- ^ spray
+  -> a         -- ^ parameter
+  -> a 
 hallInnerProduct spray1 spray2 alpha = 
   AlgAdd.sum $ DM.elems
     (merge dropMissing dropMissing (zipWithMatched f) psCombo1 psCombo2)
   where
-    psCombo1 = psCombination spray1 :: Map Partition b
-    psCombo2 = psCombination spray2 :: Map Partition b
-    zlambda' :: Partition -> b
+    psCombo1 = psCombination spray1 :: Map Partition a
+    psCombo2 = psCombination spray2 :: Map Partition a
+    zlambda' :: Partition -> a
     zlambda' lambda = fromIntegral (zlambda lambda) 
       AlgRing.* alpha AlgRing.^ (toInteger $ length lambda)
-    f :: Partition -> b -> b -> b
-    f lambda coeff1 coeff2 = zlambda' lambda AlgRing.* (coeff1 AlgRing.* coeff2)
+    f :: Partition -> a -> a -> a
+    f lambda coeff1 coeff2 = 
+      zlambda' lambda AlgRing.* (coeff1 AlgRing.* coeff2)
 
 -- Hall inner product with parameter
 hallInnerProduct' :: 
-  forall b. (Eq b, AlgMod.C Rational b, AlgRing.C b)
-  => Spray b   -- ^ spray
-  -> Spray b   -- ^ spray
-  -> b         -- ^ parameter
-  -> b 
+  forall a. (Eq a, AlgMod.C Rational a, AlgRing.C a)
+  => Spray a   -- ^ spray
+  -> Spray a   -- ^ spray
+  -> a         -- ^ parameter
+  -> a 
 hallInnerProduct' spray1 spray2 alpha = 
   AlgAdd.sum $ DM.elems
     (merge dropMissing dropMissing (zipWithMatched f) psCombo1 psCombo2)
   where
-    psCombo1 = psCombination' spray1 :: Map Partition b
-    psCombo2 = psCombination' spray2 :: Map Partition b
-    zlambda' :: Partition -> b
+    psCombo1 = psCombination' spray1 :: Map Partition a
+    psCombo2 = psCombination' spray2 :: Map Partition a
+    zlambda' :: Partition -> a
     zlambda' lambda = fromIntegral (zlambda lambda) 
       AlgRing.* alpha AlgRing.^ (toInteger $ length lambda)
-    f :: Partition -> b -> b -> b
-    f lambda coeff1 coeff2 = zlambda' lambda AlgRing.* (coeff1 AlgRing.* coeff2)
+    f :: Partition -> a -> a -> a
+    f lambda coeff1 coeff2 = 
+      zlambda' lambda AlgRing.* (coeff1 AlgRing.* coeff2)

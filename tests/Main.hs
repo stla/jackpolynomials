@@ -1,12 +1,15 @@
 module Main ( main ) where
 import Data.Ratio                               ( (%) )
 import Math.Algebra.Hspray                      ( FunctionLike (..)
-                                                , Spray, lone
+                                                , Spray, lone, qlone 
                                                 , evalSpray 
                                                 , evalParametricSpray'
                                                 , substituteParameters
                                                 , canCoerceToSimpleParametricSpray
                                                 , isHomogeneousSpray
+                                                , asRatioOfSprays
+                                                , (%//%)
+                                                , (/^)
                                                 )
 import qualified Math.Algebra.Hspray            as Hspray
 import Math.Algebra.Jack                        ( schur, skewSchur 
@@ -208,6 +211,24 @@ main = defaultMain $ testGroup
       , 8 * pow alpha 2
       , 4 * pow alpha 3
       , 24 * pow alpha 4
+      )
+
+  , testCase "Hall inner product symbolic" $ do
+    let
+      jp1 = jackSymbolicPol' 3 [1, 1, 1] 'P'
+      jp2 = jackSymbolicPol' 3 [2, 1] 'P'
+      jp3 = jackSymbolicPol' 3 [3] 'P'
+      t = qlone 1
+      t' = asRatioOfSprays t
+      h1 = hallInnerProduct jp1 jp1 t'
+      h2 = hallInnerProduct jp2 jp2 t'
+      h3 = hallInnerProduct jp3 jp3 t'
+    assertEqual ""
+      (h1, h2, h3) 
+      (
+        asRatioOfSprays (t^**^3 /^ 6 ^+^ t^**^2 /^ 2 ^+^ t /^ 3)
+      , (2*^t^**^3 ^+^ t^**^2) %//% (t <+ 2)
+      , (3*^t^**^3) %//% ((t^**^2 ^+^ (3%2)*^t) <+ (1%2))
       )
 
   ]
