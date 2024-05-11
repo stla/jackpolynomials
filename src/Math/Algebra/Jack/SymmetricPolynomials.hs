@@ -30,8 +30,10 @@ module Math.Algebra.Jack.SymmetricPolynomials
   , hallInnerProduct
   , psCombination'
   , hallInnerProduct'
+  , psCombination''
+  , hallInnerProduct''
   ) where
-import           Prelude hiding ( fromIntegral )
+import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
 import qualified Algebra.Field                    as AlgField
 import qualified Algebra.Module                   as AlgMod
@@ -255,18 +257,18 @@ psPolynomial n lambda
 
 -- | monomial symmetric polynomial as a linear combination of 
 -- power sum polynomials
-mspInPSbasis :: (Eq a, Fractional a, AlgField.C a) => Partition -> Map Partition a
+mspInPSbasis :: (Eq a, AlgField.C a) => Partition -> Map Partition a
 mspInPSbasis kappa = DM.fromList (zipWith f weights lambdas)
   where
     parts = map fromPartition (partitions (sum kappa))
     (weights, lambdas) = unzip $ filter ((/= AlgAdd.zero) . fst) 
       [(eLambdaMu kappa lambda, lambda) | lambda <- parts]
-    f weight lambda = (lambda, weight / zlambda lambda 1)
+    f weight lambda = (lambda, weight AlgField./ zlambda lambda (AlgRing.one ))
     ----
-    eLambdaMu :: (Fractional a, AlgField.C a) => Partition -> Partition -> a
+    eLambdaMu :: (AlgField.C a) => Partition -> Partition -> a
     eLambdaMu lambda mu 
-      | ellLambda < ellMu = 0
-      | otherwise = if even (ellLambda - ellMu) then sum xs else - sum xs
+      | ellLambda < ellMu = AlgAdd.zero
+      | otherwise = if even (ellLambda - ellMu) then AlgAdd.sum xs else AlgAdd.negate (AlgAdd.sum xs)
       where
         ellLambda = length lambda
         ellMu     = length mu
@@ -292,8 +294,8 @@ mspInPSbasis kappa = DM.fromList (zipWith f weights lambdas)
           and [xs !! i >= xs !! (i+1) | i <- [0 .. length xs - 2]]
         test = and (zipWith (==) mu nuWeights) && all decreasing nus
     ---- 
-    eMuNus :: Fractional a => Partition -> [Partition] -> a
-    eMuNus mu nus = fromRational $ product toMultiply
+    eMuNus :: AlgField.C a => Partition -> [Partition] -> a
+    eMuNus mu nus = AlgField.fromRational $ product toMultiply
       where
         w :: Int -> Partition -> Rational
         w k nu = 
@@ -375,3 +377,34 @@ hallInnerProduct' spray1 spray2 =
     alpha = qlone 1
     f :: Partition -> RatioOfQSprays -> RatioOfQSprays -> RatioOfQSprays
     f lambda coeff1 coeff2 = zlambda lambda alpha AlgMod.*> (coeff1 AlgRing.* coeff2)
+
+psCombination'' :: 
+  forall b. (Eq b, AlgField.C b) => Spray b -> Map Partition b
+psCombination'' spray =
+  if constantTerm == AlgAdd.zero 
+    then psMap
+    else insert [] constantTerm psMap
+  where
+    constantTerm = getConstantTerm spray
+    assocs = msCombination' (spray <+ (AlgAdd.negate constantTerm))
+    f :: (Partition, b) -> [(Partition, b)] 
+    f (lambda, coeff) = 
+      map (second (AlgRing.* coeff)) (DM.toList psCombo)
+      where
+        psCombo = mspInPSbasis lambda :: Map Partition b
+    psMap = DM.filter (/= AlgAdd.zero) (unionsWith (AlgAdd.+) (map (DM.fromList . f) assocs))
+
+hallInnerProduct'' :: 
+  forall b. (Eq b, AlgField.C b)
+  => Spray b    -- ^ rational spray
+  -> Spray b   -- ^ rational spray
+  -> b
+  -> b 
+hallInnerProduct'' spray1 spray2 alpha = 
+  AlgAdd.sum $ DM.elems
+    (merge dropMissing dropMissing (zipWithMatched f) psCombo1 psCombo2)
+  where
+    psCombo1 = psCombination'' spray1 :: Map Partition b
+    psCombo2 = psCombination'' spray2 :: Map Partition b
+    f :: Partition -> b -> b -> b
+    f lambda coeff1 coeff2 = zlambda lambda alpha AlgRing.* (coeff1 AlgRing.* coeff2)
