@@ -11,6 +11,9 @@ a linear combination of the monomial symmetric polynomials instead, which is
 always possible since Jack polynomials are symmetric. This is the initial 
 motivation of this module. 
 -}
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Math.Algebra.Jack.SymmetricPolynomials
   ( isSymmetricSpray
@@ -25,10 +28,15 @@ module Math.Algebra.Jack.SymmetricPolynomials
   , psPolynomial
   , psCombination
   , hallInnerProduct
+  , psCombination'
+  , hallInnerProduct'
   ) where
+import           Prelude hiding ( fromIntegral )
 import qualified Algebra.Additive                 as AlgAdd
 import qualified Algebra.Field                    as AlgField
+import qualified Algebra.Module                   as AlgMod
 import qualified Algebra.Ring                     as AlgRing
+import           Algebra.ToInteger                ( fromIntegral )
 import qualified Data.Foldable                    as DF
 import qualified Data.HashMap.Strict              as HM
 import           Data.List                        ( foldl1', nub )
@@ -59,8 +67,11 @@ import           Math.Algebra.Hspray              (
                                                   , Powers (..)
                                                   , QSpray
                                                   , QSpray'
+                                                  , RatioOfQSprays
+                                                  , ParametricSpray
                                                   , ParametricQSpray
                                                   , lone
+                                                  , qlone
                                                   , lone'
                                                   , fromList
                                                   , getCoefficient
@@ -244,15 +255,15 @@ psPolynomial n lambda
 
 -- | monomial symmetric polynomial as a linear combination of 
 -- power sum polynomials
-mspInPSbasis :: Partition -> Map Partition Rational
+mspInPSbasis :: (Eq a, Fractional a, AlgField.C a) => Partition -> Map Partition a
 mspInPSbasis kappa = DM.fromList (zipWith f weights lambdas)
   where
     parts = map fromPartition (partitions (sum kappa))
-    (weights, lambdas) = unzip $ filter ((/= 0) . fst) 
+    (weights, lambdas) = unzip $ filter ((/= AlgAdd.zero) . fst) 
       [(eLambdaMu kappa lambda, lambda) | lambda <- parts]
-    f weight lambda = (lambda, toRational weight / zlambda lambda 1)
+    f weight lambda = (lambda, weight / zlambda lambda 1)
     ----
-    eLambdaMu :: Partition -> Partition -> Rational
+    eLambdaMu :: (Fractional a, AlgField.C a) => Partition -> Partition -> a
     eLambdaMu lambda mu 
       | ellLambda < ellMu = 0
       | otherwise = if even (ellLambda - ellMu) then sum xs else - sum xs
@@ -281,8 +292,8 @@ mspInPSbasis kappa = DM.fromList (zipWith f weights lambdas)
           and [xs !! i >= xs !! (i+1) | i <- [0 .. length xs - 2]]
         test = and (zipWith (==) mu nuWeights) && all decreasing nus
     ---- 
-    eMuNus :: Partition -> [Partition] -> Rational
-    eMuNus mu nus = product toMultiply
+    eMuNus :: Fractional a => Partition -> [Partition] -> a
+    eMuNus mu nus = fromRational $ product toMultiply
       where
         w :: Int -> Partition -> Rational
         w k nu = 
@@ -293,9 +304,9 @@ mspInPSbasis kappa = DM.fromList (zipWith f weights lambdas)
         toMultiply = zipWith w mu nus
 
 -- | the factor in the Hall inner product
-zlambda :: (Eq a, Num a) => Partition -> a -> a
+zlambda :: (Eq a, AlgRing.C a) => Partition -> a -> a
 zlambda lambda alpha = 
-  if alpha == 1 then p else p * alpha ^ (length lambda)
+  if alpha == AlgRing.one then p else p AlgRing.* alpha AlgRing.^ (toInteger $ length lambda)
   where
     parts = nub lambda
     table = [sum [fromEnum (k == j) | k <- lambda] | j <- parts]
@@ -318,16 +329,49 @@ psCombination spray =
         psCombo = mspInPSbasis lambda
     psMap = DM.filter (/= 0) (unionsWith (+) (map (DM.fromList . f) assocs))
 
+psCombination' :: 
+  forall b. (AlgMod.C Rational b, Eq b, AlgRing.C b) => Spray b -> Map Partition b
+psCombination' spray =
+  if constantTerm == AlgAdd.zero 
+    then psMap
+    else insert [] constantTerm psMap
+  where
+    constantTerm = getConstantTerm spray
+    assocs = msCombination' (spray <+ (AlgAdd.negate constantTerm))
+    f :: (Partition, b) -> [(Partition, b)] 
+    f (lambda, coeff) = 
+      map (second (\r -> r AlgMod.*> coeff)) (DM.toList psCombo)
+      where
+        psCombo = mspInPSbasis lambda :: Map Partition Rational
+    psMap = DM.filter (/= AlgAdd.zero) (unionsWith (AlgAdd.+) (map (DM.fromList . f) assocs))
+
+
 -- | Hall inner product between two symmetric polynomials
 hallInnerProduct :: 
-     QSpray   -- ^ rational spray
-  -> QSpray   -- ^ rational spray
-  -> Rational -- ^ Jack parameter; @1@ for the standard Hall inner product
-  -> Rational
+  forall b. (Eq b, AlgRing.C b, AlgMod.C Rational b)
+  => Spray b   -- ^ rational spray
+  -> Spray b  -- ^ rational spray
+  -> b -- ^ Jack parameter; @1@ for the standard Hall inner product
+  -> b
 hallInnerProduct spray1 spray2 alpha = 
-  sum $ DM.elems
+  AlgAdd.sum $ DM.elems
     (merge dropMissing dropMissing (zipWithMatched f) psCombo1 psCombo2)
   where
-    psCombo1 = psCombination spray1
-    psCombo2 = psCombination spray2
-    f lambda coeff1 coeff2 = coeff1 * coeff2 * zlambda lambda alpha
+    psCombo1 = psCombination' spray1 :: Map Partition b
+    psCombo2 = psCombination' spray2 :: Map Partition b
+    f :: Partition -> b -> b -> b
+    f lambda coeff1 coeff2 = zlambda lambda alpha AlgRing.* (coeff1 AlgRing.* coeff2)
+
+hallInnerProduct' :: 
+  ParametricQSpray    -- ^ rational spray
+  -> ParametricQSpray   -- ^ rational spray
+  -> RatioOfQSprays 
+hallInnerProduct' spray1 spray2 = 
+  AlgAdd.sum $ DM.elems
+    (merge dropMissing dropMissing (zipWithMatched f) psCombo1 psCombo2)
+  where
+    psCombo1 = psCombination' spray1 :: Map Partition RatioOfQSprays
+    psCombo2 = psCombination' spray2 :: Map Partition RatioOfQSprays
+    alpha = qlone 1
+    f :: Partition -> RatioOfQSprays -> RatioOfQSprays -> RatioOfQSprays
+    f lambda coeff1 coeff2 = zlambda lambda alpha AlgMod.*> (coeff1 AlgRing.* coeff2)
