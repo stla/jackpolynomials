@@ -110,6 +110,76 @@ they do not check the symmetry. This new module provides the function
 than the function with the same name in the **hspray** package.
 
 
+### Hall inner product
+
+As of version 1.4.1.0, the package provides an implementation of the Hall 
+inner product with parameter. It is known that the Jack polynomials with 
+Jack parameter $\alpha$ are orthogonal for the Hall inner product with 
+parameter $\alpha$. 
+
+There is a function `hallInnerProduct` as well as a function 
+`symbolicHallInnerProduct`. The latter allows to get the Hall inner product 
+of two symmetric polynomials without substituting a value to the parameter 
+$\alpha$. The Hall inner product of two symmetric polynomials is a polynomial 
+in $\alpha$, so the result of `symbolicHallInnerProduct` is a `Spray` object.
+
+Let's see a first example with a power sum polynomial. These symmetric 
+polynomials are implemented in the package. We display the result by using 
+`alpha` to denote the parameter of the Hall product.
+
+```haskell
+import Math.Algebra.Jack.SymmetricPolynomials 
+import Math.Algebra.Hspray hiding (psPolynomial)
+psPoly = psPolynomial 4 [2, 1, 1] :: QSpray
+hip = symbolicHallInnerProduct psPoly psPoly
+putStrLn $ prettyQSprayXYZ ["alpha"] hip
+-- 4*alpha^3
+```
+
+Now let's consider the following situation. We want to get the symbolic Hall 
+inner product of a Jack polynomial with itself, and we deal with a symbolic 
+Jack parameter in this polynomial. We denote it by `t` to distinguish it from 
+the parameter of the Hall product that we still denote by `alpha`.
+
+The signature of the `symbolicHallInnerProduct` is a bit misleading:
+```haskell
+Spray a -> Spray a -> Spray a
+```
+because the `Spray a` of the output is not of the same family as the two 
+`Spray a` inputs: this is a univariate polynomial in $\alpha$. 
+
+We use the function `jackSymbolicPol'` to compute a Jack polynomial. It
+returns a `ParametricQSpray` spray, a type alias of `Spray RatioOfQSprays`.
+
+```haskell
+import Math.Algebra.JackSymbolicPol
+import Math.Algebra.Jack.SymmetricPolynomials 
+import Math.Algebra.Hspray 
+jp = jackSymbolicPol' 2 [3, 1] 'P'
+hip = symbolicHallInnerProduct jp jp
+putStrLn $ prettyParametricQSprayABCXYZ ["t"] ["alpha"] hip
+-- { [ 3*t^2 + 6*t + 11 ] %//% [ t^2 + 2*t + 1 ] }*alpha^2 + { [ 4*t^2 + 16*t + 16 ] %//% [ t^2 + 2*t + 1 ] }*alpha
+```
+
+One could be interested in computing the Hall inner product of a Jack 
+polynomial with itself when the Jack parameter and the parameter of the 
+Hall product are identical. That is, we want to take `alpha = t` in the 
+above expression. Since the symbolic Hall product is a `ParametricQSpray` 
+spray, one can substitute its variable `alpha` by a `RatioOfQSprays` 
+object. On the other hand, `t` represents a `QSpray` object, but one can 
+identify a `RatioOfQSprays` to a `QSpray` by taking the unit spray as the 
+denominator, that is, by applying the `asRatioOfSprays` function. Finally 
+we get the desired result if we evaluate the symbolic Hall product by 
+replacing `alpha` with `asRatioOfSprays (qlone 1)`, since `t` is the 
+first polynomial variable. 
+
+```haskell
+prettyRatioOfQSpraysXYZ ["t"] $ evaluate hip [asRatioOfSprays (qlone 1)]
+-- [ 3*t^4 + 10*t^3 + 27*t^2 + 16*t ] %//% [ t^2 + 2*t + 1 ]
+```
+
+
+
 ## References
 
 * I.G. Macdonald. *Symmetric Functions and Hall Polynomials*. Oxford Mathematical Monographs. The Clarendon Press Oxford University Press, New York, second edition, 1995.
