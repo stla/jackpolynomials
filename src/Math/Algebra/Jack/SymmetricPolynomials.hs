@@ -29,6 +29,10 @@ module Math.Algebra.Jack.SymmetricPolynomials
   , hallInnerProduct
   , psCombination'
   , hallInnerProduct'
+  , symbolicHallInnerProduct
+  -- , hallSymbolic, test
+  -- , hallSymbolic', test'
+  -- , hallSymbolic'', test''
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -84,7 +88,19 @@ import           Math.Algebra.Hspray              (
                                                   , zeroSpray
                                                   , unitSpray
                                                   , productOfSprays
+                                                  , constantSpray
+                                                  -- , prettyQSpray
+                                                  -- , qlone
+                                                  -- , prettyParametricQSpray
+                                                  -- , substituteParameters
+                                                  -- , evalParametricSpray
+                                                  -- , constantRatioOfSprays
+                                                  -- , asRatioOfSprays
+                                                  -- , prettyParametricQSprayABCXYZ
                                                   )
+-- import Math.Algebra.JackSymbolicPol             ( jackSymbolicPol' )
+-- import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol'
+--                                                 , schurPol, schurPol', skewSchurPol' )
 import           Math.Algebra.Jack.Internal       ( Partition , _isPartition )
 import           Math.Combinat.Compositions       ( compositions1 )
 import           Math.Combinat.Partitions.Integer ( 
@@ -390,3 +406,61 @@ hallInnerProduct' spray1 spray2 alpha =
     f :: Partition -> a -> a -> a
     f lambda coeff1 coeff2 = 
       zlambda' lambda AlgRing.* (coeff1 AlgRing.* coeff2)
+
+-- hallSymbolic :: 
+--   QSpray -> QSpray -> QSpray
+-- hallSymbolic spray1 spray2 = hallInnerProduct' spray1' spray2' alpha
+--   where
+--     spray1' = HM.map constantSpray spray1
+--     spray2' = HM.map constantSpray spray2
+--     alpha = qlone 1
+
+-- test :: String
+-- test = prettyQSpray $ hallSymbolic poly poly
+--   where poly = psPolynomial 4 [2,1,1]
+
+-- hallSymbolic' :: 
+--   Int -> ParametricQSpray -> ParametricQSpray -> ParametricQSpray
+-- hallSymbolic' i spray1 spray2 = hallInnerProduct' spray1' spray2' alpha
+--   where
+--     spray1' = HM.map constantSpray spray1
+--     spray2' = HM.map constantSpray spray2
+--     alpha = lone i
+
+-- test' :: (String, String, String, Rational, Rational, String, String)
+-- test' = (
+--           prettyParametricQSpray result1
+--         , prettyRatioOfQSpraysXYZ ["a"] $ evalParametricSpray result1 [5]
+--         , prettyRatioOfQSpraysXYZ ["a"] $ hallInnerProduct jsp jsp (constantRatioOfSprays 5)
+--         , evaluate (evalParametricSpray result1 [5]) [7]
+--         , hallInnerProduct jp jp 5
+--         , prettyRatioOfQSpraysXYZ ["a"] $ evaluate result1 [asRatioOfSprays (qlone 1)]
+--         , prettyRatioOfQSpraysXYZ ["a"] $ hallInnerProduct jsp jsp (asRatioOfSprays (qlone 1))
+--         )
+--   where 
+--     jsp = jackSymbolicPol' 3 [2, 1] 'P'
+--     result1 = hallSymbolic' 1 jsp jsp
+--     jp = jackPol' 3 [2, 1] 7 'P'
+
+-- hallParametric :: 
+--   forall b. (FunctionLike b, Eq b, AlgMod.C Rational b, AlgRing.C b) => Spray b -> Spray b -> Spray b
+-- hallParametric spray1 spray2 = hallInnerProduct' spray1' spray2' alpha
+--   where
+--     spray1' = HM.map constantSpray spray1
+--     spray2' = HM.map constantSpray spray2
+--     alpha = lone 1 
+
+symbolicHallInnerProduct :: 
+  (Eq a, AlgMod.C Rational (Spray a), AlgRing.C a) 
+  => Spray a -> Spray a -> Spray a
+symbolicHallInnerProduct spray1 spray2 = 
+  hallInnerProduct' spray1' spray2' (lone 1)
+  where
+    spray1' = HM.map constantSpray spray1
+    spray2' = HM.map constantSpray spray2
+
+-- test'' :: (String, String)
+-- test'' = (prettyParametricQSpray result, prettyParametricQSprayABCXYZ ["a"] ["b"] $ result)
+--   where 
+--     jsp = jackSymbolicPol' 3 [2, 1] 'P'
+--     result = hallSymbolic'' jsp jsp
