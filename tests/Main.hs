@@ -1,7 +1,9 @@
 module Main ( main ) where
+import qualified Data.Map.Strict                as DM
 import Data.Ratio                               ( (%) )
 import Math.Algebra.Hspray                      ( FunctionLike (..)
-                                                , Spray, lone, qlone 
+                                                , Spray, QSpray
+                                                , lone, qlone 
                                                 , evalSpray 
                                                 , evalParametricSpray'
                                                 , substituteParameters
@@ -20,7 +22,9 @@ import Math.Algebra.Jack.SymmetricPolynomials   ( isSymmetricSpray
                                                 , laplaceBeltrami
                                                 , calogeroSutherland
                                                 , hallInnerProduct
-                                                , psPolynomial )
+                                                , psPolynomial 
+                                                , psCombination
+                                                )
 import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol'
                                                 , schurPol, schurPol', skewSchurPol' )
 import Math.Algebra.JackSymbolicPol             ( jackSymbolicPol' )
@@ -135,7 +139,8 @@ main = defaultMain $ testGroup
         sp3 = schurPol 4 [2, 2]
         sp4 = schurPol 4 [2, 1, 1]
         sp5 = schurPol 4 [1, 1, 1, 1] :: Spray Int
-        v = evalSpray (sp1 ^+^ 3 *^ sp2 ^+^ 2 *^ sp3 ^+^ 3 *^ sp4 ^+^ sp5) [2, 2, 2, 2]
+        v = evalSpray (sp1 ^+^ 3 *^ sp2 ^+^ 2 *^ sp3 ^+^ 3 *^ sp4 ^+^ sp5) 
+                        [2, 2, 2, 2]
     assertEqual "" v 4096
 
   , testCase "schurPol is symmetric (Groebner)" $ do
@@ -159,8 +164,9 @@ main = defaultMain $ testGroup
         y = lone 2 :: Spray Rational
         z = lone 3 :: Spray Rational
         skp = skewSchurPol' 3 [2, 2, 1] [1, 1]
-        p = x^**^2 ^*^ y  ^+^  x^**^2 ^*^ z  ^+^  x ^*^ y^**^2  ^+^  3 *^ (x ^*^ y ^*^ z) 
-            ^+^  x ^*^ z^**^2  ^+^  y^**^2 ^*^ z  ^+^  y ^*^ z^**^2
+        p = x^**^2 ^*^ y  ^+^  x^**^2 ^*^ z  ^+^  x ^*^ y^**^2  
+            ^+^  3 *^ (x ^*^ y ^*^ z)  ^+^  x ^*^ z^**^2  
+            ^+^  y^**^2 ^*^ z  ^+^  y ^*^ z^**^2
     assertEqual "" skp p 
 
   , testCase "skewSchurPol is symmetric (Groebner)" $ do
@@ -229,6 +235,16 @@ main = defaultMain $ testGroup
         asRatioOfSprays (t^**^3 /^ 6 ^+^ t^**^2 /^ 2 ^+^ t /^ 3)
       , (2*^t^**^3 ^+^ t^**^2) %//% (t <+ 2)
       , (3*^t^**^3) %//% ((t^**^2 ^+^ (3%2)*^t) <+ (1%2))
+      )
+
+  , testCase "Power sum polynomial and power sum combination" $ do
+    let
+      psPoly = 3*^psPolynomial 4 [2, 1, 1] ^-^ psPolynomial 4 [2, 1] :: QSpray
+      psCombo = psCombination psPoly
+    assertEqual ""
+      psCombo 
+      (
+        DM.fromList [([2, 1, 1], 3), ([2, 1], -1)]
       )
 
   ]

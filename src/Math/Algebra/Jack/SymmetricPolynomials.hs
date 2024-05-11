@@ -243,7 +243,7 @@ psPolynomial n lambda
   | otherwise                 = productOfSprays sprays
     where
       lambda' = fromPartition $ mkPartition lambda
-      llambda      = length lambda'
+      llambda = length lambda'
       sprays = [HM.fromList $ [f i k | i <- [1 .. n]] | k <- lambda']
       f j k = (Powers expts j, AlgRing.one)
         where
@@ -325,7 +325,8 @@ psCombination spray =
     assocs = msCombination' (spray <+ (AlgAdd.negate constantTerm))
     f :: (Partition, a) -> [(Partition, a)] 
     f (lambda, coeff) = 
-      map (second ((AlgRing.* coeff) . AlgField.fromRational)) (DM.toList psCombo)
+      map (second ((AlgRing.* coeff) . AlgField.fromRational)) 
+          (DM.toList psCombo)
       where
         psCombo = mspInPSbasis lambda :: Map Partition Rational
     psMap = DM.filter (/= AlgAdd.zero) 
@@ -333,7 +334,8 @@ psCombination spray =
 
 -- | Symmetric polynomial as a linear combination of power sum polynomials
 psCombination' :: 
-  forall a. (Eq a, AlgMod.C Rational a, AlgRing.C a) => Spray a -> Map Partition a
+  forall a. (Eq a, AlgMod.C Rational a, AlgRing.C a) 
+  => Spray a -> Map Partition a
 psCombination' spray =
   if constantTerm == AlgAdd.zero 
     then psMap
@@ -349,7 +351,7 @@ psCombination' spray =
     psMap = DM.filter (/= AlgAdd.zero) 
             (unionsWith (AlgAdd.+) (map (DM.fromList . f) assocs))
 
--- Hall inner product with parameter
+-- | Hall inner product with parameter
 hallInnerProduct :: 
   forall a. (Eq a, AlgField.C a)
   => Spray a   -- ^ spray
@@ -369,7 +371,7 @@ hallInnerProduct spray1 spray2 alpha =
     f lambda coeff1 coeff2 = 
       zlambda' lambda AlgRing.* (coeff1 AlgRing.* coeff2)
 
--- Hall inner product with parameter
+-- | Hall inner product with parameter
 hallInnerProduct' :: 
   forall a. (Eq a, AlgMod.C Rational a, AlgRing.C a)
   => Spray a   -- ^ spray

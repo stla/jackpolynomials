@@ -57,6 +57,7 @@ test-suite unit-tests
                       , hspray >= 0.5.0.0 && < 0.6.0.0
                       , hypergeomatrix >= 1.1.0.2 && < 2
                       , combinat >= 0.2.10 && < 0.3
+                      , containers >= 0.6.4.1 && < 0.8
   Default-Language:     Haskell2010
   ghc-options:         -Wall
                        -Wcompat
