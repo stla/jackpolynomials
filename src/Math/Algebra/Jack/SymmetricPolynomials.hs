@@ -26,8 +26,8 @@ module Math.Algebra.Jack.SymmetricPolynomials
   , calogeroSutherland
   , psPolynomial
   , psCombination
-  , hallInnerProduct
   , psCombination'
+  , hallInnerProduct
   , hallInnerProduct'
   , hallInnerProduct''
   , hallInnerProduct'''
@@ -328,10 +328,10 @@ zlambda lambda = p
       product [factorial mj * part^mj | (part, mj) <- zip parts table]
     factorial n = product [2 .. n]
 
--- | Symmetric polynomial as a linear combination of power sum polynomials
-psCombination :: 
-  forall a. (Eq a, AlgField.C a) => Spray a -> Map Partition a
-psCombination spray =
+-- | symmetric polynomial as a linear combination of power sum polynomials
+_psCombination :: 
+  forall a. (Eq a, AlgRing.C a) => (a -> Rational -> a) -> Spray a -> Map Partition a
+_psCombination func spray =
   if constantTerm == AlgAdd.zero 
     then psMap
     else insert [] constantTerm psMap
@@ -340,33 +340,27 @@ psCombination spray =
     assocs = msCombination' (spray <+ (AlgAdd.negate constantTerm))
     f :: (Partition, a) -> [(Partition, a)] 
     f (lambda, coeff) = 
-      map (second ((AlgRing.* coeff) . AlgField.fromRational)) 
-          (DM.toList psCombo)
+      map (second (func coeff)) (DM.toList psCombo)
       where
         psCombo = mspInPSbasis lambda :: Map Partition Rational
     psMap = DM.filter (/= AlgAdd.zero) 
             (unionsWith (AlgAdd.+) (map (DM.fromList . f) assocs))
 
--- | Symmetric polynomial as a linear combination of power sum polynomials
+-- | Symmetric polynomial as a linear combination of power sum polynomials. 
+-- Symmetry is not checked.
+psCombination :: 
+  forall a. (Eq a, AlgField.C a) => Spray a -> Map Partition a
+psCombination = 
+  _psCombination (\coef r -> coef AlgRing.* (AlgField.fromRational r))
+
+-- | Symmetric polynomial as a linear combination of power sum polynomials. 
+-- Same as @psCombination@ but with other constraints on the base ring of the spray.
 psCombination' :: 
   forall a. (Eq a, AlgMod.C Rational a, AlgRing.C a) 
   => Spray a -> Map Partition a
-psCombination' spray =
-  if constantTerm == AlgAdd.zero 
-    then psMap
-    else insert [] constantTerm psMap
-  where
-    constantTerm = getConstantTerm spray
-    assocs = msCombination' (spray <+ (AlgAdd.negate constantTerm))
-    f :: (Partition, a) -> [(Partition, a)] 
-    f (lambda, coeff) = 
-      map (second (\r -> r AlgMod.*> coeff)) (DM.toList psCombo)
-      where
-        psCombo = mspInPSbasis lambda :: Map Partition Rational
-    psMap = DM.filter (/= AlgAdd.zero) 
-            (unionsWith (AlgAdd.+) (map (DM.fromList . f) assocs))
+psCombination' = _psCombination (flip (AlgMod.*>))
 
--- | Hall inner product with parameter
+-- | the Hall inner product with parameter
 _hallInnerProduct :: 
   forall a b. (AlgRing.C b, AlgRing.C a)
   => (Spray b -> Map Partition b)
@@ -388,7 +382,8 @@ _hallInnerProduct psCombinationFunc multabFunc spray1 spray2 alpha =
     f lambda coeff1 coeff2 = 
       multabFunc (zlambda' lambda) (coeff1 AlgRing.* coeff2)
 
--- | Hall inner product with parameter
+-- | Hall inner product with parameter. It makes sense only for symmetric sprays,
+-- and the symmetry is not checked. 
 hallInnerProduct :: 
   forall a. (Eq a, AlgField.C a)
   => Spray a   -- ^ spray
@@ -397,7 +392,8 @@ hallInnerProduct ::
   -> a 
 hallInnerProduct = _hallInnerProduct psCombination (AlgRing.*)
 
--- | Hall inner product with parameter
+-- | Hall inner product with parameter. Same as @hallInnerProduct@ but 
+-- with other constraints on the base ring of the sprays.
 hallInnerProduct' :: 
   forall a. (Eq a, AlgMod.C Rational a, AlgRing.C a)
   => Spray a   -- ^ spray
@@ -406,7 +402,17 @@ hallInnerProduct' ::
   -> a 
 hallInnerProduct' = _hallInnerProduct psCombination' (AlgRing.*)
 
--- | Hall inner product with parameter for parametric sprays
+-- | Hall inner product with parameter for parametric sprays, because the
+-- type of the parameter in @hallInnerProduct@ is strange. For example, a
+-- @ParametricQSpray@ spray is a @Spray RatioOfQSprays@ spray, and it makes
+-- more sense to compute the Hall product with a @Rational@ parameter then 
+-- to compute the Hall product with a @RatioOfQSprays@ parameter.
+--
+-- >>> import Math.Algebra.Jack.SymmetricPolynomials
+-- >>> import Math.Algebra.JackSymbolicPol
+-- >>> import Math.Algebra.Hspray
+-- >>> jp = jackSymbolicPol 3 [2, 1] 'P'
+-- >>> hallInnerProduct'' jp jp 5 == hallInnerProduct jp jp (constantRatioOfSprays 5)
 hallInnerProduct'' :: 
   forall b. (Eq b, AlgField.C b, AlgMod.C (BaseRing b) b)
   => Spray b    -- ^ parametric spray
@@ -415,7 +421,8 @@ hallInnerProduct'' ::
   -> b 
 hallInnerProduct'' = _hallInnerProduct psCombination (AlgMod.*>) 
 
--- | Hall inner product with parameter for parametric sprays
+-- | Hall inner product with parameter for parametric sprays. Same as 
+-- @hallInnerProduct''@ but with other constraints on the types.
 hallInnerProduct''' :: 
   forall b. (Eq b, AlgRing.C b, AlgMod.C Rational b, AlgMod.C (BaseRing b) b)
   => Spray b    -- ^ parametric spray
@@ -424,49 +431,7 @@ hallInnerProduct''' ::
   -> b 
 hallInnerProduct''' = _hallInnerProduct psCombination' (AlgMod.*>) 
 
--- hallSymbolic :: 
---   QSpray -> QSpray -> QSpray
--- hallSymbolic spray1 spray2 = hallInnerProduct' spray1' spray2' alpha
---   where
---     spray1' = HM.map constantSpray spray1
---     spray2' = HM.map constantSpray spray2
---     alpha = qlone 1
-
--- test :: String
--- test = prettyQSpray $ hallSymbolic poly poly
---   where poly = psPolynomial 4 [2,1,1]
-
--- hallSymbolic' :: 
---   Int -> ParametricQSpray -> ParametricQSpray -> ParametricQSpray
--- hallSymbolic' i spray1 spray2 = hallInnerProduct' spray1' spray2' alpha
---   where
---     spray1' = HM.map constantSpray spray1
---     spray2' = HM.map constantSpray spray2
---     alpha = lone i
-
--- test' :: (String, String, String, Rational, Rational, String, String)
--- test' = (
---           prettyParametricQSpray result1
---         , prettyRatioOfQSpraysXYZ ["a"] $ evalParametricSpray result1 [5]
---         , prettyRatioOfQSpraysXYZ ["a"] $ hallInnerProduct jsp jsp (constantRatioOfSprays 5)
---         , evaluate (evalParametricSpray result1 [5]) [7]
---         , hallInnerProduct jp jp 5
---         , prettyRatioOfQSpraysXYZ ["a"] $ evaluate result1 [asRatioOfSprays (qlone 1)]
---         , prettyRatioOfQSpraysXYZ ["a"] $ hallInnerProduct jsp jsp (asRatioOfSprays (qlone 1))
---         )
---   where 
---     jsp = jackSymbolicPol' 3 [2, 1] 'P'
---     result1 = hallSymbolic' 1 jsp jsp
---     jp = jackPol' 3 [2, 1] 7 'P'
-
--- hallParametric :: 
---   forall b. (FunctionLike b, Eq b, AlgMod.C Rational b, AlgRing.C b) => Spray b -> Spray b -> Spray b
--- hallParametric spray1 spray2 = hallInnerProduct' spray1' spray2' alpha
---   where
---     spray1' = HM.map constantSpray spray1
---     spray2' = HM.map constantSpray spray2
---     alpha = lone 1 
-
+-- | Hall inner product with symbolic parameter. See README for some examples
 symbolicHallInnerProduct :: 
   (Eq a, AlgMod.C Rational (Spray a), AlgRing.C a) 
   => Spray a -> Spray a -> Spray a
