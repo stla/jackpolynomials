@@ -32,6 +32,7 @@ module Math.Algebra.Jack.SymmetricPolynomials
   , hallInnerProduct''
   , hallInnerProduct'''
   , symbolicHallInnerProduct
+  , symbolicHallInnerProduct'
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -431,15 +432,44 @@ hallInnerProduct''' ::
   -> b 
 hallInnerProduct''' = _hallInnerProduct psCombination' (AlgMod.*>) 
 
--- | Hall inner product with symbolic parameter. See README for some examples
-symbolicHallInnerProduct :: 
-  (Eq a, AlgMod.C Rational (Spray a), AlgRing.C a) 
-  => Spray a -> Spray a -> Spray a
-symbolicHallInnerProduct spray1 spray2 = 
-  hallInnerProduct' spray1' spray2' (lone 1)
+-- | the Hall inner product with symbolic parameter
+_symbolicHallInnerProduct :: 
+  (Eq a, AlgRing.C a) 
+  => (Spray (Spray a) -> Spray (Spray a) -> Spray a -> Spray a) 
+  -> Spray a -> Spray a -> Spray a
+_symbolicHallInnerProduct func spray1 spray2 = func spray1' spray2' (lone 1)
   where
     spray1' = HM.map constantSpray spray1
     spray2' = HM.map constantSpray spray2
+
+-- | Hall inner product with symbolic parameter. See README for some examples
+symbolicHallInnerProduct :: 
+  (Eq a, AlgField.C a) => Spray a -> Spray a -> Spray a
+symbolicHallInnerProduct =
+  _symbolicHallInnerProduct 
+    (
+      _hallInnerProduct 
+        (_psCombination (\coef r -> (AlgField.fromRational r) *^ coef)) 
+        (AlgRing.*)
+    ) 
+  -- _hallInnerProduct 
+  --   (_psCombination (\coef r -> (AlgField.fromRational r) *^ coef)) 
+  --   (AlgRing.*) spray1' spray2' (lone 1)
+  -- where
+  --   spray1' = HM.map constantSpray spray1
+  --   spray2' = HM.map constantSpray spray2
+
+-- | Hall inner product with symbolic parameter. Same as @symbolicHallInnerProduct@ 
+-- but with other type constraints.
+symbolicHallInnerProduct' :: 
+  (Eq a, AlgMod.C Rational (Spray a), AlgRing.C a) 
+  => Spray a -> Spray a -> Spray a
+symbolicHallInnerProduct' =  _symbolicHallInnerProduct (hallInnerProduct')
+  -- hallInnerProduct' spray1' spray2' (lone 1)
+  -- where
+  --   spray1' = HM.map constantSpray spray1
+  --   spray2' = HM.map constantSpray spray2
+
 
 -- test'' :: (String, String)
 -- test'' = (prettyParametricQSpray result, prettyParametricQSprayABCXYZ ["a"] ["b"] $ result)
