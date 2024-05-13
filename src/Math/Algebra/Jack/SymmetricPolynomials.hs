@@ -31,6 +31,7 @@ module Math.Algebra.Jack.SymmetricPolynomials
   , hallInnerProduct'
   , hallInnerProduct''
   , hallInnerProduct'''
+  , hallInnerProduct''''
   , symbolicHallInnerProduct
   , symbolicHallInnerProduct'
   , symbolicHallInnerProduct''
@@ -406,6 +407,25 @@ hallInnerProduct' ::
   -> a 
 hallInnerProduct' = _hallInnerProduct psCombination' (AlgRing.*)
 
+-- | Hall inner product with parameter. Same as @hallInnerProduct@ but 
+-- with other constraints on the base ring of the sprays. It is applicable 
+-- to @Spray Int@ sprays.
+hallInnerProduct'' :: 
+  forall a. (Real a)
+  => Spray a   -- ^ spray
+  -> Spray a   -- ^ spray
+  -> a         -- ^ parameter
+  -> Rational 
+hallInnerProduct'' spray1 spray2 alpha = 
+  _hallInnerProduct 
+    (_psCombination (*)) (*) qspray1 qspray2 (toRational alpha)
+  where
+    asQSpray :: Spray a -> QSpray
+    asQSpray = HM.map toRational
+    qspray1 = asQSpray spray1
+    qspray2 = asQSpray spray2
+
+
 -- | Hall inner product with parameter for parametric sprays, because the
 -- type of the parameter in @hallInnerProduct@ is strange. For example, a
 -- @ParametricQSpray@ spray is a @Spray RatioOfQSprays@ spray, and it makes
@@ -416,26 +436,26 @@ hallInnerProduct' = _hallInnerProduct psCombination' (AlgRing.*)
 -- >>> import Math.Algebra.JackSymbolicPol
 -- >>> import Math.Algebra.Hspray
 -- >>> jp = jackSymbolicPol 3 [2, 1] 'P'
--- >>> hallInnerProduct'' jp jp 5 == hallInnerProduct jp jp (constantRatioOfSprays 5)
-hallInnerProduct'' :: 
+-- >>> hallInnerProduct''' jp jp 5 == hallInnerProduct jp jp (constantRatioOfSprays 5)
+hallInnerProduct''' :: 
   forall b. (Eq b, AlgField.C b, AlgMod.C (BaseRing b) b)
   => Spray b    -- ^ parametric spray
   -> Spray b    -- ^ parametric spray
   -> BaseRing b -- ^ parameter
   -> b 
-hallInnerProduct'' = _hallInnerProduct psCombination (AlgMod.*>) 
+hallInnerProduct''' = _hallInnerProduct psCombination (AlgMod.*>) 
 
 -- | Hall inner product with parameter for parametric sprays. Same as 
--- @hallInnerProduct''@ but with other constraints on the types. It is 
--- applicable to @SimpleParametricQSpray@ sprays, while @hallInnerProduct''@ 
+-- @hallInnerProduct'''@ but with other constraints on the types. It is 
+-- applicable to @SimpleParametricQSpray@ sprays, while @hallInnerProduct'''@ 
 -- is not.
-hallInnerProduct''' :: 
+hallInnerProduct'''' :: 
   forall b. (Eq b, AlgRing.C b, AlgMod.C Rational b, AlgMod.C (BaseRing b) b)
   => Spray b    -- ^ parametric spray
   -> Spray b    -- ^ parametric spray
   -> BaseRing b -- ^ parameter
   -> b 
-hallInnerProduct''' = _hallInnerProduct psCombination' (AlgMod.*>) 
+hallInnerProduct'''' = _hallInnerProduct psCombination' (AlgMod.*>) 
 
 -- | the Hall inner product with symbolic parameter
 _symbolicHallInnerProduct :: 

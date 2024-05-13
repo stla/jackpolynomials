@@ -22,6 +22,7 @@ import Math.Algebra.Jack.SymmetricPolynomials   ( isSymmetricSpray
                                                 , laplaceBeltrami
                                                 , calogeroSutherland
                                                 , hallInnerProduct
+                                                , hallInnerProduct''
                                                 , symbolicHallInnerProduct
                                                 , symbolicHallInnerProduct''
                                                 , psPolynomial 
@@ -220,6 +221,15 @@ main = defaultMain $ testGroup
       , 4 * pow alpha 3
       , 24 * pow alpha 4
       )
+
+  , testCase "Hall inner product of Schur polynomials" $ do
+    let
+      sp1 = schurPol 7 [4, 2, 1] :: Spray Int
+      sp2 = schurPol 7 [2, 2, 2, 1] :: Spray Int
+      h1 = hallInnerProduct'' sp1 sp1 1
+      h2 = hallInnerProduct'' sp2 sp2 1
+      h12 = hallInnerProduct'' sp1 sp2 1
+    assertEqual "" (h1, h2, h12) (1, 1, 0)
 
   , testCase "Symbolic Hall inner product" $ do
     let
