@@ -9,24 +9,32 @@ A Jack polynomial can have a very long expression in the canonical basis.
 A considerably shorter expression is obtained by writing the polynomial as 
 a linear combination of the monomial symmetric polynomials instead, which is 
 always possible since Jack polynomials are symmetric. This is the initial 
-motivation of this module. 
+motivation of this module. But now it contains more stuff dealing with 
+symmetric polynomials.
 -}
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Math.Algebra.Jack.SymmetricPolynomials
-  ( isSymmetricSpray
+module Math.Algebra.SymmetricPolynomials
+  ( 
+  -- * Checking symmetry
+    isSymmetricSpray
+  -- * Classical symmetric polynomials
   , msPolynomial
+  , psPolynomial
+  -- * Decomposition of symmetric polynomials
   , msCombination
+  , psCombination
+  , psCombination'
+  -- * Printing symmetric polynomials
   , prettySymmetricNumSpray
   , prettySymmetricQSpray
   , prettySymmetricQSpray'
   , prettySymmetricParametricQSpray
+  -- * Operators on the space of symmetric polynomials
   , laplaceBeltrami
   , calogeroSutherland
-  , psPolynomial
-  , psCombination
-  , psCombination'
+  -- * Hall inner product of symmetric polynomials
   , hallInnerProduct
   , hallInnerProduct'
   , hallInnerProduct''

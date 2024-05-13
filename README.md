@@ -88,7 +88,7 @@ a symmetric polynomial. Here is an example:
 
 ```haskell
 import Math.Algebra.JackPol
-import Math.Algebra.Jack.SymmetricPolynomials
+import Math.Algebra.SymmetricPolynomials
 jp = jackPol' 3 [3, 1, 1] 2 'J'
 putStrLn $ prettySymmetricQSpray jp
 -- 42*M[3,1,1] + 28*M[2,2,1]
@@ -98,7 +98,7 @@ And another example, with a symbolic Jack polynomial:
 
 ```haskell
 import Math.Algebra.JackSymbolicPol
-import Math.Algebra.Jack.SymmetricPolynomials
+import Math.Algebra.SymmetricPolynomials
 jp = jackSymbolicPol' 3 [3, 1, 1] 'J'
 putStrLn $ prettySymmetricParametricQSpray ["a"] jp
 -- { [ 4*a^2 + 10*a + 6 ] }*M[3,1,1] + { [ 8*a + 12 ] }*M[2,2,1]
@@ -128,7 +128,7 @@ polynomials are implemented in the package. We display the result by using
 `alpha` to denote the parameter of the Hall product.
 
 ```haskell
-import Math.Algebra.Jack.SymmetricPolynomials 
+import Math.Algebra.SymmetricPolynomials 
 import Math.Algebra.Hspray hiding (psPolynomial)
 psPoly = psPolynomial 4 [2, 1, 1] :: QSpray
 hip = symbolicHallInnerProduct psPoly psPoly
@@ -153,7 +153,7 @@ returns a `ParametricQSpray` spray, a type alias of `Spray RatioOfQSprays`.
 
 ```haskell
 import Math.Algebra.JackSymbolicPol
-import Math.Algebra.Jack.SymmetricPolynomials 
+import Math.Algebra.SymmetricPolynomials 
 import Math.Algebra.Hspray 
 jp = jackSymbolicPol' 2 [3, 1] 'P'
 hip = symbolicHallInnerProduct jp jp

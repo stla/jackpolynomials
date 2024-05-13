@@ -17,7 +17,7 @@ import qualified Math.Algebra.Hspray            as Hspray
 import Math.Algebra.Jack                        ( schur, skewSchur 
                                                 , jack', zonal' )
 import Math.Algebra.Jack.HypergeoPQ             ( hypergeoPQ )
-import Math.Algebra.Jack.SymmetricPolynomials   ( isSymmetricSpray
+import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , prettySymmetricParametricQSpray
                                                 , laplaceBeltrami
                                                 , calogeroSutherland
