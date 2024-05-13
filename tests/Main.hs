@@ -23,6 +23,7 @@ import Math.Algebra.Jack.SymmetricPolynomials   ( isSymmetricSpray
                                                 , calogeroSutherland
                                                 , hallInnerProduct
                                                 , symbolicHallInnerProduct
+                                                , symbolicHallInnerProduct''
                                                 , psPolynomial 
                                                 , psCombination
                                                 )
@@ -220,7 +221,7 @@ main = defaultMain $ testGroup
       , 24 * pow alpha 4
       )
 
-  , testCase "Hall inner product symbolic" $ do
+  , testCase "Symbolic Hall inner product" $ do
     let
       poly1 = psPolynomial 4 [4] :: QSpray
       poly2 = psPolynomial 4 [3, 1] :: QSpray
@@ -243,7 +244,16 @@ main = defaultMain $ testGroup
       , 24 *^ alpha^**^4
       )
 
-  , testCase "Hall inner product symbolic with parametric sprays" $ do
+  , testCase "Symbolic Hall inner product of Schur polynomials" $ do
+    let
+      sp1 = schurPol 7 [4, 2, 1] :: Spray Int
+      sp2 = schurPol 7 [2, 2, 2, 1] :: Spray Int
+      h1 = evaluateAt [1] (symbolicHallInnerProduct'' sp1 sp1)
+      h2 = evaluateAt [1] (symbolicHallInnerProduct'' sp2 sp2)
+      h12 = evaluateAt [1] (symbolicHallInnerProduct'' sp1 sp2)
+    assertEqual "" (h1, h2, h12) (1, 1, 0)
+
+  , testCase "Symbolic Hall inner product with parametric sprays" $ do
     let
       jp1 = jackSymbolicPol' 3 [1, 1, 1] 'P'
       jp2 = jackSymbolicPol' 3 [2, 1] 'P'

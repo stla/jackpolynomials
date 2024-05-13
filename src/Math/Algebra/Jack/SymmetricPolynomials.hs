@@ -426,7 +426,9 @@ hallInnerProduct'' ::
 hallInnerProduct'' = _hallInnerProduct psCombination (AlgMod.*>) 
 
 -- | Hall inner product with parameter for parametric sprays. Same as 
--- @hallInnerProduct''@ but with other constraints on the types.
+-- @hallInnerProduct''@ but with other constraints on the types. It is 
+-- applicable to @SimpleParametricQSpray@ sprays, while @hallInnerProduct''@ 
+-- is not.
 hallInnerProduct''' :: 
   forall b. (Eq b, AlgRing.C b, AlgMod.C Rational b, AlgMod.C (BaseRing b) b)
   => Spray b    -- ^ parametric spray
@@ -445,7 +447,7 @@ _symbolicHallInnerProduct func spray1 spray2 = func spray1' spray2' (lone 1)
     spray1' = HM.map constantSpray spray1
     spray2' = HM.map constantSpray spray2
 
--- | Hall inner product with symbolic parameter. See README for some examples
+-- | Hall inner product with symbolic parameter. See README for some examples.
 symbolicHallInnerProduct :: 
   (Eq a, AlgField.C a) => Spray a -> Spray a -> Spray a
 symbolicHallInnerProduct =
