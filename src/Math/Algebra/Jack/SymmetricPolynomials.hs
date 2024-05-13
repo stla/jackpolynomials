@@ -33,9 +33,11 @@ module Math.Algebra.Jack.SymmetricPolynomials
   , hallInnerProduct'''
   , symbolicHallInnerProduct
   , symbolicHallInnerProduct'
+  , symbolicHallInnerProduct''
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
+import           Algebra.Field                    ( fromRational )
 import qualified Algebra.Field                    as AlgField
 import qualified Algebra.Module                   as AlgMod
 import qualified Algebra.Ring                     as AlgRing
@@ -72,6 +74,7 @@ import           Math.Algebra.Hspray              (
                                                   , QSpray'
                                                   , ParametricQSpray
                                                   , lone
+                                                  , qlone
                                                   , lone'
                                                   , fromList
                                                   , getCoefficient
@@ -352,7 +355,7 @@ _psCombination func spray =
 psCombination :: 
   forall a. (Eq a, AlgField.C a) => Spray a -> Map Partition a
 psCombination = 
-  _psCombination (\coef r -> coef AlgRing.* (AlgField.fromRational r))
+  _psCombination (\coef r -> coef AlgRing.* fromRational r)
 
 -- | Symmetric polynomial as a linear combination of power sum polynomials. 
 -- Same as @psCombination@ but with other constraints on the base ring of the spray.
@@ -449,15 +452,8 @@ symbolicHallInnerProduct =
   _symbolicHallInnerProduct 
     (
       _hallInnerProduct 
-        (_psCombination (\coef r -> (AlgField.fromRational r) *^ coef)) 
-        (AlgRing.*)
+        (_psCombination (\spray_a r -> fromRational r *^ spray_a)) (^*^)
     ) 
-  -- _hallInnerProduct 
-  --   (_psCombination (\coef r -> (AlgField.fromRational r) *^ coef)) 
-  --   (AlgRing.*) spray1' spray2' (lone 1)
-  -- where
-  --   spray1' = HM.map constantSpray spray1
-  --   spray2' = HM.map constantSpray spray2
 
 -- | Hall inner product with symbolic parameter. Same as @symbolicHallInnerProduct@ 
 -- but with other type constraints.
@@ -465,10 +461,19 @@ symbolicHallInnerProduct' ::
   (Eq a, AlgMod.C Rational (Spray a), AlgRing.C a) 
   => Spray a -> Spray a -> Spray a
 symbolicHallInnerProduct' =  _symbolicHallInnerProduct (hallInnerProduct')
-  -- hallInnerProduct' spray1' spray2' (lone 1)
-  -- where
-  --   spray1' = HM.map constantSpray spray1
-  --   spray2' = HM.map constantSpray spray2
+
+-- | Hall inner product with symbolic parameter. Same as @symbolicHallInnerProduct@ 
+-- but with other type constraints. It is applicable to @Spray Int@ sprays.
+symbolicHallInnerProduct'' :: forall a. Real a => Spray a -> Spray a -> QSpray
+symbolicHallInnerProduct'' spray1 spray2 = 
+  _hallInnerProduct 
+    (_psCombination (\qspray r -> r *^ qspray)) (^*^)
+    qspray1' qspray2' (qlone 1)
+  where
+    asQSpray :: Spray a -> QSpray
+    asQSpray = HM.map toRational
+    qspray1' = HM.map constantSpray (asQSpray spray1)
+    qspray2' = HM.map constantSpray (asQSpray spray2)
 
 
 -- test'' :: (String, String)
