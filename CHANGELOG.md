@@ -64,7 +64,9 @@ the Jack polynomials are eigenpolynomials of these operators
 * new function `psPolynomial`, to get a power sum symmetric polynomial
 
 * new function `psCombination`, to get a symmetric polynomial as a linear 
-combination of power sum polynomials
+combination of some power sum polynomials
 
 * new function `hallInnerProduct`, to compute the Hall inner product between 
-two symmetric polynomials
+two symmetric polynomials, and there is also the function 
+`symbolicHallInnerProduct`, to get the Hall inner product with a symbolic 
+parameter
