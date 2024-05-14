@@ -101,18 +101,7 @@ import           Math.Algebra.Hspray              (
                                                   , unitSpray
                                                   , productOfSprays
                                                   , constantSpray
-                                                  -- , prettyQSpray
-                                                  -- , qlone
-                                                  -- , prettyParametricQSpray
-                                                  -- , substituteParameters
-                                                  -- , evalParametricSpray
-                                                  -- , constantRatioOfSprays
-                                                  -- , asRatioOfSprays
-                                                  -- , prettyParametricQSprayABCXYZ
                                                   )
--- import Math.Algebra.JackSymbolicPol             ( jackSymbolicPol' )
--- import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol'
---                                                 , schurPol, schurPol', skewSchurPol' )
 import           Math.Algebra.Jack.Internal       ( Partition , _isPartition )
 import           Math.Combinat.Compositions       ( compositions1 )
 import           Math.Combinat.Partitions.Integer ( 
@@ -122,7 +111,7 @@ import           Math.Combinat.Partitions.Integer (
                                                   )
 import           Math.Combinat.Permutations       ( permuteMultiset )
 
--- | Monomial symmetric polynomials
+-- | Monomial symmetric polynomial
 --
 -- >>> putStrLn $ prettySpray' (msPolynomial 3 [2, 1])
 -- (1) x1^2.x2 + (1) x1^2.x3 + (1) x1.x2^2 + (1) x1.x3^2 + (1) x2^2.x3 + (1) x2.x3^2
@@ -214,7 +203,7 @@ prettySymmetricParametricQSpray letters spray =
   where
     mspray = makeMSpray spray
 
--- Laplace-Beltrami operator on the space of homogeneous symmetric polynomials;
+-- | Laplace-Beltrami operator on the space of homogeneous symmetric polynomials;
 -- neither symmetry and homogeneity are checked
 laplaceBeltrami :: (Eq a, AlgField.C a) => a -> Spray a -> Spray a
 laplaceBeltrami alpha spray = 
@@ -232,7 +221,7 @@ laplaceBeltrami alpha spray =
               [(lone' i 2 ^*^ dsprays !! (i-1)) %//% (lone i ^-^ lone j)
                 | i <- range, j <- range, i /= j]
 
--- Calogero-Sutherland operator on the space of homogeneous symmetric polynomials;
+-- | Calogero-Sutherland operator on the space of homogeneous symmetric polynomials;
 -- neither symmetry and homogeneity are checked
 calogeroSutherland :: (Eq a, AlgField.C a) => a -> Spray a -> Spray a
 calogeroSutherland alpha spray = 
@@ -253,7 +242,7 @@ calogeroSutherland alpha spray =
           (xi ^+^ xj) ^*^ (xi ^*^ dxi ^-^ xj ^*^ dxj) %//% (xi ^-^ xj)
        | i <- range, j <- [i+1 .. n]]
 
--- | Power sum polynomials
+-- | Power sum polynomial
 --
 -- >>> putStrLn $ prettyQSpray (psPolynomial 3 [2, 1])
 -- x^3 + x^2.y + x^2.z + x.y^2 + x.z^2 + y^3 + y^2.z + y.z^2 + z^3
@@ -333,7 +322,6 @@ mspInPSbasis kappa = DM.fromList (zipWith f weights lambdas)
 -- | the factor in the Hall inner product
 zlambda :: Partition -> Int
 zlambda lambda = p
-  -- p AlgRing.* alpha AlgRing.^ (toInteger $ length lambda)
   where
     parts = nub lambda
     table = [sum [fromEnum (k == j) | k <- lambda] | j <- parts]
@@ -432,7 +420,6 @@ hallInnerProduct'' spray1 spray2 alpha =
     asQSpray = HM.map toRational
     qspray1 = asQSpray spray1
     qspray2 = asQSpray spray2
-
 
 -- | Hall inner product with parameter for parametric sprays, because the
 -- type of the parameter in @hallInnerProduct@ is strange. For example, a
