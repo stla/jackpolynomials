@@ -167,11 +167,11 @@ Hall product are identical. That is, we want to take `alpha = t` in the
 above expression. Since the symbolic Hall product is a `ParametricQSpray` 
 spray, one can substitute its variable `alpha` by a `RatioOfQSprays` 
 object. On the other hand, `t` represents a `QSpray` object, but one can 
-identify a `RatioOfQSprays` to a `QSpray` by taking the unit spray as the 
+identify a `QSpray` to a `RatioOfQSprays` by taking the unit spray as the 
 denominator, that is, by applying the `asRatioOfSprays` function. Finally 
 we get the desired result if we evaluate the symbolic Hall product by 
 replacing `alpha` with `asRatioOfSprays (qlone 1)`, since `t` is the 
-first polynomial variable. 
+first polynomial variable, `qlone 1`. 
 
 ```haskell
 prettyRatioOfQSpraysXYZ ["t"] $ evaluate hip [asRatioOfSprays (qlone 1)]
