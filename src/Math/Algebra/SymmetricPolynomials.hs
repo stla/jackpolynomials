@@ -22,6 +22,7 @@ module Math.Algebra.SymmetricPolynomials
   -- * Classical symmetric polynomials
   , msPolynomial
   , psPolynomial
+  , cshPolynomial
   -- * Decomposition of symmetric polynomials
   , msCombination
   , psCombination
@@ -43,6 +44,7 @@ module Math.Algebra.SymmetricPolynomials
   , symbolicHallInnerProduct
   , symbolicHallInnerProduct'
   , symbolicHallInnerProduct''
+  , test
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -100,6 +102,7 @@ import           Math.Algebra.Hspray              (
                                                   , zeroSpray
                                                   , unitSpray
                                                   , productOfSprays
+                                                  , sumOfSprays
                                                   , constantSpray
                                                   )
 import           Math.Algebra.Jack.Internal       ( Partition , _isPartition )
@@ -255,16 +258,57 @@ psPolynomial n lambda
       error "psPolynomial: negative number of variables."
   | not (_isPartition lambda) = 
       error "psPolynomial: invalid partition."
-  | null lambda'              = unitSpray
+  | null lambda               = unitSpray
   | llambda > n               = zeroSpray
   | otherwise                 = productOfSprays sprays
     where
-      lambda' = fromPartition $ mkPartition lambda
-      llambda = length lambda'
-      sprays = [HM.fromList $ [f i k | i <- [1 .. n]] | k <- lambda']
+      llambda = length lambda
+      sprays = [HM.fromList $ [f i k | i <- [1 .. n]] | k <- lambda]
       f j k = (Powers expts j, AlgRing.one)
         where
           expts = S.replicate (j-1) 0 |> k
+
+eLambdaMu :: Partition -> Partition -> Rational
+eLambdaMu lambda mu 
+  | ellLambda < ellMu = 0
+  | otherwise = if even (ellLambda - ellMu) 
+      then sum xs 
+      else - sum xs
+  where
+    ellLambda = length lambda
+    ellMu     = length mu
+    compos = compositions1 ellMu ellLambda
+    lambdaPerms = permuteMultiset lambda
+    sequencesOfPartitions = filter (not . null)
+      [partitionSequences perm compo 
+        | perm <- lambdaPerms, compo <- compos]
+    xs = [eMuNus nus | nus <- sequencesOfPartitions]
+    ----
+    partitionSequences :: [Int] -> [Int] -> [Partition]
+    partitionSequences kappa compo = if test then nus else []
+      where
+        headOfCompo = fst $ fromJust (unsnoc compo)
+        starts = scanl (+) 0 headOfCompo 
+        ends   = zipWith (+) starts compo
+        nus = [ 
+                [ kappa !! k | k <- [starts !! i .. ends !! i - 1] ] 
+                | i <- [0 .. length compo - 1]
+              ]
+        nuWeights = [sum nu | nu <- nus]
+        decreasing ys = 
+          and [ys !! i >= ys !! (i+1) | i <- [0 .. length ys - 2]]
+        test = and (zipWith (==) mu nuWeights) && all decreasing nus
+    ---- 
+    eMuNus :: [Partition] -> Rational
+    eMuNus nus = product toMultiply
+      where
+        w :: Int -> Partition -> Rational
+        w k nu = 
+          let table = [sum [fromEnum (i == j) | i <- nu] | j <- nub nu] in
+          (toInteger $ k * factorial (length nu - 1)) % 
+            (toInteger $ product (map factorial table))
+        factorial n = product [2 .. n]
+        toMultiply = zipWith w mu nus
 
 -- | monomial symmetric polynomial as a linear combination of 
 -- power sum polynomials
@@ -276,48 +320,6 @@ mspInPSbasis kappa = DM.fromList (zipWith f weights lambdas)
       [(eLambdaMu kappa lambda, lambda) | lambda <- parts]
     f weight lambda = 
       (lambda, weight / toRational (zlambda lambda))
-    ----
-    eLambdaMu :: Partition -> Partition -> Rational
-    eLambdaMu lambda mu 
-      | ellLambda < ellMu = 0
-      | otherwise = if even (ellLambda - ellMu) 
-          then sum xs 
-          else - sum xs
-      where
-        ellLambda = length lambda
-        ellMu     = length mu
-        compos = compositions1 ellMu ellLambda
-        lambdaPerms = permuteMultiset lambda
-        sequencesOfPartitions = filter (not . null)
-          [partitionSequences perm mu compo 
-            | perm <- lambdaPerms, compo <- compos]
-        xs = [eMuNus mu nus | nus <- sequencesOfPartitions]
-    ----
-    partitionSequences :: [Int] -> Partition -> [Int] -> [Partition]
-    partitionSequences lambda mu compo = if test then nus else []
-      where
-        headOfCompo = fst $ fromJust (unsnoc compo)
-        starts = scanl (+) 0 headOfCompo 
-        ends   = zipWith (+) starts compo
-        nus = [ 
-                [ lambda !! k | k <- [starts !! i .. ends !! i - 1] ] 
-                | i <- [0 .. length compo - 1]
-              ]
-        nuWeights = [sum nu | nu <- nus]
-        decreasing xs = 
-          and [xs !! i >= xs !! (i+1) | i <- [0 .. length xs - 2]]
-        test = and (zipWith (==) mu nuWeights) && all decreasing nus
-    ---- 
-    eMuNus :: Partition -> [Partition] -> Rational
-    eMuNus mu nus = product toMultiply
-      where
-        w :: Int -> Partition -> Rational
-        w k nu = 
-          let table = [sum [fromEnum (i == j) | i <- nu] | j <- nub nu] in
-          (toInteger $ k * factorial (length nu - 1)) % 
-            (toInteger $ product (map factorial table))
-        factorial n = product [2 .. n]
-        toMultiply = zipWith w mu nus
 
 -- | the factor in the Hall inner product
 zlambda :: Partition -> Int
@@ -491,6 +493,46 @@ symbolicHallInnerProduct'' spray1 spray2 =
     asQSpray = HM.map toRational
     qspray1' = HM.map constantSpray (asQSpray spray1)
     qspray2' = HM.map constantSpray (asQSpray spray2)
+
+-- | Complete symmetric homogeneous polynomial
+--
+-- >>> putStrLn $ prettyQSpray (cshPolynomial 3 [2, 1])
+-- 
+cshPolynomial :: (AlgRing.C a, Eq a) 
+  => Int       -- ^ number of variables
+  -> Partition -- ^ integer partition
+  -> Spray a
+cshPolynomial n lambda
+  | n < 0                     = 
+      error "cshPolynomial: negative number of variables."
+  | not (_isPartition lambda) = 
+      error "cshPolynomial: invalid partition."
+  | null lambda               = unitSpray
+  | llambda > n               = zeroSpray
+  | otherwise                 = productOfSprays (map cshPolynomialK lambda)
+    where
+      llambda = length lambda
+      cshPolynomialK k = sumOfSprays msSprays
+        where
+          parts = partitions k
+          msSprays = [msPolynomial n (fromPartition part) | part <- parts]
+
+-- | power sum polynomial as a linear combination of 
+-- complete symmetric homogeneous polynomials
+pspInCSHbasis :: Partition -> Map Partition Rational
+pspInCSHbasis mu = DM.fromList (zipWith f weights lambdas)
+  where
+    parts = partitions (sum mu)
+    (weights, lambdas) = unzip $ filter ((/= 0) . fst) 
+      [(eLambdaMu (fromPartition lambda) mu, fromPartition lambda) | lambda <- parts]
+    f weight lambda = (lambda, weight)
+
+test :: Bool
+test = psp == sumOfSprays cshs
+  where
+    mu = [3, 2, 1, 1]
+    psp = psPolynomial 7 mu :: QSpray
+    cshs = [c *^ cshPolynomial 7 lambda | (lambda, c) <- DM.toList (pspInCSHbasis mu)]
 
 
 -- test'' :: (String, String)
