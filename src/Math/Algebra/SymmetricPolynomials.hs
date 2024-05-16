@@ -73,7 +73,8 @@ import           Data.Map.Merge.Strict            (
 import           Data.Ratio                       ( (%) )
 import           Data.Sequence                    ( 
                                                     Seq
-                                                  , (|>) 
+                                                  , (|>)
+                                                  , index 
                                                   )
 import qualified Data.Sequence                    as S
 import           Data.Tuple.Extra                 ( second )
@@ -99,21 +100,32 @@ import           Math.Algebra.Hspray              (
                                                   , showQSpray
                                                   , showQSpray'
                                                   , showSpray
-                                                  , toList
                                                   , zeroSpray
                                                   , unitSpray
                                                   , productOfSprays
                                                   , sumOfSprays
                                                   , constantSpray
+                                                  , allExponents
                                                   )
 import           Math.Algebra.Jack.Internal       ( Partition , _isPartition )
 import           Math.Combinat.Compositions       ( compositions1 )
 import           Math.Combinat.Partitions.Integer ( 
                                                     fromPartition
-                                                  , mkPartition
                                                   , partitions 
                                                   )
 import           Math.Combinat.Permutations       ( permuteMultiset )
+
+-- | monomial symmetric polynomial
+msPolynomialUnsafe :: (AlgRing.C a, Eq a) 
+  => Int       -- ^ number of variables
+  -> Partition -- ^ integer partition
+  -> Spray a
+msPolynomialUnsafe n lambda
+  = fromList $ zip permutations coefficients
+    where
+      llambda      = length lambda
+      permutations = permuteMultiset (lambda ++ replicate (n-llambda) 0)
+      coefficients = repeat AlgRing.one
 
 -- | Monomial symmetric polynomial
 --
@@ -128,12 +140,8 @@ msPolynomial n lambda
       error "msPolynomial: negative number of variables."
   | not (_isPartition lambda) = 
       error "msPolynomial: invalid partition."
-  | llambda > n               = zeroSpray
-  | otherwise                 = fromList $ zip permutations coefficients
-    where
-      llambda      = length lambda
-      permutations = permuteMultiset (lambda ++ replicate (n-llambda) 0)
-      coefficients = repeat AlgRing.one
+  | length lambda > n         = zeroSpray
+  | otherwise                 = msPolynomialUnsafe n lambda
 
 -- | Checks whether a spray defines a symmetric polynomial; this is useless for 
 -- Jack polynomials because they always are symmetric, but this module contains 
@@ -154,9 +162,12 @@ msCombination spray = DM.fromList (msCombination' spray)
 
 msCombination' :: AlgRing.C a => Spray a -> [(Partition, a)]
 msCombination' spray = 
-  map (\lambda -> (lambda, getCoefficient lambda spray)) lambdas
+  map (\lambda -> let mu = DF.toList lambda in (mu, getCoefficient mu spray)) 
+        lambdas
   where
-    lambdas = nub $ map (fromPartition . mkPartition . fst) (toList spray)
+    decreasing ys = 
+      and [ys `index` i >= ys `index` (i+1) | i <- [0 .. S.length ys - 2]]
+    lambdas = filter decreasing (allExponents spray)
 
 -- helper function for the showing stuff
 makeMSpray :: (Eq a, AlgRing.C a) => Spray a -> Spray a
@@ -516,7 +527,7 @@ cshPolynomial n lambda
       cshPolynomialK k = sumOfSprays msSprays
         where
           parts = partitions k
-          msSprays = [msPolynomial n (fromPartition part) | part <- parts]
+          msSprays = [msPolynomialUnsafe n (fromPartition part) | part <- parts]
 
 -- | power sum polynomial as a linear combination of 
 -- complete symmetric homogeneous polynomials
