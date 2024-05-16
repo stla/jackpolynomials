@@ -27,6 +27,8 @@ module Math.Algebra.SymmetricPolynomials
   , msCombination
   , psCombination
   , psCombination'
+  , cshCombination
+  , cshCombination'
   -- * Printing symmetric polynomials
   , prettySymmetricNumSpray
   , prettySymmetricQSpray
@@ -44,7 +46,6 @@ module Math.Algebra.SymmetricPolynomials
   , symbolicHallInnerProduct
   , symbolicHallInnerProduct'
   , symbolicHallInnerProduct''
-  , test
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -541,13 +542,46 @@ mspInCSHbasis mu = sprayToMap (sumOfSprays sprays)
     sprays = 
       [c *^ comboToSpray (pspInCSHbasis lambda) | (lambda, c) <- psAssocs]
 
-test :: Bool
-test = msp == sumOfSprays cshs
+-- | symmetric polynomial as a linear combination of 
+-- complete symmetric homogeneous polynomials
+_cshCombination :: 
+  forall a. (Eq a, AlgRing.C a) => (a -> Rational -> a) -> Spray a -> Map Partition a
+_cshCombination func spray =
+  if constantTerm == AlgAdd.zero 
+    then cshMap
+    else insert [] constantTerm cshMap
   where
-    mu = [3, 2, 1, 1]
-    msp = msPolynomial 7 mu :: QSpray
-    cshs = [c *^ cshPolynomial 7 lambda | (lambda, c) <- DM.toList (mspInCSHbasis mu)]
+    constantTerm = getConstantTerm spray
+    assocs = msCombination' (spray <+ (AlgAdd.negate constantTerm))
+    f :: (Partition, a) -> [(Partition, a)] 
+    f (lambda, coeff) = 
+      map (second (func coeff)) (DM.toList cshCombo)
+      where
+        cshCombo = mspInCSHbasis lambda :: Map Partition Rational
+    cshMap = DM.filter (/= AlgAdd.zero) 
+            (unionsWith (AlgAdd.+) (map (DM.fromList . f) assocs))
 
+-- | Symmetric polynomial as a linear combination of complete symmetric homogeneous polynomials. 
+-- Symmetry is not checked.
+cshCombination :: 
+  forall a. (Eq a, AlgField.C a) => Spray a -> Map Partition a
+cshCombination = 
+  _cshCombination (\coef r -> coef AlgRing.* fromRational r)
+
+-- | Symmetric polynomial as a linear combination of complete symmetric homogeneous polynomials. 
+-- Same as @cshCombination@ but with other constraints on the base ring of the spray.
+cshCombination' :: 
+  forall a. (Eq a, AlgMod.C Rational a, AlgRing.C a) 
+  => Spray a -> Map Partition a
+cshCombination' = _cshCombination (flip (AlgMod.*>))
+
+
+-- test :: Bool
+-- test = msp == sumOfSprays cshs
+--   where
+--     mu = [3, 2, 1, 1]
+--     msp = msPolynomial 7 mu :: QSpray
+--     cshs = [c *^ cshPolynomial 7 lambda | (lambda, c) <- DM.toList (mspInCSHbasis mu)]
 
 -- test'' :: (String, String)
 -- test'' = (prettyParametricQSpray result, prettyParametricQSprayABCXYZ ["a"] ["b"] $ result)

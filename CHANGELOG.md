@@ -70,3 +70,11 @@ combination of some power sum polynomials
 two symmetric polynomials, and there is also the function 
 `symbolicHallInnerProduct`, to get the Hall inner product with a symbolic 
 parameter
+
+1.4.2.0
+-------
+* new function `cshPolynomial`, to get a complete symmetric homogeneous polynomial
+
+* new function `cshCombination`, to get a symmetric polynomial as a linear 
+combination of some complete symmetric homogeneous polynomials
+

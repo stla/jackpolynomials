@@ -27,6 +27,8 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , symbolicHallInnerProduct''
                                                 , psPolynomial 
                                                 , psCombination
+                                                , cshPolynomial
+                                                , cshCombination
                                                 )
 import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol'
                                                 , schurPol, schurPol', skewSchurPol' )
@@ -287,6 +289,16 @@ main = defaultMain $ testGroup
       psCombo = psCombination psPoly
     assertEqual ""
       psCombo 
+      (
+        DM.fromList [([2, 1, 1], 3), ([2, 1], -1)]
+      )
+
+  , testCase "Complete symmetric homogeneous combination" $ do
+    let
+      cshPoly = 3*^cshPolynomial 4 [2, 1, 1] ^-^ cshPolynomial 4 [2, 1] :: QSpray
+      cshCombo = cshCombination cshPoly
+    assertEqual ""
+      cshCombo 
       (
         DM.fromList [([2, 1, 1], 3), ([2, 1], -1)]
       )
