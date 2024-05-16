@@ -14,7 +14,9 @@ module Math.Algebra.Jack.Internal
   , _N
   , _fromInt
   , skewSchurLRCoefficients
-  , isSkewPartition )
+  , isSkewPartition
+  , sprayToMap
+  , comboToSpray )
   where
 import           Prelude 
   hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger, recip)
@@ -26,12 +28,18 @@ import           Algebra.Ring                                ( (*), product, one
                                                              )
 import qualified Algebra.Ring                                as AlgRing
 import           Algebra.ToInteger                           ( fromIntegral )
+import qualified Data.Foldable                               as DF
+import qualified Data.HashMap.Strict                         as HM
 import           Data.List.Index                             ( iconcatMap )
+import           Data.Map.Strict                             ( Map )
 import qualified Data.Map.Strict                             as DM
+import qualified Data.Sequence                               as S
 import           Math.Algebra.Hspray                         ( 
                                                                RatioOfSprays, (%:%)
                                                              , Spray, (.^)
+                                                             , Powers (..)
                                                              , lone, unitSpray
+                                                             , sumOfSprays
                                                              , FunctionLike (..)
                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
@@ -217,3 +225,12 @@ skewSchurLRCoefficients lambda mu =
 isSkewPartition :: Partition -> Partition -> Bool
 isSkewPartition lambda mu = 
   _isPartition lambda && _isPartition mu && all (>= 0) (zipWith (-) lambda mu)
+
+sprayToMap :: Spray a -> Map [Int] a
+sprayToMap spray = 
+  DM.fromList (HM.toList $ HM.mapKeys (DF.toList . exponents) spray) 
+
+comboToSpray :: (Eq a, AlgRing.C a) => Map Partition a -> Spray a
+comboToSpray combo = sumOfSprays 
+  [ let part' = S.fromList part in HM.singleton (Powers part' (S.length part')) c 
+    | (part, c) <- DM.toList combo ]

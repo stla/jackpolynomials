@@ -29,6 +29,8 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , psCombination
                                                 , cshPolynomial
                                                 , cshCombination
+                                                , esPolynomial
+                                                , esCombination
                                                 )
 import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol'
                                                 , schurPol, schurPol', skewSchurPol' )
@@ -299,6 +301,16 @@ main = defaultMain $ testGroup
       cshCombo = cshCombination cshPoly
     assertEqual ""
       cshCombo 
+      (
+        DM.fromList [([2, 1, 1], 3), ([2, 1], -1)]
+      )
+
+  , testCase "Elementary symmetric polynomials combination" $ do
+    let
+      esPoly = 3*^esPolynomial 4 [2, 1, 1] ^-^ esPolynomial 4 [2, 1] :: QSpray
+      esCombo = esCombination esPoly
+    assertEqual ""
+      esCombo 
       (
         DM.fromList [([2, 1, 1], 3), ([2, 1], -1)]
       )
