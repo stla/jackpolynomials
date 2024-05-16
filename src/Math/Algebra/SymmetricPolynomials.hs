@@ -51,7 +51,6 @@ module Math.Algebra.SymmetricPolynomials
   , symbolicHallInnerProduct
   , symbolicHallInnerProduct'
   , symbolicHallInnerProduct''
-  , test
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -127,8 +126,6 @@ import           Math.Combinat.Partitions.Integer (
                                                   )
 import           Math.Combinat.Permutations       ( permuteMultiset )
 import           Math.Combinat.Tableaux.GelfandTsetlin ( kostkaNumbersWithGivenMu )
-import Math.Algebra.JackPol                     (
-                                                 schurPol' )
 
 
 -- | monomial symmetric polynomial
@@ -551,7 +548,8 @@ cshPolynomial n lambda
       cshPolynomialK k = sumOfSprays msSprays
         where
           parts = partitions k
-          msSprays = [msPolynomialUnsafe n (fromPartition part) | part <- parts]
+          msSprays = 
+            [msPolynomialUnsafe n (fromPartition part) | part <- parts]
 
 -- | power sum polynomial as a linear combination of 
 -- complete symmetric homogeneous polynomials
@@ -559,8 +557,9 @@ pspInCSHbasis :: Partition -> Map Partition Rational
 pspInCSHbasis mu = DM.fromList (zipWith f weights lambdas)
   where
     parts = partitions (sum mu)
-    (weights, lambdas) = unzip $ filter ((/= 0) . fst) 
-      [(eLambdaMu (fromPartition lambda) mu, fromPartition lambda) | lambda <- parts]
+    assoc kappa = 
+      let kappa' = fromPartition kappa in (eLambdaMu kappa' mu, kappa')
+    (weights, lambdas) = unzip $ filter ((/= 0) . fst) (map assoc parts)
     f weight lambda = (lambda, weight)
 
 -- | monomial symmetric polynomial as a linear combination of 
@@ -575,7 +574,8 @@ mspInCSHbasis mu = sprayToMap (sumOfSprays sprays)
 -- | symmetric polynomial as a linear combination of 
 -- complete symmetric homogeneous polynomials
 _cshCombination :: 
-  forall a. (Eq a, AlgRing.C a) => (a -> Rational -> a) -> Spray a -> Map Partition a
+  forall a. (Eq a, AlgRing.C a) 
+  => (a -> Rational -> a) -> Spray a -> Map Partition a
 _cshCombination = _symmPolyCombination mspInCSHbasis
 
 -- | Symmetric polynomial as a linear combination of complete symmetric homogeneous polynomials. 
@@ -639,7 +639,8 @@ mspInESbasis mu = sprayToMap (sumOfSprays sprays)
 -- | symmetric polynomial as a linear combination of 
 -- elementary symmetric polynomials
 _esCombination :: 
-  forall a. (Eq a, AlgRing.C a) => (a -> Rational -> a) -> Spray a -> Map Partition a
+  forall a. (Eq a, AlgRing.C a) 
+  => (a -> Rational -> a) -> Spray a -> Map Partition a
 _esCombination = _symmPolyCombination mspInESbasis
 
 -- | Symmetric polynomial as a linear combination of elementary symmetric polynomials. 
@@ -663,17 +664,18 @@ cshInSchurBasis mu = DM.mapKeys fromPartition (DM.map toRational kostkaNumbers)
   where
     kostkaNumbers = kostkaNumbersWithGivenMu (mkPartition mu)
 
--- | symmetric polynomial as a linear combination of 
--- Schur polynomials
+-- | symmetric polynomial as a linear combination of Schur polynomials
 _schurCombination :: 
-  forall a. (Eq a, AlgRing.C a) => (a -> Rational -> a) -> Spray a -> Map Partition a
+  forall a. (Eq a, AlgRing.C a) 
+  => (a -> Rational -> a) -> Spray a -> Map Partition a
 _schurCombination func spray =
   if constantTerm == AlgAdd.zero 
     then schurMap
     else insert [] constantTerm schurMap
   where
     constantTerm = getConstantTerm spray
-    assocs = DM.toList $ _cshCombination func (spray <+ (AlgAdd.negate constantTerm))
+    assocs = 
+      DM.toList $ _cshCombination func (spray <+ (AlgAdd.negate constantTerm))
     f :: (Partition, a) -> [(Partition, a)] 
     f (lambda, coeff) = 
       map (second (func coeff)) (DM.toList schurCombo)
@@ -697,12 +699,12 @@ schurCombination' ::
 schurCombination' = _schurCombination (flip (AlgMod.*>))
 
 
-test :: Bool
-test = poly == sumOfSprays sprays
-  where
-    mu = [3, 1, 1]
-    poly = msPolynomial 5 mu ^+^ psPolynomial 5 mu ^+^ cshPolynomial 5 mu ^+^ esPolynomial 5 mu :: QSpray
-    sprays = [c *^ schurPol' 5 lambda | (lambda, c) <- DM.toList (schurCombination poly)]
+-- test :: Bool
+-- test = poly == sumOfSprays sprays
+--   where
+--     mu = [3, 1, 1]
+--     poly = msPolynomial 5 mu ^+^ psPolynomial 5 mu ^+^ cshPolynomial 5 mu ^+^ esPolynomial 5 mu :: QSpray
+--     sprays = [c *^ schurPol' 5 lambda | (lambda, c) <- DM.toList (schurCombination poly)]
 
 -- test :: Bool
 -- test = psp == sumOfSprays esps
