@@ -31,6 +31,7 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , cshCombination
                                                 , esPolynomial
                                                 , esCombination
+                                                , schurCombination
                                                 )
 import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol'
                                                 , schurPol, schurPol', skewSchurPol' )
@@ -311,6 +312,16 @@ main = defaultMain $ testGroup
       esCombo = esCombination esPoly
     assertEqual ""
       esCombo 
+      (
+        DM.fromList [([2, 1, 1], 3), ([2, 1], -1)]
+      )
+
+  , testCase "Schur polynomials combination" $ do
+    let
+      poly = 3*^schurPol' 4 [2, 1, 1] ^-^ schurPol' 4 [2, 1]
+      combo = schurCombination poly
+    assertEqual ""
+      combo 
       (
         DM.fromList [([2, 1, 1], 3), ([2, 1], -1)]
       )

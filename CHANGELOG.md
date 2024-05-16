@@ -78,3 +78,7 @@ parameter
 * new function `cshCombination`, to get a symmetric polynomial as a linear 
 combination of some complete symmetric homogeneous polynomials
 
+* new function `esPolynomial`, to get an elementary symmetric polynomial
+
+* new function `esCombination`, to get a symmetric polynomial as a linear 
+combination of some elementary symmetric polynomials

@@ -32,6 +32,8 @@ module Math.Algebra.SymmetricPolynomials
   , cshCombination'
   , esCombination
   , esCombination'
+  , schurCombination
+  , schurCombination'
   -- * Printing symmetric polynomials
   , prettySymmetricNumSpray
   , prettySymmetricQSpray
@@ -120,9 +122,14 @@ import           Math.Algebra.Jack.Internal       (
 import           Math.Combinat.Compositions       ( compositions1 )
 import           Math.Combinat.Partitions.Integer ( 
                                                     fromPartition
+                                                  , mkPartition
                                                   , partitions 
                                                   )
 import           Math.Combinat.Permutations       ( permuteMultiset )
+import           Math.Combinat.Tableaux.GelfandTsetlin ( kostkaNumbersWithGivenMu )
+import Math.Algebra.JackPol                     (
+                                                 schurPol' )
+
 
 -- | monomial symmetric polynomial
 msPolynomialUnsafe :: (AlgRing.C a, Eq a) 
@@ -649,6 +656,53 @@ esCombination' ::
   => Spray a -> Map Partition a
 esCombination' = _esCombination (flip (AlgMod.*>))
 
+-- | complete symmetric homogeneous polynomial as a linear combination of 
+-- Schur polynomials
+cshInSchurBasis :: Partition -> Map Partition Rational
+cshInSchurBasis mu = DM.mapKeys fromPartition (DM.map toRational kostkaNumbers)
+  where
+    kostkaNumbers = kostkaNumbersWithGivenMu (mkPartition mu)
+
+-- | symmetric polynomial as a linear combination of 
+-- Schur polynomials
+_schurCombination :: 
+  forall a. (Eq a, AlgRing.C a) => (a -> Rational -> a) -> Spray a -> Map Partition a
+_schurCombination func spray =
+  if constantTerm == AlgAdd.zero 
+    then schurMap
+    else insert [] constantTerm schurMap
+  where
+    constantTerm = getConstantTerm spray
+    assocs = DM.toList $ _cshCombination func (spray <+ (AlgAdd.negate constantTerm))
+    f :: (Partition, a) -> [(Partition, a)] 
+    f (lambda, coeff) = 
+      map (second (func coeff)) (DM.toList schurCombo)
+      where
+        schurCombo = cshInSchurBasis lambda :: Map Partition Rational
+    schurMap = DM.filter (/= AlgAdd.zero) 
+            (unionsWith (AlgAdd.+) (map (DM.fromList . f) assocs))
+
+-- | Symmetric polynomial as a linear combination of Schur polynomials. 
+-- Symmetry is not checked.
+schurCombination :: 
+  forall a. (Eq a, AlgField.C a) => Spray a -> Map Partition a
+schurCombination = 
+  _schurCombination (\coef r -> coef AlgRing.* fromRational r)
+
+-- | Symmetric polynomial as a linear combination of Schur polynomials. 
+-- Same as @schurCombination@ but with other constraints on the base ring of the spray.
+schurCombination' :: 
+  forall a. (Eq a, AlgMod.C Rational a, AlgRing.C a) 
+  => Spray a -> Map Partition a
+schurCombination' = _schurCombination (flip (AlgMod.*>))
+
+
+test :: Bool
+test = poly == sumOfSprays sprays
+  where
+    mu = [3, 1, 1]
+    poly = msPolynomial 5 mu ^+^ psPolynomial 5 mu ^+^ cshPolynomial 5 mu ^+^ esPolynomial 5 mu :: QSpray
+    sprays = [c *^ schurPol' 5 lambda | (lambda, c) <- DM.toList (schurCombination poly)]
 
 -- test :: Bool
 -- test = psp == sumOfSprays esps
@@ -657,12 +711,12 @@ esCombination' = _esCombination (flip (AlgMod.*>))
 --     psp = psPolynomial 7 mu :: QSpray
 --     esps = [c *^ esPolynomial 7 lambda | (lambda, c) <- DM.toList (pspInESbasis mu)]
 
-test :: Bool
-test = poly == sumOfSprays ess
-  where
-    mu = [3, 1, 1]
-    poly = msPolynomial 5 mu ^+^ psPolynomial 5 mu ^+^ cshPolynomial 5 mu ^+^ esPolynomial 5 mu :: QSpray
-    ess = [c *^ esPolynomial 5 lambda | (lambda, c) <- DM.toList (esCombination poly)]
+-- test :: Bool
+-- test = poly == sumOfSprays ess
+--   where
+--     mu = [3, 1, 1]
+--     poly = msPolynomial 5 mu ^+^ psPolynomial 5 mu ^+^ cshPolynomial 5 mu ^+^ esPolynomial 5 mu :: QSpray
+--     ess = [c *^ esPolynomial 5 lambda | (lambda, c) <- DM.toList (esCombination poly)]
 
 -- test'' :: (String, String)
 -- test'' = (prettyParametricQSpray result, prettyParametricQSprayABCXYZ ["a"] ["b"] $ result)
