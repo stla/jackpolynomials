@@ -527,12 +527,26 @@ pspInCSHbasis mu = DM.fromList (zipWith f weights lambdas)
       [(eLambdaMu (fromPartition lambda) mu, fromPartition lambda) | lambda <- parts]
     f weight lambda = (lambda, weight)
 
+-- | monomial symmetric polynomial as a linear combination of 
+-- complete symmetric homogeneous polynomials
+mspInCSHbasis :: Partition -> Map Partition Rational
+mspInCSHbasis mu = sprayToMap (sumOfSprays sprays)
+  where
+    sprayToMap spray = 
+      DM.fromList (HM.toList $ HM.mapKeys (DF.toList . exponents) spray) 
+    comboToSpray combo = sumOfSprays 
+      [ HM.singleton (Powers (S.fromList part) (length part)) c 
+        | (part, c) <- DM.toList combo ]
+    psAssocs = DM.toList (mspInPSbasis mu)
+    sprays = 
+      [c *^ comboToSpray (pspInCSHbasis lambda) | (lambda, c) <- psAssocs]
+
 test :: Bool
-test = psp == sumOfSprays cshs
+test = msp == sumOfSprays cshs
   where
     mu = [3, 2, 1, 1]
-    psp = psPolynomial 7 mu :: QSpray
-    cshs = [c *^ cshPolynomial 7 lambda | (lambda, c) <- DM.toList (pspInCSHbasis mu)]
+    msp = msPolynomial 7 mu :: QSpray
+    cshs = [c *^ cshPolynomial 7 lambda | (lambda, c) <- DM.toList (mspInCSHbasis mu)]
 
 
 -- test'' :: (String, String)
