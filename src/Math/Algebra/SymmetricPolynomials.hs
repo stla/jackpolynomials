@@ -23,6 +23,7 @@ module Math.Algebra.SymmetricPolynomials
   , msPolynomial
   , psPolynomial
   , cshPolynomial
+  , esPolynomial
   -- * Decomposition of symmetric polynomials
   , msCombination
   , psCombination
@@ -46,6 +47,7 @@ module Math.Algebra.SymmetricPolynomials
   , symbolicHallInnerProduct
   , symbolicHallInnerProduct'
   , symbolicHallInnerProduct''
+  , test
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -586,6 +588,47 @@ cshCombination' ::
   => Spray a -> Map Partition a
 cshCombination' = _cshCombination (flip (AlgMod.*>))
 
+-- | Elementary symmetric polynomial
+--
+-- >>> putStrLn $ prettyQSpray (esPolynomial 3 [2, 1])
+-- 
+esPolynomial :: (AlgRing.C a, Eq a) 
+  => Int       -- ^ number of variables
+  -> Partition -- ^ integer partition
+  -> Spray a
+esPolynomial n lambda
+  | n < 0                     = 
+      error "esPolynomial: negative number of variables."
+  | not (_isPartition lambda) = 
+      error "esPolynomial: invalid partition."
+  | null lambda               = unitSpray
+  | l > n || any (>n) lambda  = zeroSpray
+  | otherwise                 = productOfSprays (map esPolynomialK lambda)
+    where
+      l = length lambda
+      esPolynomialK k = msPolynomialUnsafe n (replicate k 1)
+
+-- | power sum polynomial as a linear combination of 
+-- elementary symmetric polynomials
+pspInESbasis :: Partition -> Map Partition Rational
+pspInESbasis mu = DM.fromList (zipWith f weights lambdas)
+  where
+    wmu = sum mu
+    parts = partitions wmu
+    e = wmu - length mu
+    e_is_even = even e
+    negateIf = if e_is_even then id else negate 
+    pair kappa = (negateIf (eLambdaMu kappa mu), kappa)
+    (weights, lambdas) = unzip $ filter ((/= 0) . fst) 
+      [let lambda = fromPartition part in pair lambda | part <- parts]
+    f weight lambda = (lambda, weight)
+
+test :: Bool
+test = psp == sumOfSprays esps
+  where
+    mu = [3, 2, 1, 1]
+    psp = psPolynomial 7 mu :: QSpray
+    esps = [c *^ esPolynomial 7 lambda | (lambda, c) <- DM.toList (pspInESbasis mu)]
 
 -- test :: Bool
 -- test = msp == sumOfSprays cshs
