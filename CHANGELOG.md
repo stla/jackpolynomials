@@ -82,3 +82,6 @@ combination of some complete symmetric homogeneous polynomials
 
 * new function `esCombination`, to get a symmetric polynomial as a linear 
 combination of some elementary symmetric polynomials
+
+* new function `schurCombination`, to get a symmetric polynomial as a linear 
+combination of some Schur polynomials
