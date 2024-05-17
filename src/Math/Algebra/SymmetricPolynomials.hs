@@ -35,7 +35,6 @@ module Math.Algebra.SymmetricPolynomials
   , schurCombination
   , schurCombination'
   , jackCombination
-  , jackCombination'
   -- * Printing symmetric polynomials
   , prettySymmetricNumSpray
   , prettySymmetricQSpray
@@ -746,33 +745,43 @@ mspInJackBasis alpha which mu =
       Right m -> m 
     i = 1 + (fromJust $ elemIndex mu lambdas) 
 
--- | symmetric polynomial as a linear combination of Jack polynomials
-_jackCombination :: 
-  forall a. (Eq a, AlgRing.C a) 
-  => (a -> Rational -> a) -> Rational -> Char -> Spray a -> Map Partition a
-_jackCombination func alpha which = 
-  _symmPolyCombination (mspInJackBasis alpha which) func
-
 -- | Symmetric polynomial as a linear combination of Jack polynomials. 
 -- Symmetry is not checked.
 jackCombination :: 
-  forall a. (Eq a, AlgField.C a) 
-  => Rational 
-  -> Char 
-  -> Spray a 
-  -> Map Partition a
-jackCombination = 
-  _jackCombination (\coef r -> coef AlgRing.* fromRational r)
+     Rational               -- ^ Jack parameter
+  -> Char                   -- ^ which Jack polynomials, @'J'@, @'C'@, @'P'@ or @'Q'@
+  -> QSpray                 -- ^ spray representing a symmetric polynomial
+  -> Map Partition Rational -- ^ map representing the linear combination; a partition @lambda@ in the keys of this map corresponds to the term @coeff *^ jackPol' n lambda alpha which@, where @coeff@ is the value attached to this key and @n@ is the number of variables of the spray
+jackCombination alpha which = 
+  _symmPolyCombination (mspInJackBasis alpha which) (*)
 
--- | Symmetric polynomial as a linear combination of Jack polynomials. 
--- Same as @jackCombination@ but with other constraints on the base ring of the spray.
-jackCombination' :: 
-  forall a. (Eq a, AlgMod.C Rational a, AlgRing.C a) 
-  => Rational 
-  -> Char 
-  -> Spray a 
-  -> Map Partition a
-jackCombination' = _jackCombination (flip (AlgMod.*>))
+-- -- | symmetric polynomial as a linear combination of Jack polynomials
+-- _jackCombination :: 
+--   forall a. (Eq a, AlgRing.C a) 
+--   => (a -> Rational -> a) -> Rational -> Char -> Spray a -> Map Partition a
+-- _jackCombination func alpha which = 
+--   _symmPolyCombination (mspInJackBasis alpha which) func
+
+-- -- | Symmetric polynomial as a linear combination of Jack polynomials. 
+-- -- Symmetry is not checked.
+-- jackCombination :: 
+--   forall a. (Eq a, AlgField.C a) 
+--   => Rational        -- ^ Jack parameter
+--   -> Char            -- ^ which Jack polynomials, @'J'@, @'C'@, @'P'@ or @'Q'@
+--   -> Spray a         -- ^ spray representing a symmetric polynomial
+--   -> Map Partition a -- ^ map representing the linear combination; 
+-- jackCombination = 
+--   _jackCombination (\coef r -> coef AlgRing.* fromRational r)
+
+-- -- | Symmetric polynomial as a linear combination of Jack polynomials. 
+-- -- Same as @jackCombination@ but with other constraints on the base ring of the spray.
+-- jackCombination' :: 
+--   forall a. (Eq a, AlgMod.C Rational a, AlgRing.C a) 
+--   => Rational 
+--   -> Char 
+--   -> Spray a 
+--   -> Map Partition a
+-- jackCombination' = _jackCombination (flip (AlgMod.*>))
 
 
 -- test :: Bool

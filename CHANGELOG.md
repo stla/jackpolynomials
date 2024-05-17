@@ -86,5 +86,8 @@ combination of some elementary symmetric polynomials
 * new function `schurCombination`, to get a symmetric polynomial as a linear 
 combination of some Schur polynomials
 
+* new function `jackCombination`, to get a symmetric polynomial as a linear 
+combination of some Jack polynomials
+
 * new functions `kostkaNumbersWithGivenLambda` and 
 `symbolicKostkaNumbersWithGivenLambda`, to get the Kostka numbers with parameter
