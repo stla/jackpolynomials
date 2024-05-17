@@ -742,7 +742,7 @@ inverseKostkaMatrixRow which alpha mu = DM.fromList (zip lambdas (V.toList (getR
     matrix = case inverse (fromLists rows) of
       Left _  -> error "inverseKostkaMatrix: should not happen:"
       Right m -> m 
-    i = fromJust $ elemIndex mu lambdas 
+    i = 1 + (fromJust $ elemIndex mu lambdas) 
     -- maps i = DM.fromList (zip lambdas (V.toList (getRow i matrix)))
     -- allMaps = [maps i | i <- [1 .. length lambdas]]
 
@@ -786,7 +786,7 @@ test = poly == sumOfSprays sprays
     alpha = 4
     mu = [3, 1, 1]
     poly = msPolynomial 5 mu ^+^ psPolynomial 5 mu ^+^ cshPolynomial 5 mu ^+^ esPolynomial 5 mu :: QSpray
-    sprays = [c *^ jackPol' 5 lambda alpha which | (lambda, c) <- DM.toList (jackCombination poly which alpha)]
+    sprays = [c *^ jackPol' 5 lambda alpha which | (lambda, c) <- DM.toList (jackCombination which alpha poly)]
 
 -- test :: Bool
 -- test = psp == sumOfSprays esps
