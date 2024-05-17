@@ -34,6 +34,8 @@ module Math.Algebra.SymmetricPolynomials
   , esCombination'
   , schurCombination
   , schurCombination'
+  , jackCombination
+  , jackCombination'
   -- * Printing symmetric polynomials
   , prettySymmetricNumSpray
   , prettySymmetricQSpray
@@ -54,6 +56,7 @@ module Math.Algebra.SymmetricPolynomials
   -- * Kostka numbers
   , kostkaNumbersWithGivenLambda
   , symbolicKostkaNumbersWithGivenLambda
+  , test
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -64,7 +67,7 @@ import qualified Algebra.Ring                     as AlgRing
 import           Algebra.ToInteger                ( fromIntegral )
 import qualified Data.Foldable                    as DF
 import qualified Data.HashMap.Strict              as HM
-import           Data.List                        ( foldl1', nub )
+import           Data.List                        ( foldl1', nub, elemIndex )
 import           Data.List.Extra                  ( unsnoc )
 import           Data.Map.Strict                  ( 
                                                     Map
@@ -729,24 +732,61 @@ symbolicKostkaNumbersWithGivenLambda lambda = msCombination jp
   where
     jp = jackSymbolicPol' (sum lambda) lambda 'P'
 
-inverseKostkaMatrix :: Char -> Int -> Rational -> Map Partition (Map Partition Rational)
-inverseKostkaMatrix which n alpha = DM.fromList (zip lambdas allMaps) 
+inverseKostkaMatrixRow :: Char -> Rational -> Partition -> Map Partition Rational
+inverseKostkaMatrixRow which alpha mu = DM.fromList (zip lambdas (V.toList (getRow i matrix))) -- (zip lambdas allMaps) 
   where
+    n = sum mu
     lambdas = map fromPartition (partitions n)
     row lambda = map (flip (DM.findWithDefault 0) (msCombination (jackPol' n lambda alpha which))) lambdas
     rows = map row lambdas
     matrix = case inverse (fromLists rows) of
       Left _  -> error "inverseKostkaMatrix: should not happen:"
       Right m -> m 
-    maps i = DM.fromList (zip lambdas (V.toList (getRow i matrix)))
-    allMaps = [maps i | i <- [1 .. length lambdas]]
+    i = fromJust $ elemIndex mu lambdas 
+    -- maps i = DM.fromList (zip lambdas (V.toList (getRow i matrix)))
+    -- allMaps = [maps i | i <- [1 .. length lambdas]]
 
--- test :: Bool
--- test = poly == sumOfSprays sprays
---   where
---     mu = [3, 1, 1]
---     poly = msPolynomial 5 mu ^+^ psPolynomial 5 mu ^+^ cshPolynomial 5 mu ^+^ esPolynomial 5 mu :: QSpray
---     sprays = [c *^ schurPol' 5 lambda | (lambda, c) <- DM.toList (schurCombination poly)]
+-- | monomial symmetric polynomial as a linear combination of Jack polynomials
+mspInJackBasis :: Char -> Rational -> Partition -> Map Partition Rational
+mspInJackBasis which alpha = inverseKostkaMatrixRow which alpha
+
+-- | symmetric polynomial as a linear combination of Jack polynomials
+_jackCombination :: 
+  forall a. (Eq a, AlgRing.C a) 
+  => (a -> Rational -> a) -> Char -> Rational -> Spray a -> Map Partition a
+_jackCombination func which alpha = 
+  _symmPolyCombination (mspInJackBasis which alpha) func
+
+-- | Symmetric polynomial as a linear combination of Jack polynomials. 
+-- Symmetry is not checked.
+jackCombination :: 
+  forall a. (Eq a, AlgField.C a) 
+  => Char 
+  -> Rational 
+  -> Spray a 
+  -> Map Partition a
+jackCombination = 
+  _jackCombination (\coef r -> coef AlgRing.* fromRational r)
+
+-- | Symmetric polynomial as a linear combination of Jack polynomials. 
+-- Same as @jackCombination@ but with other constraints on the base ring of the spray.
+jackCombination' :: 
+  forall a. (Eq a, AlgMod.C Rational a, AlgRing.C a) 
+  => Char 
+  -> Rational 
+  -> Spray a 
+  -> Map Partition a
+jackCombination' = _jackCombination (flip (AlgMod.*>))
+
+
+test :: Bool
+test = poly == sumOfSprays sprays
+  where
+    which = 'J'
+    alpha = 4
+    mu = [3, 1, 1]
+    poly = msPolynomial 5 mu ^+^ psPolynomial 5 mu ^+^ cshPolynomial 5 mu ^+^ esPolynomial 5 mu :: QSpray
+    sprays = [c *^ jackPol' 5 lambda alpha which | (lambda, c) <- DM.toList (jackCombination poly which alpha)]
 
 -- test :: Bool
 -- test = psp == sumOfSprays esps
