@@ -37,7 +37,14 @@ import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol'
                                                 , schurPol, schurPol', skewSchurPol' )
 import Math.Algebra.JackSymbolicPol             ( jackSymbolicPol' )
 import Math.Combinat.Classes                    ( HasDuality (..) )
-import Math.Combinat.Partitions.Integer         ( toPartition, fromPartition )
+import Math.Combinat.Partitions.Integer         ( 
+                                                  toPartition
+                                                , fromPartition
+                                                , mkPartition
+                                                , partitions 
+                                                , dualPartition
+                                                )
+import Math.Combinat.Tableaux.GelfandTsetlin    ( kostkaNumber )
 import Math.HypergeoMatrix                      ( hypergeomat )
 import Test.Tasty                               ( defaultMain
                                                 , testGroup
@@ -46,6 +53,13 @@ import Test.Tasty.HUnit                         ( assertEqual
                                                 , assertBool
                                                 , testCase
                                                 )
+
+b_lambda_mu :: [Int] -> [Int] -> Int
+b_lambda_mu lambda mu = sum $ zipWith (*) k1 k2 
+  where
+    parts = partitions (sum lambda)
+    k1 = map ((flip kostkaNumber) (mkPartition lambda)) parts
+    k2 = map (((flip kostkaNumber) (mkPartition mu)) . dualPartition) parts
 
 main :: IO ()
 main = defaultMain $ testGroup
@@ -226,6 +240,16 @@ main = defaultMain $ testGroup
       , 4 * pow alpha 3
       , 24 * pow alpha 4
       )
+
+  , testCase "Hall inner product and b_lambda_mu" $ do
+    let
+      lambda = [4, 2, 1, 1]
+      mu = [2, 2, 2, 2]
+      h = cshPolynomial 8 lambda :: QSpray
+      e = esPolynomial 8 mu :: QSpray
+    assertEqual ""
+      (hallInnerProduct h e 1) 
+      (toRational $ b_lambda_mu lambda mu)
 
   , testCase "Hall inner product of Schur polynomials" $ do
     let
