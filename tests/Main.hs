@@ -61,6 +61,13 @@ b_lambda_mu lambda mu = sum $ zipWith (*) k1 k2
     k1 = map ((flip kostkaNumber) (mkPartition lambda)) parts
     k2 = map (((flip kostkaNumber) (mkPartition mu)) . dualPartition) parts
 
+a_lambda_mu :: [Int] -> [Int] -> Int
+a_lambda_mu lambda mu = sum $ zipWith (*) k1 k2 
+  where
+    parts = partitions (sum lambda)
+    k1 = map ((flip kostkaNumber) (mkPartition lambda)) parts
+    k2 = map ((flip kostkaNumber) (mkPartition mu)) parts
+
 main :: IO ()
 main = defaultMain $ testGroup
 
@@ -250,6 +257,16 @@ main = defaultMain $ testGroup
     assertEqual ""
       (hallInnerProduct h e 1) 
       (toRational $ b_lambda_mu lambda mu)
+
+  , testCase "Hall inner product and a_lambda_mu" $ do
+    let
+      lambda = [4, 2, 2, 1]
+      mu = [5, 4]
+      hlambda = cshPolynomial 9 lambda :: QSpray
+      hmu = cshPolynomial 9 mu :: QSpray
+    assertEqual ""
+      (hallInnerProduct hlambda hmu 1) 
+      (toRational $ a_lambda_mu lambda mu)
 
   , testCase "Hall inner product of Schur polynomials" $ do
     let
