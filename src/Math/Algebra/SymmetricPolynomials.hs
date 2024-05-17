@@ -72,6 +72,11 @@ import           Data.Map.Strict                  (
                                                   , insert
                                                   )
 import qualified Data.Map.Strict                  as DM
+import           Data.Matrix                      ( 
+                                                    inverse
+                                                  , fromLists 
+                                                  , getRow
+                                                  )
 import           Data.Maybe                       ( fromJust )
 import           Data.Map.Merge.Strict            ( 
                                                     merge
@@ -85,6 +90,7 @@ import           Data.Sequence                    (
                                                   , index 
                                                   )
 import qualified Data.Sequence                    as S
+import qualified Data.Vector                      as V
 import           Data.Tuple.Extra                 ( second )
 import           Math.Algebra.Hspray              (
                                                     FunctionLike (..)
@@ -722,6 +728,18 @@ symbolicKostkaNumbersWithGivenLambda :: Partition -> Map Partition RatioOfQSpray
 symbolicKostkaNumbersWithGivenLambda lambda = msCombination jp
   where
     jp = jackSymbolicPol' (sum lambda) lambda 'P'
+
+inverseKostkaMatrix :: Char -> Int -> Rational -> Map Partition (Map Partition Rational)
+inverseKostkaMatrix which n alpha = DM.fromList (zip lambdas allMaps) 
+  where
+    lambdas = map fromPartition (partitions n)
+    row lambda = map (flip (DM.findWithDefault 0) (msCombination (jackPol' n lambda alpha which))) lambdas
+    rows = map row lambdas
+    matrix = case inverse (fromLists rows) of
+      Left _  -> error "inverseKostkaMatrix: should not happen:"
+      Right m -> m 
+    maps i = DM.fromList (zip lambdas (V.toList (getRow i matrix)))
+    allMaps = [maps i | i <- [1 .. length lambdas]]
 
 -- test :: Bool
 -- test = poly == sumOfSprays sprays
