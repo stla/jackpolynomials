@@ -35,9 +35,9 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , esPolynomial
                                                 , esCombination
                                                 , schurCombination
+                                                , jackCombination
                                                 , kostkaNumbersWithGivenLambda
                                                 )
-import Math.Combinat.Classes                    ( HasDuality (..) )
 import Math.Combinat.Partitions.Integer         ( 
                                                   toPartition
                                                 , fromPartition
@@ -136,7 +136,7 @@ main = defaultMain $ testGroup
       b mu = toRational $ sum $ zipWith (*) mu [0 .. ]
       eigenvalue :: Int -> Rational -> [Int] -> Rational
       eigenvalue n a mu = 
-        let mu' = fromPartition $ dual (toPartition mu) in
+        let mu' = fromPartition $ dualPartition (toPartition mu) in
           a * b mu' - b mu + toRational ((n-1) * sum mu)
       ev = eigenvalue 4 alpha lambda
       jp = jackPol' 4 lambda alpha 'J'
@@ -364,6 +364,30 @@ main = defaultMain $ testGroup
     let
       poly = 3*^schurPol' 4 [2, 1, 1] ^-^ schurPol' 4 [2, 1]
       combo = schurCombination poly
+    assertEqual ""
+      combo 
+      (
+        DM.fromList [([2, 1, 1], 3), ([2, 1], -1)]
+      )
+
+  , testCase "Jack J-polynomials combination" $ do
+    let
+      alpha = 3
+      which = 'J'
+      poly = 3*^jackPol' 4 [2, 1, 1] alpha which ^-^ jackPol' 4 [2, 1] alpha which
+      combo = jackCombination alpha which poly
+    assertEqual ""
+      combo 
+      (
+        DM.fromList [([2, 1, 1], 3), ([2, 1], -1)]
+      )
+
+  , testCase "Jack C-polynomials combination" $ do
+    let
+      alpha = 7
+      which = 'C'
+      poly = 3*^jackPol' 4 [2, 1, 1] alpha which ^-^ jackPol' 4 [2, 1] alpha which
+      combo = jackCombination alpha which poly
     assertEqual ""
       combo 
       (

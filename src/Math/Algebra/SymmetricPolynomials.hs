@@ -56,7 +56,6 @@ module Math.Algebra.SymmetricPolynomials
   -- * Kostka numbers
   , kostkaNumbersWithGivenLambda
   , symbolicKostkaNumbersWithGivenLambda
-  , test
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -732,37 +731,34 @@ symbolicKostkaNumbersWithGivenLambda lambda = msCombination jp
   where
     jp = jackSymbolicPol' (sum lambda) lambda 'P'
 
-inverseKostkaMatrixRow :: Char -> Rational -> Partition -> Map Partition Rational
-inverseKostkaMatrixRow which alpha mu = DM.fromList (zip lambdas (V.toList (getRow i matrix))) -- (zip lambdas allMaps) 
+-- | monomial symmetric polynomial as a linear combination of Jack polynomials
+mspInJackBasis :: Rational -> Char -> Partition -> Map Partition Rational
+mspInJackBasis alpha which mu = 
+  DM.fromList (zip lambdas (V.toList (getRow i matrix)))
   where
     n = sum mu
     lambdas = map fromPartition (partitions n)
-    row lambda = map (flip (DM.findWithDefault 0) (msCombination (jackPol' n lambda alpha which))) lambdas
-    rows = map row lambdas
-    matrix = case inverse (fromLists rows) of
-      Left _  -> error "inverseKostkaMatrix: should not happen:"
+    msCombo lambda = msCombination (jackPol' n lambda alpha which)
+    row lambda = map (flip (DM.findWithDefault 0) (msCombo lambda)) lambdas
+    kostkaMatrix = fromLists (map row lambdas)
+    matrix = case inverse kostkaMatrix of
+      Left _  -> error "mspInJackBasis: should not happen:"
       Right m -> m 
     i = 1 + (fromJust $ elemIndex mu lambdas) 
-    -- maps i = DM.fromList (zip lambdas (V.toList (getRow i matrix)))
-    -- allMaps = [maps i | i <- [1 .. length lambdas]]
-
--- | monomial symmetric polynomial as a linear combination of Jack polynomials
-mspInJackBasis :: Char -> Rational -> Partition -> Map Partition Rational
-mspInJackBasis which alpha = inverseKostkaMatrixRow which alpha
 
 -- | symmetric polynomial as a linear combination of Jack polynomials
 _jackCombination :: 
   forall a. (Eq a, AlgRing.C a) 
-  => (a -> Rational -> a) -> Char -> Rational -> Spray a -> Map Partition a
-_jackCombination func which alpha = 
-  _symmPolyCombination (mspInJackBasis which alpha) func
+  => (a -> Rational -> a) -> Rational -> Char -> Spray a -> Map Partition a
+_jackCombination func alpha which = 
+  _symmPolyCombination (mspInJackBasis alpha which) func
 
 -- | Symmetric polynomial as a linear combination of Jack polynomials. 
 -- Symmetry is not checked.
 jackCombination :: 
   forall a. (Eq a, AlgField.C a) 
-  => Char 
-  -> Rational 
+  => Rational 
+  -> Char 
   -> Spray a 
   -> Map Partition a
 jackCombination = 
@@ -772,21 +768,21 @@ jackCombination =
 -- Same as @jackCombination@ but with other constraints on the base ring of the spray.
 jackCombination' :: 
   forall a. (Eq a, AlgMod.C Rational a, AlgRing.C a) 
-  => Char 
-  -> Rational 
+  => Rational 
+  -> Char 
   -> Spray a 
   -> Map Partition a
 jackCombination' = _jackCombination (flip (AlgMod.*>))
 
 
-test :: Bool
-test = poly == sumOfSprays sprays
-  where
-    which = 'J'
-    alpha = 4
-    mu = [3, 1, 1]
-    poly = msPolynomial 5 mu ^+^ psPolynomial 5 mu ^+^ cshPolynomial 5 mu ^+^ esPolynomial 5 mu :: QSpray
-    sprays = [c *^ jackPol' 5 lambda alpha which | (lambda, c) <- DM.toList (jackCombination which alpha poly)]
+-- test :: Bool
+-- test = poly == sumOfSprays sprays
+--   where
+--     which = 'J'
+--     alpha = 4
+--     mu = [3, 1, 1]
+--     poly = msPolynomial 5 mu ^+^ psPolynomial 5 mu ^+^ cshPolynomial 5 mu ^+^ esPolynomial 5 mu :: QSpray
+--     sprays = [c *^ jackPol' 5 lambda alpha which | (lambda, c) <- DM.toList (jackCombination which alpha poly)]
 
 -- test :: Bool
 -- test = psp == sumOfSprays esps
