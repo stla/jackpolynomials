@@ -17,6 +17,9 @@ import qualified Math.Algebra.Hspray            as Hspray
 import Math.Algebra.Jack                        ( schur, skewSchur 
                                                 , jack', zonal' )
 import Math.Algebra.Jack.HypergeoPQ             ( hypergeoPQ )
+import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol'
+                                                , schurPol, schurPol', skewSchurPol' )
+import Math.Algebra.JackSymbolicPol             ( jackSymbolicPol' )
 import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , prettySymmetricParametricQSpray
                                                 , laplaceBeltrami
@@ -32,10 +35,8 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , esPolynomial
                                                 , esCombination
                                                 , schurCombination
+                                                , kostkaNumbersWithGivenLambda
                                                 )
-import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol'
-                                                , schurPol, schurPol', skewSchurPol' )
-import Math.Algebra.JackSymbolicPol             ( jackSymbolicPol' )
 import Math.Combinat.Classes                    ( HasDuality (..) )
 import Math.Combinat.Partitions.Integer         ( 
                                                   toPartition
@@ -44,7 +45,9 @@ import Math.Combinat.Partitions.Integer         (
                                                 , partitions 
                                                 , dualPartition
                                                 )
+import qualified Math.Combinat.Partitions.Integer as PI
 import Math.Combinat.Tableaux.GelfandTsetlin    ( kostkaNumber )
+import qualified Math.Combinat.Tableaux.GelfandTsetlin as GT
 import Math.HypergeoMatrix                      ( hypergeomat )
 import Test.Tasty                               ( defaultMain
                                                 , testGroup
@@ -367,4 +370,11 @@ main = defaultMain $ testGroup
         DM.fromList [([2, 1, 1], 3), ([2, 1], -1)]
       )
 
+  , testCase "Kostka numbers" $ do
+    let
+      lambda = [4, 3, 1]
+      kn1 = kostkaNumbersWithGivenLambda lambda 1
+      kn2 = DM.mapKeys fromPartition 
+            (GT.kostkaNumbersWithGivenLambda (mkPartition lambda) :: DM.Map PI.Partition Rational)
+    assertEqual "" kn1 kn2
   ]

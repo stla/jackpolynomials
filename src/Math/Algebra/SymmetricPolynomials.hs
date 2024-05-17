@@ -51,6 +51,9 @@ module Math.Algebra.SymmetricPolynomials
   , symbolicHallInnerProduct
   , symbolicHallInnerProduct'
   , symbolicHallInnerProduct''
+  -- * Kostka numbers
+  , kostkaNumbersWithGivenLambda
+  , symbolicKostkaNumbersWithGivenLambda
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -100,6 +103,7 @@ import           Math.Algebra.Hspray              (
                                                   , isConstant
                                                   , (%//%)
                                                   , RatioOfSprays (..)
+                                                  , RatioOfQSprays
                                                   , prettyRatioOfQSpraysXYZ
                                                   , showNumSpray
                                                   , showQSpray
@@ -117,6 +121,12 @@ import           Math.Algebra.Jack.Internal       (
                                                   , _isPartition
                                                   , sprayToMap
                                                   , comboToSpray 
+                                                  )
+import           Math.Algebra.JackPol             ( 
+                                                    jackPol'
+                                                  )
+import           Math.Algebra.JackSymbolicPol     ( 
+                                                    jackSymbolicPol'
                                                   )
 import           Math.Combinat.Compositions       ( compositions1 )
 import           Math.Combinat.Partitions.Integer ( 
@@ -530,7 +540,7 @@ symbolicHallInnerProduct'' spray1 spray2 =
 -- | Complete symmetric homogeneous polynomial
 --
 -- >>> putStrLn $ prettyQSpray (cshPolynomial 3 [2, 1])
--- 
+-- x^3 + 2*x^2.y + 2*x^2.z + 2*x.y^2 + 3*x.y.z + 2*x.z^2 + y^3 + 2*y^2.z + 2*y.z^2 + z^3
 cshPolynomial :: (AlgRing.C a, Eq a) 
   => Int       -- ^ number of variables
   -> Partition -- ^ integer partition
@@ -595,7 +605,7 @@ cshCombination' = _cshCombination (flip (AlgMod.*>))
 -- | Elementary symmetric polynomial
 --
 -- >>> putStrLn $ prettyQSpray (esPolynomial 3 [2, 1])
--- 
+-- x^2.y + x^2.z + x.y^2 + 3*x.y.z + x.z^2 + y^2.z + y.z^2
 esPolynomial :: (AlgRing.C a, Eq a) 
   => Int       -- ^ number of variables
   -> Partition -- ^ integer partition
@@ -698,6 +708,20 @@ schurCombination' ::
   => Spray a -> Map Partition a
 schurCombination' = _schurCombination (flip (AlgMod.*>))
 
+-- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) for a given partition \(\lambda\)
+-- and a given parameter \(\alpha\) (these are the standard Kostka numbers when
+-- \(\alpha=1\)).
+kostkaNumbersWithGivenLambda :: Partition -> Rational -> Map Partition Rational
+kostkaNumbersWithGivenLambda lambda alpha = msCombination jp
+  where
+    jp = jackPol' (sum lambda) lambda alpha 'P'
+
+-- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) with symbolic parameter \(\alpha\) 
+-- for a given partition \(\lambda\).
+symbolicKostkaNumbersWithGivenLambda :: Partition -> Map Partition RatioOfQSprays
+symbolicKostkaNumbersWithGivenLambda lambda = msCombination jp
+  where
+    jp = jackSymbolicPol' (sum lambda) lambda 'P'
 
 -- test :: Bool
 -- test = poly == sumOfSprays sprays
