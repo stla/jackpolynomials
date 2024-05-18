@@ -130,7 +130,7 @@ schurPol'
 schurPol' = schurPol
 
 -- | Symbolic Schur polynomial
-schurPol :: forall a. (Ord a, AlgRing.C a)
+schurPol :: forall a. (Eq a, AlgRing.C a)
   => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> Spray a
