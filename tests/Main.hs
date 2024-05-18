@@ -61,11 +61,15 @@ import Test.Tasty.HUnit                         ( assertEqual
                                                 )
 
 b_lambda_mu :: [Int] -> [Int] -> Int
-b_lambda_mu lambda mu = sum $ zipWith (*) k1 k2 
+b_lambda_mu lambda mu = sum $ DM.elems wholeMap -- zipWith (*) k1 k2 
   where
     parts = partitions (sum lambda)
-    k1 = map ((flip kostkaNumber) (mkPartition lambda)) parts
-    k2 = map (((flip kostkaNumber) (mkPartition mu)) . dualPartition) parts
+    zeros = DM.fromList (zip parts (repeat 0))
+    map1 = DM.union (GT.kostkaNumbersWithGivenMu (mkPartition lambda)) zeros
+    map2 = DM.union (GT.kostkaNumbersWithGivenMu (mkPartition mu)) zeros
+    wholeMap = DM.unionWithKey (\part kn1 _ -> kn1 * (map2 DM.! (dualPartition part))) map1 map2
+    -- k1 = map ((flip kostkaNumber) (mkPartition lambda)) parts
+    -- k2 = map (((flip kostkaNumber) (mkPartition mu)) . dualPartition) parts
 
 a_lambda_mu :: [Int] -> [Int] -> Int
 a_lambda_mu lambda mu = sum $ zipWith (*) k1 k2 
