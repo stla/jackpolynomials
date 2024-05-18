@@ -366,28 +366,28 @@ eLambdaMu lambda mu
 
 -- | monomial symmetric polynomial as a linear combination of 
 -- power sum polynomials
--- mspInPSbasis :: Partition -> Map Partition Rational
--- mspInPSbasis kappa = DM.fromList (zipWith f weights lambdas)
---   where
---     parts = map fromPartition (partitions (sum kappa))
---     (weights, lambdas) = unzip $ filter ((/= 0) . fst) 
---       [(eLambdaMu kappa lambda, lambda) | lambda <- parts]
---     f weight lambda = 
---       (lambda, weight / toRational (zlambda lambda))
-
 mspInPSbasis :: Partition -> Map Partition Rational
-mspInPSbasis mu = 
-  maps (1 + (fromJust $ elemIndex mu lambdas))
+mspInPSbasis kappa = DM.fromList (zipWith f weights lambdas)
   where
-    weight = sum mu
-    lambdas = map fromPartition (partitions weight)
-    msCombo lambda = msCombination (psPolynomial 3 lambda)
-    row lambda = map (flip (DM.findWithDefault 0) (msCombo lambda)) lambdas
-    kostkaMatrix = fromLists (map row lambdas)
-    matrix = case inverse kostkaMatrix of
-      Left _  -> error "mspInJackBasis: should not happen:"
-      Right m -> m 
-    maps i = DM.fromList (zip lambdas (filter (/= 0) $ V.toList (getRow i matrix)))
+    parts = map fromPartition (partitions (sum kappa))
+    (weights, lambdas) = unzip $ filter ((/= 0) . fst) 
+      [(eLambdaMu kappa lambda, lambda) | lambda <- parts]
+    f weight lambda = 
+      (lambda, weight / toRational (zlambda lambda))
+
+-- mspInPSbasis :: Partition -> Map Partition Rational
+-- mspInPSbasis mu = 
+--   maps (1 + (fromJust $ elemIndex mu lambdas))
+--   where
+--     weight = sum mu
+--     lambdas = map fromPartition (partitions weight)
+--     msCombo lambda = msCombination (psPolynomial 3 lambda)
+--     row lambda = map (flip (DM.findWithDefault 0) (msCombo lambda)) lambdas
+--     kostkaMatrix = fromLists (map row lambdas)
+--     matrix = case inverse kostkaMatrix of
+--       Left _  -> error "mspInJackBasis: should not happen:"
+--       Right m -> m 
+--     maps i = DM.fromList (zip lambdas (filter (/= 0) $ V.toList (getRow i matrix)))
 
 km :: Int -> Partition -> (Matrix Rational, Maybe (Matrix Rational))
 km n mu = 
@@ -450,7 +450,7 @@ _symmPolyCombination mspInSymmPolyBasis func spray =
 -- | symmetric polynomial as a linear combination of power sum polynomials
 _psCombination :: 
   forall a. (Eq a, AlgRing.C a) => (a -> Rational -> a) -> Spray a -> Map Partition a
-_psCombination func spray = _symmPolyCombination (mspInPSbasis' (numberOfVariables spray)) func spray
+_psCombination func spray = _symmPolyCombination (mspInPSbasis) func spray
 
 -- | Symmetric polynomial as a linear combination of power sum polynomials. 
 -- Symmetry is not checked.
@@ -496,17 +496,17 @@ hallInnerProduct ::
   -> Spray a   -- ^ spray
   -> a         -- ^ parameter
   -> a 
-hallInnerProduct spray1 spray2 alpha = -- _hallInnerProduct psCombination (AlgRing.*)
-  AlgAdd.sum $ DM.elems
-    (merge dropMissing dropMissing (zipWithMatched f) schurCombo1 schurCombo2)
-  where
-    schurCombo1 = schurCombination spray1 :: Map Partition a
-    schurCombo2 = schurCombination spray2 :: Map Partition a
-    zlambda' :: Partition -> a
-    zlambda' lambda = alpha AlgRing.^ (toInteger $ length lambda)
-    f :: Partition -> a -> a -> a
-    f lambda coeff1 coeff2 = 
-      (AlgRing.*) (zlambda' lambda) (coeff1 AlgRing.* coeff2)
+hallInnerProduct = _hallInnerProduct psCombination (AlgRing.*)
+  -- AlgAdd.sum $ DM.elems
+  --   (merge dropMissing dropMissing (zipWithMatched f) schurCombo1 schurCombo2)
+  -- where
+  --   schurCombo1 = schurCombination spray1 :: Map Partition a
+  --   schurCombo2 = schurCombination spray2 :: Map Partition a
+  --   zlambda' :: Partition -> a
+  --   zlambda' lambda = alpha AlgRing.^ (toInteger $ length lambda)
+  --   f :: Partition -> a -> a -> a
+  --   f lambda coeff1 coeff2 = 
+  --     (AlgRing.*) (zlambda' lambda) (coeff1 AlgRing.* coeff2)
 
 
 -- | Hall inner product with parameter. Same as @hallInnerProduct@ but 
@@ -806,7 +806,7 @@ mspInJackBasis alpha which n weight =
     matrix = case inverse kostkaMatrix of
       Left _  -> error "mspInJackBasis: should not happen:"
       Right m -> m 
-    maps i = DM.fromList (zip lambdas (filter (/= 0) $ V.toList (getRow i matrix))) -- filter should be wrong!
+    maps i = DM.filter (/= 0) (DM.fromList (zip lambdas (V.toList (getRow i matrix)))) -- (zip lambdas (filter (/= 0) $ V.toList (getRow i matrix))) -- filter should be wrong!
 
 -- | Symmetric polynomial as a linear combination of Jack polynomials. 
 -- Symmetry is not checked.
