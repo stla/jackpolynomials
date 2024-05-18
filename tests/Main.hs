@@ -19,7 +19,7 @@ import qualified Math.Algebra.Hspray            as Hspray
 import Math.Algebra.Jack                        ( schur, skewSchur 
                                                 , jack', zonal' )
 import Math.Algebra.Jack.HypergeoPQ             ( hypergeoPQ )
-import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol', 
+import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol'
                                                 , schurPol, schurPol', skewSchurPol' )
 import Math.Algebra.JackSymbolicPol             ( jackSymbolicPol' )
 import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
@@ -253,6 +253,13 @@ main = defaultMain $ testGroup
       , 4 * pow alpha 3
       , 24 * pow alpha 4
       )
+
+  , testCase "Hall inner product of Jack P-polynomial and Jack Q-polynomial" $ do
+    let
+      jp1 = jackPol' 7 [4, 2, 1] 3 'P' 
+      jp2 = jackPol' 7 [4, 2, 1] 3 'Q' 
+      h = hallInnerProduct jp1 jp2 3
+    assertEqual "" h 1
 
   , testCase "Hall inner product and b_lambda_mu" $ do
     let
