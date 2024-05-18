@@ -21,7 +21,7 @@ import qualified Math.Algebra.Hspray            as Hspray
 import Math.Algebra.Jack                        ( schur, skewSchur 
                                                 , jack', zonal' )
 import Math.Algebra.Jack.HypergeoPQ             ( hypergeoPQ )
-import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol'
+import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol', jackPol
                                                 , schurPol, schurPol', skewSchurPol' )
 import Math.Algebra.JackSymbolicPol             ( jackSymbolicPol' )
 import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
@@ -416,9 +416,9 @@ main = defaultMain $ testGroup
       schurCombo = schurCombination jpol
       alpha = qlone 1
       expected = [
-          ([1, 1, 1, 1], asRatioOfSprays (2*^alpha^**^2 ^-^ 6*^alpha <+ 4)   )
-        , ([2, 1, 1],    asRatioOfSprays ((-2)*^alpha^**^2 ^-^ 2*^alpha <+ 4))
-        , ([2, 2],       asRatioOfSprays (2*^alpha^**^2 ^+^ 6*^alpha <+ 4)   )
+          ([1, 1, 1, 1], asRatioOfSprays ((2*^alpha^**^2 ^-^ 6*^alpha) <+ 4)   )
+        , ([2, 1, 1],    asRatioOfSprays (((-2)*^alpha^**^2 ^-^ 2*^alpha) <+ 4))
+        , ([2, 2],       asRatioOfSprays ((2*^alpha^**^2 ^+^ 6*^alpha) <+ 4)   )
         ]
       jpol' = sumOfSprays $ map (\(lambda, c) -> c *^ jackPol 4 lambda unitRatioOfSprays 'P') expected
     assertEqual ""

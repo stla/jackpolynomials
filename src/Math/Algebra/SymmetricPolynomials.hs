@@ -78,7 +78,6 @@ import           Data.Matrix                      (
                                                     inverse
                                                   , fromLists 
                                                   , getRow
-                                                  , Matrix
                                                   )
 import           Data.Maybe                       ( fromJust )
 import           Data.Map.Merge.Strict            ( 
@@ -311,7 +310,7 @@ psPolynomial n lambda
 --  | llambda > n               = zeroSpray
   | otherwise                 = productOfSprays sprays
     where
-      llambda = length lambda
+      -- llambda = length lambda
       sprays = [HM.fromList $ [f i k | i <- [1 .. n]] | k <- lambda]
       f j k = (Powers expts j, AlgRing.one)
         where
@@ -609,7 +608,7 @@ cshPolynomial n lambda
 --  | llambda > n               = zeroSpray
   | otherwise                 = productOfSprays (map cshPolynomialK lambda)
     where
-      llambda = length lambda
+      -- llambda = length lambda
       cshPolynomialK k = sumOfSprays msSprays
         where
           parts = partitions k
