@@ -4,6 +4,7 @@ import Data.Ratio                               ( (%) )
 import Math.Algebra.Hspray                      ( FunctionLike (..)
                                                 , Spray, QSpray
                                                 , lone, qlone 
+                                                , unitSpray
                                                 , evalSpray 
                                                 , evalParametricSpray'
                                                 , substituteParameters
@@ -12,6 +13,7 @@ import Math.Algebra.Hspray                      ( FunctionLike (..)
                                                 , asRatioOfSprays
                                                 , (%//%)
                                                 , (/^)
+                                                , sumOfSprays
                                                 )
 import qualified Math.Algebra.Hspray            as Hspray
 import Math.Algebra.Jack                        ( schur, skewSchur 
@@ -28,6 +30,7 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , hallInnerProduct''
                                                 , symbolicHallInnerProduct
                                                 , symbolicHallInnerProduct''
+                                                , msPolynomial
                                                 , psPolynomial 
                                                 , psCombination
                                                 , cshPolynomial
@@ -393,6 +396,19 @@ main = defaultMain $ testGroup
       (
         DM.fromList [([2, 1, 1], 3), ([2, 1], -1)]
       )
+
+  , testCase "Jack Q-polynomials combination" $ do
+    let
+      which = 'Q'
+      alpha = 4
+      p = msPolynomial 5 [3, 1, 1] ^+^ psPolynomial 5 [3, 1] ^+^ 
+          cshPolynomial 5 [2, 1] ^+^ esPolynomial 5 [2] ^+^ unitSpray :: QSpray
+      sprays = [
+          c *^ jackPol' 5 lambda alpha which 
+          | (lambda, c) <- DM.toList (jackCombination alpha which p)
+        ]
+    assertEqual ""
+      p (sumOfSprays sprays)
 
   , testCase "Kostka numbers" $ do
     let

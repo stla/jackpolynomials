@@ -55,6 +55,7 @@ module Math.Algebra.SymmetricPolynomials
   -- * Kostka numbers
   , kostkaNumbersWithGivenLambda
   , symbolicKostkaNumbersWithGivenLambda
+  , mspInJackBasis
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -65,8 +66,9 @@ import qualified Algebra.Ring                     as AlgRing
 import           Algebra.ToInteger                ( fromIntegral )
 import qualified Data.Foldable                    as DF
 import qualified Data.HashMap.Strict              as HM
-import           Data.List                        ( foldl1', nub, elemIndex )
+import           Data.List                        ( foldl1', nub )
 import           Data.List.Extra                  ( unsnoc )
+import qualified Data.IntMap.Strict               as IM
 import           Data.Map.Strict                  ( 
                                                     Map
                                                   , unionsWith
@@ -731,19 +733,18 @@ symbolicKostkaNumbersWithGivenLambda lambda = msCombination jp
     jp = jackSymbolicPol' (sum lambda) lambda 'P'
 
 -- | monomial symmetric polynomial as a linear combination of Jack polynomials
-mspInJackBasis :: Rational -> Char -> Partition -> Map Partition Rational
-mspInJackBasis alpha which mu = 
-  DM.fromList (zip lambdas (V.toList (getRow i matrix)))
+mspInJackBasis :: Rational -> Char -> Int -> Int -> Map Partition (Map Partition Rational)
+mspInJackBasis alpha which n weight = 
+  DM.fromList (zip lambdas [maps i | i <- [1 .. length lambdas]])
   where
-    n = sum mu
-    lambdas = map fromPartition (partitions n)
-    msCombo lambda = msCombination (jackPol' n lambda alpha which)
+    lambdas = filter (\lambda -> length lambda <= n) (map fromPartition (partitions weight))
+    msCombo lambda = msCombination (jackPol' weight lambda alpha which)
     row lambda = map (flip (DM.findWithDefault 0) (msCombo lambda)) lambdas
     kostkaMatrix = fromLists (map row lambdas)
     matrix = case inverse kostkaMatrix of
       Left _  -> error "mspInJackBasis: should not happen:"
       Right m -> m 
-    i = 1 + (fromJust $ elemIndex mu lambdas) 
+    maps i = DM.fromList (zip lambdas (filter (/= 0) $ V.toList (getRow i matrix)))
 
 -- | Symmetric polynomial as a linear combination of Jack polynomials. 
 -- Symmetry is not checked.
@@ -752,8 +753,15 @@ jackCombination ::
   -> Char                   -- ^ which Jack polynomials, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> QSpray                 -- ^ spray representing a symmetric polynomial
   -> Map Partition Rational -- ^ map representing the linear combination; a partition @lambda@ in the keys of this map corresponds to the term @coeff *^ jackPol' n lambda alpha which@, where @coeff@ is the value attached to this key and @n@ is the number of variables of the spray
-jackCombination alpha which = 
-  _symmPolyCombination (mspInJackBasis alpha which) (*)
+jackCombination alpha which qspray = 
+  _symmPolyCombination (\lambda -> (msPolynomialsInJackBasis IM.! (sum lambda)) DM.! lambda) (*) qspray
+  where
+    -- notNullAndDecreasing ys = 
+    --   not S.null ys && and [ys `index` i >= ys `index` (i+1) | i <- [0 .. S.length ys - 2]]
+    weights = filter (/= 0) (map DF.sum (allExponents qspray))
+    n = numberOfVariables qspray
+    msPolynomialsInJackBasis = 
+      IM.fromList (zip weights (map (mspInJackBasis alpha which n) weights))
 
 -- -- | symmetric polynomial as a linear combination of Jack polynomials
 -- _jackCombination :: 
