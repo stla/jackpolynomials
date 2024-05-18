@@ -55,7 +55,11 @@ module Math.Algebra.SymmetricPolynomials
   -- * Kostka numbers
   , kostkaNumbersWithGivenLambda
   , symbolicKostkaNumbersWithGivenLambda
-  , mspInJackBasis
+  , mspInPSbasis
+  , pspInCSHbasis
+  , mspInCSHbasis
+  , mspInPSbasis'
+  , km
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -66,7 +70,7 @@ import qualified Algebra.Ring                     as AlgRing
 import           Algebra.ToInteger                ( fromIntegral )
 import qualified Data.Foldable                    as DF
 import qualified Data.HashMap.Strict              as HM
-import           Data.List                        ( foldl1', nub )
+import           Data.List                        ( foldl1', nub, elemIndex )
 import           Data.List.Extra                  ( unsnoc )
 import qualified Data.IntMap.Strict               as IM
 import           Data.Map.Strict                  ( 
@@ -79,6 +83,7 @@ import           Data.Matrix                      (
                                                     inverse
                                                   , fromLists 
                                                   , getRow
+                                                  , Matrix
                                                   )
 import           Data.Maybe                       ( fromJust )
 import           Data.Map.Merge.Strict            ( 
@@ -142,6 +147,7 @@ import           Math.Combinat.Partitions.Integer (
                                                     fromPartition
                                                   , mkPartition
                                                   , partitions 
+                                                  , partitionWidth
                                                   )
 import           Math.Combinat.Permutations       ( permuteMultiset )
 import           Math.Combinat.Tableaux.GelfandTsetlin ( kostkaNumbersWithGivenMu )
@@ -175,9 +181,12 @@ msPolynomial n lambda
   | length lambda > n         = zeroSpray
   | otherwise                 = msPolynomialUnsafe n lambda
 
--- | Checks whether a spray defines a symmetric polynomial; this is useless for 
--- Jack polynomials because they always are symmetric, but this module contains 
--- everything needed to build this function which can be useful in another context
+-- | Checks whether a spray defines a symmetric polynomial.
+--
+-- >>> -- note that the sum of two symmetric polynomials is not symmetric
+-- >>> -- if they have different numbers of variables:
+-- >>> spray = schurPol' 4 [2, 2] ^+^ schurPol' 3 [2, 1]
+-- >>> isSymmetricSpray spray
 isSymmetricSpray :: (AlgRing.C a, Eq a) => Spray a -> Bool
 isSymmetricSpray spray = spray == spray' 
   where
@@ -188,7 +197,7 @@ isSymmetricSpray spray = spray == spray'
         map (\(lambda, x) -> x *^ msPolynomial n lambda) assocs
       )
 
--- | Symmetric polynomial as a linear combination of monomial symmetric polynomials
+-- | Symmetric polynomial as a linear combination of monomial symmetric polynomials.
 msCombination :: AlgRing.C a => Spray a -> Map Partition a
 msCombination spray = DM.fromList (msCombination' spray)
 
@@ -303,7 +312,8 @@ psPolynomial n lambda
   | not (_isPartition lambda) = 
       error "psPolynomial: invalid partition."
   | null lambda               = unitSpray
-  | llambda > n               = zeroSpray
+--  | any (> n) lambda          = zeroSpray
+--  | llambda > n               = zeroSpray
   | otherwise                 = productOfSprays sprays
     where
       llambda = length lambda
@@ -356,14 +366,55 @@ eLambdaMu lambda mu
 
 -- | monomial symmetric polynomial as a linear combination of 
 -- power sum polynomials
+-- mspInPSbasis :: Partition -> Map Partition Rational
+-- mspInPSbasis kappa = DM.fromList (zipWith f weights lambdas)
+--   where
+--     parts = map fromPartition (partitions (sum kappa))
+--     (weights, lambdas) = unzip $ filter ((/= 0) . fst) 
+--       [(eLambdaMu kappa lambda, lambda) | lambda <- parts]
+--     f weight lambda = 
+--       (lambda, weight / toRational (zlambda lambda))
+
 mspInPSbasis :: Partition -> Map Partition Rational
-mspInPSbasis kappa = DM.fromList (zipWith f weights lambdas)
+mspInPSbasis mu = 
+  maps (1 + (fromJust $ elemIndex mu lambdas))
   where
-    parts = map fromPartition (partitions (sum kappa))
-    (weights, lambdas) = unzip $ filter ((/= 0) . fst) 
-      [(eLambdaMu kappa lambda, lambda) | lambda <- parts]
-    f weight lambda = 
-      (lambda, weight / toRational (zlambda lambda))
+    weight = sum mu
+    lambdas = map fromPartition (partitions weight)
+    msCombo lambda = msCombination (psPolynomial 3 lambda)
+    row lambda = map (flip (DM.findWithDefault 0) (msCombo lambda)) lambdas
+    kostkaMatrix = fromLists (map row lambdas)
+    matrix = case inverse kostkaMatrix of
+      Left _  -> error "mspInJackBasis: should not happen:"
+      Right m -> m 
+    maps i = DM.fromList (zip lambdas (filter (/= 0) $ V.toList (getRow i matrix)))
+
+km :: Int -> Partition -> (Matrix Rational, Maybe (Matrix Rational))
+km n mu = 
+  (kostkaMatrix, matrix)
+  where
+    weight = sum mu
+    lambdas = map fromPartition (partitions weight)
+    msCombo lambda = msCombination (psPolynomial n lambda)
+    row lambda = map (flip (DM.findWithDefault 0) (msCombo lambda)) lambdas
+    kostkaMatrix = fromLists (map row lambdas)
+    matrix = case inverse kostkaMatrix of
+      Left _  -> Nothing
+      Right m -> Just m 
+
+mspInPSbasis' :: Int -> Partition -> Map Partition Rational
+mspInPSbasis' n mu = 
+  DM.filter (/= 0) (maps (1 + (fromJust $ elemIndex mu lambdas)))
+  where
+    weight = sum mu
+    lambdas = filter (\lambda -> length lambda <= n) (map fromPartition (partitions weight))
+    msCombo lambda = msCombination (psPolynomial n lambda)
+    row lambda = map (flip (DM.findWithDefault 0) (msCombo lambda)) lambdas
+    kostkaMatrix = fromLists (map row lambdas)
+    matrix = case inverse kostkaMatrix of
+      Left _  -> error "mspInJackBasis: should not happen:"
+      Right m -> m 
+    maps i = DM.fromList (zip lambdas (V.toList (getRow i matrix)))
 
 -- | the factor in the Hall inner product
 zlambda :: Partition -> Int
@@ -399,7 +450,7 @@ _symmPolyCombination mspInSymmPolyBasis func spray =
 -- | symmetric polynomial as a linear combination of power sum polynomials
 _psCombination :: 
   forall a. (Eq a, AlgRing.C a) => (a -> Rational -> a) -> Spray a -> Map Partition a
-_psCombination = _symmPolyCombination mspInPSbasis
+_psCombination func spray = _symmPolyCombination (mspInPSbasis' (numberOfVariables spray)) func spray
 
 -- | Symmetric polynomial as a linear combination of power sum polynomials. 
 -- Symmetry is not checked.
@@ -445,7 +496,18 @@ hallInnerProduct ::
   -> Spray a   -- ^ spray
   -> a         -- ^ parameter
   -> a 
-hallInnerProduct = _hallInnerProduct psCombination (AlgRing.*)
+hallInnerProduct spray1 spray2 alpha = -- _hallInnerProduct psCombination (AlgRing.*)
+  AlgAdd.sum $ DM.elems
+    (merge dropMissing dropMissing (zipWithMatched f) schurCombo1 schurCombo2)
+  where
+    schurCombo1 = schurCombination spray1 :: Map Partition a
+    schurCombo2 = schurCombination spray2 :: Map Partition a
+    zlambda' :: Partition -> a
+    zlambda' lambda = alpha AlgRing.^ (toInteger $ length lambda)
+    f :: Partition -> a -> a -> a
+    f lambda coeff1 coeff2 = 
+      (AlgRing.*) (zlambda' lambda) (coeff1 AlgRing.* coeff2)
+
 
 -- | Hall inner product with parameter. Same as @hallInnerProduct@ but 
 -- with other constraints on the base ring of the sprays.
@@ -560,7 +622,7 @@ cshPolynomial n lambda
   | not (_isPartition lambda) = 
       error "cshPolynomial: invalid partition."
   | null lambda               = unitSpray
-  | llambda > n               = zeroSpray
+--  | llambda > n               = zeroSpray
   | otherwise                 = productOfSprays (map cshPolynomialK lambda)
     where
       llambda = length lambda
@@ -568,14 +630,14 @@ cshPolynomial n lambda
         where
           parts = partitions k
           msSprays = 
-            [msPolynomialUnsafe n (fromPartition part) | part <- parts]
+            [msPolynomialUnsafe n (fromPartition part) | part <- parts, partitionWidth part <= n]
 
 -- | power sum polynomial as a linear combination of 
 -- complete symmetric homogeneous polynomials
-pspInCSHbasis :: Partition -> Map Partition Rational
-pspInCSHbasis mu = DM.fromList (zipWith f weights lambdas)
+pspInCSHbasis :: Int -> Partition -> Map Partition Rational
+pspInCSHbasis n mu = DM.fromList (zipWith f weights lambdas)
   where
-    parts = partitions (sum mu)
+    parts = partitions (sum mu) -- filter (\part -> partitionWidth part <= n) (partitions (sum mu))
     assoc kappa = 
       let kappa' = fromPartition kappa in (eLambdaMu kappa' mu, kappa')
     (weights, lambdas) = unzip $ filter ((/= 0) . fst) (map assoc parts)
@@ -583,19 +645,19 @@ pspInCSHbasis mu = DM.fromList (zipWith f weights lambdas)
 
 -- | monomial symmetric polynomial as a linear combination of 
 -- complete symmetric homogeneous polynomials
-mspInCSHbasis :: Partition -> Map Partition Rational
-mspInCSHbasis mu = sprayToMap (sumOfSprays sprays)
+mspInCSHbasis :: Int -> Partition -> Map Partition Rational
+mspInCSHbasis n mu = sprayToMap (sumOfSprays sprays)
   where
-    psAssocs = DM.toList (mspInPSbasis mu)
+    psAssocs = DM.toList (mspInPSbasis' n mu)
     sprays = 
-      [c *^ comboToSpray (pspInCSHbasis lambda) | (lambda, c) <- psAssocs]
+      [c *^ comboToSpray (pspInCSHbasis n lambda) | (lambda, c) <- psAssocs]
 
 -- | symmetric polynomial as a linear combination of 
 -- complete symmetric homogeneous polynomials
 _cshCombination :: 
   forall a. (Eq a, AlgRing.C a) 
   => (a -> Rational -> a) -> Spray a -> Map Partition a
-_cshCombination = _symmPolyCombination mspInCSHbasis
+_cshCombination func spray = _symmPolyCombination (mspInCSHbasis (numberOfVariables spray)) func spray
 
 -- | Symmetric polynomial as a linear combination of complete symmetric homogeneous polynomials. 
 -- Symmetry is not checked.
@@ -678,8 +740,8 @@ esCombination' = _esCombination (flip (AlgMod.*>))
 
 -- | complete symmetric homogeneous polynomial as a linear combination of 
 -- Schur polynomials
-cshInSchurBasis :: Partition -> Map Partition Rational
-cshInSchurBasis mu = DM.mapKeys fromPartition (DM.map toRational kostkaNumbers)
+cshInSchurBasis :: Int -> Partition -> Map Partition Rational
+cshInSchurBasis n mu = DM.filterWithKey (\k _ -> length k <= n) (DM.mapKeys fromPartition (DM.map toRational kostkaNumbers))
   where
     kostkaNumbers = kostkaNumbersWithGivenMu (mkPartition mu)
 
@@ -699,7 +761,7 @@ _schurCombination func spray =
     f (lambda, coeff) = 
       map (second (func coeff)) (DM.toList schurCombo)
       where
-        schurCombo = cshInSchurBasis lambda :: Map Partition Rational
+        schurCombo = cshInSchurBasis (numberOfVariables spray) lambda :: Map Partition Rational
     schurMap = DM.filter (/= AlgAdd.zero) 
             (unionsWith (AlgAdd.+) (map (DM.fromList . f) assocs))
 
@@ -744,7 +806,7 @@ mspInJackBasis alpha which n weight =
     matrix = case inverse kostkaMatrix of
       Left _  -> error "mspInJackBasis: should not happen:"
       Right m -> m 
-    maps i = DM.fromList (zip lambdas (filter (/= 0) $ V.toList (getRow i matrix)))
+    maps i = DM.fromList (zip lambdas (filter (/= 0) $ V.toList (getRow i matrix))) -- filter should be wrong!
 
 -- | Symmetric polynomial as a linear combination of Jack polynomials. 
 -- Symmetry is not checked.
