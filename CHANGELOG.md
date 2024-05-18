@@ -67,9 +67,9 @@ the Jack polynomials are eigenpolynomials of these operators
 combination of some power sum polynomials
 
 * new function `hallInnerProduct`, to compute the Hall inner product between 
-two symmetric polynomials, and there is also the function 
-`symbolicHallInnerProduct`, to get the Hall inner product with a symbolic 
-parameter
+two symmetric polynomials, aka the Jack-scalar product; there is also the 
+function `symbolicHallInnerProduct`, to get the Hall inner product with a 
+symbolic parameter
 
 1.4.2.0
 -------

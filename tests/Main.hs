@@ -11,9 +11,11 @@ import Math.Algebra.Hspray                      ( FunctionLike (..)
                                                 , canCoerceToSimpleParametricSpray
                                                 , isHomogeneousSpray
                                                 , asRatioOfSprays
+                                                , unitRatioOfSprays
                                                 , (%//%)
                                                 , (/^)
                                                 , sumOfSprays
+                                                , fromList
                                                 )
 import qualified Math.Algebra.Hspray            as Hspray
 import Math.Algebra.Jack                        ( schur, skewSchur 
@@ -283,6 +285,31 @@ main = defaultMain $ testGroup
       h12 = hallInnerProduct'' sp1 sp2 1
     assertEqual "" (h1, h2, h12) (1, 1, 0)
 
+  , testCase "Hall inner product with 'degenerate' symmetric polynomials" $ do
+    let
+      sp1 = schurPol' 3 [3,1]
+      sp2 = schurPol' 3 [2,2]
+      h1 = hallInnerProduct sp1 sp1 1
+      h2 = hallInnerProduct sp2 sp2 1
+      h12 = hallInnerProduct sp1 sp2 1
+    assertEqual "" (h1, h2, h12) (10, 5, 6)
+
+  , testCase "Symbolic Hall inner product with 'degenerate' symmetric polynomials" $ do
+    let
+      sp1 = schurPol' 3 [3,1]
+      sp2 = schurPol' 3 [2,2]
+      h1 = symbolicHallInnerProduct sp1 sp1
+      h2 = symbolicHallInnerProduct sp2 sp2
+      h12 = symbolicHallInnerProduct sp1 sp2
+      alpha = qlone 1
+    assertEqual "" 
+      (h1, h2, h12) 
+      (
+        4*^alpha^**^3 ^+^ 5*^alpha^**^2 ^+^ alpha
+      , alpha^**^3 ^+^ 3*^alpha^**^2 ^+^ alpha
+      , 2*^alpha^**^3 ^+^ 3*^alpha^**^2 ^+^ alpha
+      )
+
   , testCase "Symbolic Hall inner product" $ do
     let
       poly1 = psPolynomial 4 [4] :: QSpray
@@ -371,6 +398,34 @@ main = defaultMain $ testGroup
       combo 
       (
         DM.fromList [([2, 1, 1], 3), ([2, 1], -1)]
+      )
+
+  , testCase "Schur polynomials combination of 'degenerate' symmetric polynomial" $ do
+    let
+      poly = psPolynomial 3 [4]
+      schurCombo = schurCombination poly
+      jackCombo = jackCombination 1 'P' poly
+      expected = DM.fromList [([2, 1, 1], 1), ([3, 1], -1), ([4], 1)]
+    assertEqual ""
+      (schurCombo, jackCombo)
+      (expected, expected)
+
+  , testCase "Schur polynomials combination of a parametric spray" $ do
+    let
+      jpol = jackSymbolicPol' 4 [2, 2] 'J'
+      schurCombo = schurCombination jpol
+      alpha = qlone 1
+      expected = [
+          ([1, 1, 1, 1], asRatioOfSprays (2*^alpha^**^2 ^-^ 6*^alpha <+ 4)   )
+        , ([2, 1, 1],    asRatioOfSprays ((-2)*^alpha^**^2 ^-^ 2*^alpha <+ 4))
+        , ([2, 2],       asRatioOfSprays (2*^alpha^**^2 ^+^ 6*^alpha <+ 4)   )
+        ]
+      jpol' = sumOfSprays $ map (\(lambda, c) -> c *^ jackPol 4 lambda unitRatioOfSprays 'P') expected
+    assertEqual ""
+      (schurCombo, jpol) 
+      (
+        DM.fromList expected
+      , jpol' 
       )
 
   , testCase "Jack J-polynomials combination" $ do
