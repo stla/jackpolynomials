@@ -16,7 +16,8 @@ module Math.Algebra.Jack.Internal
   , skewSchurLRCoefficients
   , isSkewPartition
   , sprayToMap
-  , comboToSpray )
+  , comboToSpray
+  , inverseUnitTriangularMatrix )
   where
 import           Prelude 
   hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger, recip)
@@ -33,7 +34,19 @@ import qualified Data.HashMap.Strict                         as HM
 import           Data.List.Index                             ( iconcatMap )
 import           Data.Map.Strict                             ( Map )
 import qualified Data.Map.Strict                             as DM
+import           Data.Matrix                                 ( 
+                                                               Matrix
+                                                             , nrows
+                                                             , getCol 
+                                                             , getRow
+                                                             , minorMatrix
+                                                             , (<|>)
+                                                             , (<->)
+                                                             , rowVector
+                                                             , colVector
+                                                             )
 import qualified Data.Sequence                               as S
+import qualified Data.Vector                                 as V
 import           Math.Algebra.Hspray                         ( 
                                                                RatioOfSprays, (%:%)
                                                              , Spray, (.^)
@@ -46,6 +59,24 @@ import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
 
 type Partition = [Int]
+
+inverseUnitTriangularMatrix :: Num a => Matrix a -> Matrix a
+inverseUnitTriangularMatrix mat = 
+  if d == 1 then mat else invmat
+  where
+    d = nrows mat
+    invminor = inverseUnitTriangularMatrix (minorMatrix d d mat)
+    lastColumn = getCol d mat
+    vectors = [
+        (
+          V.drop (i-1) (getRow i invminor)
+        , V.drop (i-1) lastColumn
+        )
+        | i <- [1 .. d-1]
+      ] 
+    newColumn = colVector [V.sum (V.zipWith (*) u v) | (u, v) <- vectors]
+    newRow = rowVector (V.snoc (V.replicate (d - 1) 0) 1)
+    invmat = (invminor <|> newColumn) <-> newRow
 
 _isPartition :: Partition -> Bool
 _isPartition []           = True
