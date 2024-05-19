@@ -21,7 +21,6 @@ module Math.Algebra.Jack.Internal
   where
 import           Prelude 
   hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger, recip)
-import qualified Prelude                                     as P
 import           Algebra.Additive                            ( (+), (-), sum )
 import qualified Algebra.Additive                            as AlgAdd
 import           Algebra.Field                               ( (/), recip )
@@ -80,7 +79,7 @@ inverseTriangularMatrix mat =
       ] 
     lastEntry = recip (getElem d d mat)
     newColumn = colVector (V.fromList 
-        [AlgAdd.negate (lastEntry * AlgAdd.sum (V.toList $ V.zipWith (*) u v)) 
+        [AlgAdd.negate (lastEntry * V.foldl1 (AlgAdd.+) (V.zipWith (*) u v)) 
           | (u, v) <- vectors]
       )
     newRow = rowVector (V.snoc (V.replicate (d - 1) AlgAdd.zero) lastEntry)

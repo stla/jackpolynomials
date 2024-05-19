@@ -35,6 +35,7 @@ module Math.Algebra.SymmetricPolynomials
   , schurCombination
   , schurCombination'
   , jackCombination
+  , jackSymbolicCombination
   -- * Printing symmetric polynomials
   , prettySymmetricNumSpray
   , prettySymmetricQSpray
@@ -75,8 +76,7 @@ import           Data.Map.Strict                  (
                                                   )
 import qualified Data.Map.Strict                  as DM
 import           Data.Matrix                      ( 
-                                                    inverse
-                                                  , fromLists 
+                                                    fromLists 
                                                   , getRow
                                                   )
 import           Data.Maybe                       ( fromJust )
@@ -112,6 +112,8 @@ import           Math.Algebra.Hspray              (
                                                   , (%//%)
                                                   , RatioOfSprays (..)
                                                   , RatioOfQSprays
+                                                  , constantRatioOfSprays
+                                                  , zeroRatioOfSprays
                                                   , prettyRatioOfQSpraysXYZ
                                                   , showNumSpray
                                                   , showQSpray
@@ -364,9 +366,9 @@ eLambdaMu lambda mu
 mspInPSbasis :: Partition -> Map Partition Rational
 mspInPSbasis kappa = DM.fromList (zipWith f weights lambdas)
   where
-    parts = map fromPartition (partitions (sum kappa))
+    parts = partitions (sum kappa)
     (weights, lambdas) = unzip $ filter ((/= 0) . fst) 
-      [(eLambdaMu kappa lambda, lambda) | lambda <- parts]
+      [let lambda = fromPartition part in (eLambdaMu kappa lambda, lambda) | part <- parts]
     f weight lambda = 
       (lambda, weight / toRational (zlambda lambda))
 
@@ -422,9 +424,9 @@ zlambda lambda = p
     factorial n = product [2 .. n]
 
 _symmPolyCombination :: 
-    forall a. (Eq a, AlgRing.C a) 
-  => (Partition -> Map Partition Rational) 
-  -> (a -> Rational -> a) 
+    forall a b. (Eq a, AlgRing.C a) 
+  => (Partition -> Map Partition b) 
+  -> (a -> b -> a) 
   -> Spray a 
   -> Map Partition a
 _symmPolyCombination mspInSymmPolyBasis func spray =
@@ -433,14 +435,35 @@ _symmPolyCombination mspInSymmPolyBasis func spray =
     else insert [] constantTerm symmPolyMap
   where
     constantTerm = getConstantTerm spray
-    assocs = msCombination' (spray <+ (AlgAdd.negate constantTerm))
+    assocs = msCombination' (spray <+ (AlgAdd.negate constantTerm)) :: [(Partition, a)]
     f :: (Partition, a) -> [(Partition, a)] 
     f (lambda, coeff) = 
       map (second (func coeff)) (DM.toList symmPolyCombo)
       where
-        symmPolyCombo = mspInSymmPolyBasis lambda :: Map Partition Rational
+        symmPolyCombo = mspInSymmPolyBasis lambda :: Map Partition b
     symmPolyMap = DM.filter (/= AlgAdd.zero) 
             (unionsWith (AlgAdd.+) (map (DM.fromList . f) assocs))
+
+-- _symmPolyCombination' :: 
+--     forall a. (Eq a, AlgRing.C a) 
+--   => (Partition -> Map Partition Rational) 
+--   -> (a -> Rational -> a) 
+--   -> Spray a 
+--   -> Map Partition a
+-- _symmPolyCombination' mspInSymmPolyBasis func spray =
+--   if constantTerm == AlgAdd.zero 
+--     then symmPolyMap
+--     else insert [] constantTerm symmPolyMap
+--   where
+--     constantTerm = getConstantTerm spray
+--     assocs = msCombination' (spray <+ (AlgAdd.negate constantTerm))
+--     f :: (Partition, a) -> [(Partition, a)] 
+--     f (lambda, coeff) = 
+--       map (second (func coeff)) (DM.toList symmPolyCombo)
+--       where
+--         symmPolyCombo = mspInSymmPolyBasis lambda :: Map Partition Rational
+--     symmPolyMap = DM.filter (/= AlgAdd.zero) 
+--             (unionsWith (AlgAdd.+) (map (DM.fromList . f) assocs))
 
 -- | symmetric polynomial as a linear combination of power sum polynomials
 _psCombination :: 
@@ -786,6 +809,7 @@ mspInJackBasis alpha which n weight =
   DM.fromList (zip lambdas [maps i | i <- [1 .. length lambdas]])
   where
     kappas = map fromPartition (partitions weight)
+    -- reverse to get an upper triangular Kostka matrix
     lambdas = reverse $ filter (\lambda -> length lambda <= n) kappas
     msCombo lambda = msCombination (jackPol' weight lambda alpha which)
     row lambda = map (flip (DM.findWithDefault 0) (msCombo lambda)) lambdas
@@ -796,6 +820,20 @@ mspInJackBasis alpha which n weight =
     --   Right m -> m 
     maps i = DM.filter (/= 0) 
               (DM.fromList (zip lambdas (V.toList (getRow i matrix)))) -- (zip lambdas (filter (/= 0) $ V.toList (getRow i matrix))) -- filter should be wrong!
+
+mspInJackSymbolicBasis :: Char -> Int -> Int -> Map Partition (Map Partition RatioOfQSprays)
+mspInJackSymbolicBasis which n weight = 
+  DM.fromList (zip lambdas [maps i | i <- [1 .. length lambdas]])
+  where
+    kappas = map fromPartition (partitions weight)
+    -- reverse to get an upper triangular Kostka matrix
+    lambdas = reverse $ filter (\lambda -> length lambda <= n) kappas
+    msCombo lambda = msCombination (jackSymbolicPol' weight lambda which)
+    row lambda = map (flip (DM.findWithDefault zeroRatioOfSprays) (msCombo lambda)) lambdas
+    kostkaMatrix = fromLists (map row lambdas)
+    matrix = inverseTriangularMatrix kostkaMatrix
+    maps i = DM.filter (/= zeroRatioOfSprays) 
+              (DM.fromList (zip lambdas (V.toList (getRow i matrix))))
 
 -- | Symmetric polynomial as a linear combination of Jack polynomials. 
 -- Symmetry is not checked.
@@ -815,6 +853,22 @@ jackCombination alpha which qspray =
     n = numberOfVariables qspray
     msPolynomialsInJackBasis = 
       IM.fromList (zip weights (map (mspInJackBasis alpha which n) weights))
+
+-- | Symmetric polynomial as a linear combination of symbolic Jack polynomials. 
+-- Symmetry is not checked.
+jackSymbolicCombination :: 
+     Char                   -- ^ which Jack polynomials, @'J'@, @'C'@, @'P'@ or @'Q'@
+  -> QSpray                 -- ^ spray representing a symmetric polynomial
+  -> Map Partition RatioOfQSprays -- ^ map representing the linear combination; a partition @lambda@ in the keys of this map corresponds to the term @coeff *^ jackPol' n lambda alpha which@, where @coeff@ is the value attached to this key and @n@ is the number of variables of the spray
+jackSymbolicCombination which qspray = 
+  _symmPolyCombination 
+    (\lambda -> (msPolynomialsInJackBasis IM.! (sum lambda)) DM.! lambda) 
+      (AlgRing.*) (HM.map constantRatioOfSprays qspray)
+  where
+    weights = filter (/= 0) (map DF.sum (allExponents qspray))
+    n = numberOfVariables qspray
+    msPolynomialsInJackBasis = 
+      IM.fromList (zip weights (map (mspInJackSymbolicBasis which n) weights))
 
 -- -- | symmetric polynomial as a linear combination of Jack polynomials
 -- _jackCombination :: 
