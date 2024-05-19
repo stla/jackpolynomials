@@ -129,7 +129,7 @@ import           Math.Algebra.Jack.Internal       (
                                                   , _isPartition
                                                   , sprayToMap
                                                   , comboToSpray 
-                                                  , inverseUnitTriangularMatrix
+                                                  , inverseTriangularMatrix
                                                   )
 import           Math.Algebra.JackPol             ( 
                                                     jackPol'
@@ -786,11 +786,11 @@ mspInJackBasis alpha which n weight =
   DM.fromList (zip lambdas [maps i | i <- [1 .. length lambdas]])
   where
     kappas = map fromPartition (partitions weight)
-    lambdas = filter (\lambda -> length lambda <= n) kappas
+    lambdas = reverse $ filter (\lambda -> length lambda <= n) kappas
     msCombo lambda = msCombination (jackPol' weight lambda alpha which)
     row lambda = map (flip (DM.findWithDefault 0) (msCombo lambda)) lambdas
     kostkaMatrix = fromLists (map row lambdas)
-    matrix = inverseUnitTriangularMatrix kostkaMatrix
+    matrix = inverseTriangularMatrix kostkaMatrix
     -- matrix = case inverse kostkaMatrix of
     --   Left _  -> error "mspInJackBasis: should not happen:"
     --   Right m -> m 

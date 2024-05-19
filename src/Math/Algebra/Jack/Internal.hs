@@ -17,11 +17,13 @@ module Math.Algebra.Jack.Internal
   , isSkewPartition
   , sprayToMap
   , comboToSpray
-  , inverseUnitTriangularMatrix )
+  , inverseTriangularMatrix )
   where
 import           Prelude 
   hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger, recip)
+import qualified Prelude                                     as P
 import           Algebra.Additive                            ( (+), (-), sum )
+import qualified Algebra.Additive                            as AlgAdd
 import           Algebra.Field                               ( (/), recip )
 import qualified Algebra.Field                               as AlgField
 import           Algebra.Ring                                ( (*), product, one
@@ -44,6 +46,8 @@ import           Data.Matrix                                 (
                                                              , (<->)
                                                              , rowVector
                                                              , colVector
+                                                             , getElem
+                                                             , fromLists
                                                              )
 import qualified Data.Sequence                               as S
 import qualified Data.Vector                                 as V
@@ -60,13 +64,13 @@ import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
 
 type Partition = [Int]
 
-inverseUnitTriangularMatrix :: Num a => Matrix a -> Matrix a
-inverseUnitTriangularMatrix mat = 
-  if d == 1 then mat else invmat
+inverseTriangularMatrix :: (Eq a, AlgField.C a) => Matrix a -> Matrix a
+inverseTriangularMatrix mat = 
+  if d == 1 then fromLists [[recip (getElem 1 1 mat)]] else invmat
   where
     d = nrows mat
-    invminor = inverseUnitTriangularMatrix (minorMatrix d d mat)
-    lastColumn = getCol d mat
+    invminor = inverseTriangularMatrix (minorMatrix d d mat)
+    lastColumn = V.init (getCol d mat)
     vectors = [
         (
           V.drop (i-1) (getRow i invminor)
@@ -74,8 +78,12 @@ inverseUnitTriangularMatrix mat =
         )
         | i <- [1 .. d-1]
       ] 
-    newColumn = colVector [V.sum (V.zipWith (*) u v) | (u, v) <- vectors]
-    newRow = rowVector (V.snoc (V.replicate (d - 1) 0) 1)
+    lastEntry = recip (getElem d d mat)
+    newColumn = colVector (V.fromList 
+        [AlgAdd.negate (lastEntry * AlgAdd.sum (V.toList $ V.zipWith (*) u v)) 
+          | (u, v) <- vectors]
+      )
+    newRow = rowVector (V.snoc (V.replicate (d - 1) AlgAdd.zero) lastEntry)
     invmat = (invminor <|> newColumn) <-> newRow
 
 _isPartition :: Partition -> Bool
