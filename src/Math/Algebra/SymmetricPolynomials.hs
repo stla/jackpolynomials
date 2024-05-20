@@ -793,8 +793,8 @@ schurCombination' = _schurCombination (flip (AlgMod.*>))
 -- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) for a given partition \(\lambda\)
 -- and a given parameter \(\alpha\) (these are the standard Kostka numbers when
 -- \(\alpha=1\)).
-kostkaNumbers :: Int -> Rational -> Map (Partition, Partition) Rational
-kostkaNumbers weight alpha = fst $ _kostkaNumbers weight weight alpha 'P'
+kostkaNumbers :: Int -> Rational -> Map Partition (Map Partition Rational)
+kostkaNumbers weight alpha = _kostkaNumbers weight weight alpha 'P'
 
 -- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) with symbolic parameter \(\alpha\) 
 -- for a given partition \(\lambda\).

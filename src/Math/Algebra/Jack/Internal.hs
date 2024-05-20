@@ -89,30 +89,29 @@ _inverseKostkaMatrix :: forall a. (Eq a, AlgField.C a) => Int -> Int -> a -> Cha
 _inverseKostkaMatrix n weight alpha which = 
   (inverseTriangularMatrix (fromLists (map row lambdas)), lambdas)
   where
-    (kostkaNumbers, lambdas) = _kostkaNumbers n weight alpha which
+    kostkaNumbers = _kostkaNumbers n weight alpha which
+    lambdas = reverse $ DM.keys kostkaNumbers
     -- kappas = map fromPartition (partitions weight)
     -- -- reverse to get an upper triangular Kostka matrix
     -- lambdas = reverse $ filter (\lambda -> length lambda <= n) kappas
-    msCombo lambda = DM.mapKeys snd (DM.filterWithKey (\(kappa, _) _ -> kappa == lambda) kostkaNumbers)
+    msCombo lambda = kostkaNumbers DM.! lambda
     row lambda = map (flip (DM.findWithDefault AlgAdd.zero) (msCombo lambda)) lambdas
 
-_kostkaNumbers :: forall a. (AlgField.C a) => Int -> Int -> a -> Char -> (Map (Partition, Partition) a, [Partition])
-_kostkaNumbers nv weight alpha which = (kostkaMatrix', lambdas')
+_kostkaNumbers :: forall a. (AlgField.C a) => Int -> Int -> a -> Char -> Map Partition (Map Partition a)
+_kostkaNumbers nv weight alpha which = kostkaMatrix'
   where
-    -- mm = DM.mapWithKey (\(kappa, mu) _ -> kappa)
-    -- mmm = DM.map (\number -> )
     coeffsP = DM.fromList 
       [(kappa, recip (jackCoeffP kappa alpha))| kappa <- lambdas']
     coeffsC = DM.fromList 
       [(kappa, jackCoeffC kappa alpha / jackCoeffP kappa alpha) | kappa <- lambdas']    
     coeffsQ = DM.fromList 
       [(kappa, jackCoeffQ kappa alpha / jackCoeffP kappa alpha) | kappa <- lambdas']    
-    kostkaMatrix = DM.mapKeys (both fromPartition) (rec (length lambdas))
+    kostkaMatrix = DM.mapKeys fromPartition (rec (length lambdas))
     kostkaMatrix' = case which of
-      'J' -> DM.mapWithKey (\(kappa, _) number -> number * coeffsP DM.! kappa) kostkaMatrix
+      'J' -> DM.mapWithKey (\kappa m -> DM.map ((*) (coeffsP DM.! kappa)) m) kostkaMatrix
       'P' -> kostkaMatrix
-      'C' -> DM.mapWithKey (\(kappa, _) number -> number * coeffsC DM.! kappa) kostkaMatrix
-      'Q' -> DM.mapWithKey (\(kappa, _) number -> number * coeffsQ DM.! kappa) kostkaMatrix
+      'C' -> DM.mapWithKey (\kappa m -> DM.map ((*) (coeffsC DM.! kappa)) m) kostkaMatrix
+      'Q' -> DM.mapWithKey (\kappa m -> DM.map ((*) (coeffsQ DM.! kappa)) m) kostkaMatrix
       _   -> error "_kostkaNumbers: should not happen."
     mu_r_plus :: Partition -> (Int, Int) -> Int -> (MCP.Partition, (Int, Int), Int)
     mu_r_plus mu pair@(i, j) r = 
@@ -121,24 +120,26 @@ _kostkaNumbers nv weight alpha which = (kostkaMatrix', lambdas')
         mu' = S.fromList mu 
     lambdas = reverse $ filter (\part -> partitionWidth part <= nv) (partitions weight)
     lambdas' = map fromPartition lambdas
-    rec :: Int -> Map (MCP.Partition, MCP.Partition) a
+    rec :: Int -> Map MCP.Partition (Map Partition a)
     rec n = if n == 1
-      then DM.singleton (dupe (MCP.Partition [weight])) AlgRing.one
-      else DM.union previous newColumn
+      then DM.singleton (MCP.Partition [weight]) (DM.singleton [weight] AlgRing.one)
+      else DM.insert mu (DM.singleton mu' AlgRing.one) (DM.fromList [(kappa, DM.insert mu' (newColumn DM.! kappa) (previous DM.! kappa)) | kappa <- kappas]) --  DM.union previous (DM.singleton mu newColumn
       where
+--        h kappa m = Just $ DM.insert mu' (newColumn DM.! kappa) m
         previous = rec (n - 1)
         parts = take (n) lambdas
         (kappas, mu) = fromJust (unsnoc parts)
-        newColumn = DM.insert (mu, mu) AlgRing.one (DM.fromList [((kappa, mu), f kappa) | kappa <- kappas])
+        mu' = fromPartition mu
+        l = length mu'
+        pairs = [(i, j) | i <- [0 .. l-2], j <- [i+1 .. l-1]]
+        newColumn = DM.fromList [(kappa, f kappa) | kappa <- kappas]
         f kappa = AlgAdd.sum xs 
           where
-            mu' = fromPartition mu 
-            l = length mu'
-            pairs = [(i, j) | i <- [0 .. l-2], j <- [i+1 .. l-1]]
+            previousRow = previous DM.! kappa
             nus = 
               filter ((dominates kappa) . fst3) [mu_r_plus mu' (i, j) r | (i, j) <- pairs, r <- [1 .. (mu' !! j P.+ mu' !! j) `div` 2]]
             ee = _e kappa alpha - _e mu alpha
-            xs = [fromIntegral (mu' !! i P.- mu' !! j P.+ 2 P.* r) * (previous DM.! (kappa, nu)) / ee | (nu, (i, j), r) <- nus]
+            xs = [fromIntegral (mu' !! i P.- mu' !! j P.+ 2 P.* r) * (previousRow DM.! (fromPartition nu)) / ee | (nu, (i, j), r) <- nus]
 
 
 
