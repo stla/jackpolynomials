@@ -19,7 +19,8 @@ module Math.Algebra.Jack.Internal
   , comboToSpray
   , inverseTriangularMatrix
   , _kostkaNumbers
-  , _e )
+  , _kostkaMatrix
+  )
   where
 import           Prelude 
   hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger, recip)
@@ -84,6 +85,16 @@ _e lambda alpha =
   alpha * fromIntegral (_n (dualPartition lambda)) - fromIntegral (_n lambda)
   where
     _n mu = sum (zipWith (P.*) [0 .. ] (fromPartition mu))
+
+_kostkaMatrix :: forall a. (Eq a, AlgField.C a) => Int -> a -> Char -> Matrix a
+_kostkaMatrix weight alpha which = fromLists (map row lambdas)
+  where
+    kostkaNumbers = _kostkaNumbers weight alpha which
+    kappas = map fromPartition (partitions weight)
+    -- reverse to get an upper triangular Kostka matrix
+    lambdas = reverse $ kappas -- filter (\lambda -> length lambda <= n) kappas
+    msCombo lambda = DM.mapKeys snd (DM.takeWhileAntitone ((== lambda) . fst) kostkaNumbers)
+    row lambda = map (flip (DM.findWithDefault AlgAdd.zero) (msCombo lambda)) lambdas
 
 _kostkaNumbers :: forall a. (Eq a, AlgField.C a) => Int -> a -> Char -> Map (Partition, Partition) a
 _kostkaNumbers weight alpha which = kostkaMatrix'
