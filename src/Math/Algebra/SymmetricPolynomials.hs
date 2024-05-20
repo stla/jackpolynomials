@@ -135,6 +135,7 @@ import           Math.Algebra.Jack.Internal       (
                                                   , _inverseKostkaMatrix
                                                   , _kostkaNumbers
                                                   , _symbolicKostkaNumbers
+                                                  , _inverseSymbolicKostkaMatrix
                                                   )
 import           Math.Algebra.JackPol             ( 
                                                     jackPol'
@@ -831,13 +832,14 @@ mspInJackSymbolicBasis :: Char -> Int -> Int -> Map Partition (Map Partition Rat
 mspInJackSymbolicBasis which n weight = 
   DM.fromList (zip lambdas [maps i | i <- [1 .. length lambdas]])
   where
-    kappas = map fromPartition (partitions weight)
-    -- reverse to get an upper triangular Kostka matrix
-    lambdas = reverse $ filter (\lambda -> length lambda <= n) kappas
-    msCombo lambda = msCombination (jackSymbolicPol' weight lambda which)
-    row lambda = map (flip (DM.findWithDefault zeroRatioOfSprays) (msCombo lambda)) lambdas
-    kostkaMatrix = fromLists (map row lambdas)
-    matrix = inverseTriangularMatrix kostkaMatrix
+    (matrix, lambdas) = _inverseSymbolicKostkaMatrix n weight which
+    -- kappas = map fromPartition (partitions weight)
+    -- -- reverse to get an upper triangular Kostka matrix
+    -- lambdas = reverse $ filter (\lambda -> length lambda <= n) kappas
+    -- msCombo lambda = msCombination (jackSymbolicPol' weight lambda which)
+    -- row lambda = map (flip (DM.findWithDefault zeroRatioOfSprays) (msCombo lambda)) lambdas
+    -- kostkaMatrix = fromLists (map row lambdas)
+    -- matrix = inverseTriangularMatrix kostkaMatrix
     maps i = DM.filter (/= zeroRatioOfSprays) 
               (DM.fromList (zip lambdas (V.toList (getRow i matrix))))
 
