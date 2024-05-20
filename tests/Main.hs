@@ -40,7 +40,7 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , schurCombination
                                                 , jackCombination
                                                 , jackSymbolicCombination
-                                                , kostkaNumbersWithGivenLambda
+                                                , kostkaNumbers
                                                 )
 import Math.Combinat.Partitions.Integer         ( 
                                                   toPartition
@@ -504,7 +504,7 @@ main = defaultMain $ testGroup
   , testCase "Kostka numbers" $ do
     let
       lambda = [4, 3, 1]
-      kn1 = kostkaNumbersWithGivenLambda lambda 1
+      kn1 = DM.mapKeys snd $ DM.filterWithKey (\(kappa, _) _ -> kappa == lambda) (kostkaNumbers (sum lambda) 1)
       kn2 = DM.mapKeys fromPartition 
             (GT.kostkaNumbersWithGivenLambda (mkPartition lambda) :: DM.Map PI.Partition Rational)
     assertEqual "" kn1 kn2

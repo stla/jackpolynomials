@@ -54,7 +54,7 @@ module Math.Algebra.SymmetricPolynomials
   , symbolicHallInnerProduct'
   , symbolicHallInnerProduct''
   -- * Kostka numbers
-  , kostkaNumbersWithGivenLambda
+  , kostkaNumbers
   , symbolicKostkaNumbersWithGivenLambda
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
@@ -133,6 +133,7 @@ import           Math.Algebra.Jack.Internal       (
                                                   , comboToSpray 
                                                   , inverseTriangularMatrix
                                                   , _inverseKostkaMatrix
+                                                  , _kostkaNumbers
                                                   )
 import           Math.Algebra.JackPol             ( 
                                                     jackPol'
@@ -792,10 +793,8 @@ schurCombination' = _schurCombination (flip (AlgMod.*>))
 -- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) for a given partition \(\lambda\)
 -- and a given parameter \(\alpha\) (these are the standard Kostka numbers when
 -- \(\alpha=1\)).
-kostkaNumbersWithGivenLambda :: Partition -> Rational -> Map Partition Rational
-kostkaNumbersWithGivenLambda lambda alpha = msCombination jp
-  where
-    jp = jackPol' (sum lambda) lambda alpha 'P'
+kostkaNumbers :: Int -> Rational -> Map (Partition, Partition) Rational
+kostkaNumbers weight alpha = fst $ _kostkaNumbers weight weight alpha 'P'
 
 -- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) with symbolic parameter \(\alpha\) 
 -- for a given partition \(\lambda\).

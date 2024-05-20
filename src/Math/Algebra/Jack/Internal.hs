@@ -69,9 +69,9 @@ import           Math.Combinat.Partitions.Integer            (
                                                                fromPartition
                                                              , dualPartition
                                                              , partitions
-                                                             , countPartitions
                                                              , dominates
                                                              , mkPartition
+                                                             , partitionWidth
                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
@@ -119,7 +119,7 @@ _kostkaNumbers nv weight alpha which = (kostkaMatrix', lambdas')
       (mkPartition (DF.toList $ S.reverse $ S.sort $ (S.adjust' ((P.+) r) i (S.adjust' (subtract r) j mu'))), pair, r)
       where
         mu' = S.fromList mu 
-    lambdas = reverse $ filter (\part -> MCP.partitionWidth part <= nv) (partitions weight)
+    lambdas = reverse $ filter (\part -> partitionWidth part <= nv) (partitions weight)
     lambdas' = map fromPartition lambdas
     rec :: Int -> Map (MCP.Partition, MCP.Partition) a
     rec n = if n == 1
