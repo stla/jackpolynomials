@@ -790,10 +790,18 @@ schurCombination' ::
   => Spray a -> Map Partition a
 schurCombination' = _schurCombination (flip (AlgMod.*>))
 
--- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) for a given partition \(\lambda\)
--- and a given parameter \(\alpha\) (these are the standard Kostka numbers when
--- \(\alpha=1\)).
-kostkaNumbers :: Int -> Rational -> Map Partition (Map Partition Rational)
+-- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) for a given weight of the 
+-- partitions \(\lambda\) and \(\mu\) and a given parameter 
+-- \(\alpha\) (these are the standard Kostka numbers when
+-- \(\alpha=1\)). This returns a map whose keys represent the 
+-- partitions \(\lambda\) and the value attached to a partition \(\lambda\)
+-- represents the map \(\mu \mapsto K_{\lambda,\mu}(\alpha)\) where the 
+-- partition \(\mu\) is included in the keys of this map if and only if 
+-- \(K_{\lambda,\mu}(\alpha) \neq 0\).
+kostkaNumbers :: 
+     Int      -- ^ weight of the partitions
+  -> Rational -- Jack parameter
+  -> Map Partition (Map Partition Rational)
 kostkaNumbers weight alpha = _kostkaNumbers weight weight alpha 'P'
 
 -- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) with symbolic parameter \(\alpha\) 
