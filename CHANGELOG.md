@@ -67,9 +67,9 @@ the Jack polynomials are eigenpolynomials of these operators
 combination of some power sum polynomials
 
 * new function `hallInnerProduct`, to compute the Hall inner product between 
-two symmetric polynomials, aka the Jack-scalar product; there is also the 
-function `symbolicHallInnerProduct`, to get the Hall inner product with a 
-symbolic parameter
+two symmetric polynomials, aka the Jack-scalar product or the deformed Hall 
+inner product; there is also the function `symbolicHallInnerProduct`, to get 
+the Hall inner product with a symbolic parameter
 
 1.4.2.0
 -------
@@ -89,5 +89,8 @@ combination of some Schur polynomials
 * new function `jackCombination`, to get a symmetric polynomial as a linear 
 combination of some Jack polynomials
 
-* new functions `kostkaNumbersWithGivenLambda` and 
-`symbolicKostkaNumbersWithGivenLambda`, to get the Kostka numbers with parameter
+* new function `jackSymbolicCombination`, to get a symmetric polynomial as a linear 
+combination of some Jack polynomials with symbolic Jack parameter
+
+* new functions `kostkaNumbers` and `symbolicKostkaNumbers`, to get the Kostka 
+numbers with parameter

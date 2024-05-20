@@ -799,14 +799,19 @@ kostkaNumbers ::
 kostkaNumbers weight alpha = _kostkaNumbers weight weight alpha 'P'
 
 -- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) with symbolic parameter \(\alpha\) 
--- for a given partition \(\lambda\).
+-- for a given weight of the partitions \(\lambda\) and \(\mu\). This returns a map 
+-- whose keys represent the 
+-- partitions \(\lambda\) and the value attached to a partition \(\lambda\)
+-- represents the map \(\mu \mapsto K_{\lambda,\mu}(\alpha)\) where the 
+-- partition \(\mu\) is included in the keys of this map if and only if 
+-- \(K_{\lambda,\mu}(\alpha) \neq 0\).
 symbolicKostkaNumbers :: Int -> Map Partition (Map Partition RatioOfQSprays)
 symbolicKostkaNumbers weight = _symbolicKostkaNumbers weight weight 'P'
 
 -- | monomial symmetric polynomial as a linear combination of Jack polynomials
 mspInJackBasis :: Rational -> Char -> Int -> Int -> Map Partition (Map Partition Rational)
 mspInJackBasis alpha which n weight = 
-  DM.fromList (zip lambdas [maps i | i <- [1 .. length lambdas]])
+  DM.fromDistinctDescList (zip lambdas [maps i | i <- [1 .. length lambdas]])
   where
     -- lambdas = reverse $ filter (\lambda -> length lambda <= n) $ map fromPartition (partitions weight)
     (matrix, lambdas) = _inverseKostkaMatrix n weight alpha which
@@ -818,11 +823,11 @@ mspInJackBasis alpha which n weight =
     -- kostkaMatrix = fromLists (map row lambdas)
     -- matrix = inverseTriangularMatrix kostkaMatrix
     maps i = DM.filter (/= 0) 
-              (DM.fromList (zip lambdas (V.toList (getRow i matrix)))) -- (zip lambdas (filter (/= 0) $ V.toList (getRow i matrix))) -- filter should be wrong!
+              (DM.fromDistinctDescList (zip lambdas (V.toList (getRow i matrix)))) -- (zip lambdas (filter (/= 0) $ V.toList (getRow i matrix))) -- filter should be wrong!
 
 mspInJackSymbolicBasis :: Char -> Int -> Int -> Map Partition (Map Partition RatioOfQSprays)
 mspInJackSymbolicBasis which n weight = 
-  DM.fromList (zip lambdas [maps i | i <- [1 .. length lambdas]])
+  DM.fromDistinctDescList (zip lambdas [maps i | i <- [1 .. length lambdas]])
   where
     (matrix, lambdas) = _inverseSymbolicKostkaMatrix n weight which
     -- kappas = map fromPartition (partitions weight)
@@ -833,7 +838,7 @@ mspInJackSymbolicBasis which n weight =
     -- kostkaMatrix = fromLists (map row lambdas)
     -- matrix = inverseTriangularMatrix kostkaMatrix
     maps i = DM.filter (/= zeroRatioOfSprays) 
-              (DM.fromList (zip lambdas (V.toList (getRow i matrix))))
+              (DM.fromDistinctDescList (zip lambdas (V.toList (getRow i matrix))))
 
 -- | Symmetric polynomial as a linear combination of Jack polynomials. 
 -- Symmetry is not checked.
@@ -859,7 +864,7 @@ jackCombination alpha which qspray =
 jackSymbolicCombination :: 
      Char                   -- ^ which Jack polynomials, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> QSpray                 -- ^ spray representing a symmetric polynomial
-  -> Map Partition RatioOfQSprays -- ^ map representing the linear combination; a partition @lambda@ in the keys of this map corresponds to the term @coeff *^ jackPol' n lambda alpha which@, where @coeff@ is the value attached to this key and @n@ is the number of variables of the spray
+  -> Map Partition RatioOfQSprays -- ^ map representing the linear combination; a partition @lambda@ in the keys of this map corresponds to the term @coeff *^ jackSymbolicPol' n lambda which@, where @coeff@ is the value attached to this key and @n@ is the number of variables of the spray
 jackSymbolicCombination which qspray = 
   _symmPolyCombination 
     (\lambda -> (msPolynomialsInJackBasis IM.! (sum lambda)) DM.! lambda) 
