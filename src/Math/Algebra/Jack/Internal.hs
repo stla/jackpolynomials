@@ -29,6 +29,7 @@ import           Algebra.Additive                            ( (+), (-), sum )
 import qualified Algebra.Additive                            as AlgAdd
 import           Algebra.Field                               ( (/), recip )
 import qualified Algebra.Field                               as AlgField
+import           Algebra.Module                              ( (*>) )
 import           Algebra.Ring                                ( (*), product, one
                                                              , (^), fromInteger 
                                                              )
@@ -58,7 +59,9 @@ import qualified Data.Sequence                               as S
 import           Data.Tuple.Extra                            ( dupe, both, fst3 )
 import qualified Data.Vector                                 as V
 import           Math.Algebra.Hspray                         ( 
-                                                               RatioOfSprays, (%:%)
+                                                               RatioOfSprays, (%:%), (%//%), (%/%)
+                                                             , unitRatioOfSprays
+                                                             , asRatioOfSprays
                                                              , Spray, (.^)
                                                              , Powers (..)
                                                              , lone, unitSpray
@@ -83,6 +86,13 @@ _e :: AlgRing.C a => MCP.Partition -> a -> a
 _e lambda alpha = 
   alpha * fromIntegral (_n (dualPartition lambda)) - fromIntegral (_n lambda)
   where
+    _n mu = sum (zipWith (P.*) [0 .. ] (fromPartition mu))
+
+_eSymbolic :: (Eq a, AlgRing.C a) => MCP.Partition -> Spray a 
+_eSymbolic lambda = 
+  _n (dualPartition lambda) .^ alpha <+ fromIntegral (- _n lambda)
+  where
+    alpha = lone 1
     _n mu = sum (zipWith (P.*) [0 .. ] (fromPartition mu))
 
 _inverseKostkaMatrix :: forall a. (Eq a, AlgField.C a) => Int -> Int -> a -> Char -> (Matrix a, [Partition])
@@ -125,7 +135,49 @@ _kostkaNumbers nv weight alpha which = kostkaMatrix'
       then DM.singleton (MCP.Partition [weight]) (DM.singleton [weight] AlgRing.one)
       else DM.insert mu (DM.singleton mu' AlgRing.one) (DM.fromList [(kappa, DM.insert mu' (newColumn DM.! kappa) (previous DM.! kappa)) | kappa <- kappas]) --  DM.union previous (DM.singleton mu newColumn
       where
---        h kappa m = Just $ DM.insert mu' (newColumn DM.! kappa) m
+        previous = rec (n - 1)
+        parts = take (n) lambdas
+        (kappas, mu) = fromJust (unsnoc parts)
+        mu' = fromPartition mu
+        l = length mu'
+        pairs = [(i, j) | i <- [0 .. l-2], j <- [i+1 .. l-1]]
+        newColumn = DM.fromList [(kappa, f kappa) | kappa <- kappas]
+        f kappa = AlgAdd.sum xs 
+          where
+            previousRow = previous DM.! kappa
+            nus = 
+              filter ((dominates kappa) . fst3) [mu_r_plus mu' (i, j) r | (i, j) <- pairs, r <- [1 .. mu' !! j]]
+            ee = _e kappa alpha - _e mu alpha
+            xs = [fromIntegral (mu' !! i P.- mu' !! j P.+ 2 P.* r) * (previousRow DM.! (fromPartition nu)) / ee | (nu, (i, j), r) <- nus]
+
+_symbolicKostkaNumbers :: forall a. (Eq a, AlgField.C a) => Int -> Int -> Char -> Map Partition (Map Partition (RatioOfSprays a))
+_symbolicKostkaNumbers nv weight which = kostkaMatrix'
+  where
+    coeffsP = DM.fromList 
+      [(kappa, asRatioOfSprays (jackSymbolicCoeffPinv kappa))| kappa <- lambdas']
+    coeffsC = DM.fromList 
+      [(kappa, (jackSymbolicCoeffPinv kappa :: Spray a) *> jackSymbolicCoeffC kappa) | kappa <- lambdas']    
+    coeffsQ = DM.fromList 
+      [(kappa, jackSymbolicCoeffPinv kappa %//% jackSymbolicCoeffQinv kappa) | kappa <- lambdas']    
+    kostkaMatrix = DM.mapKeys fromPartition (rec (length lambdas))
+    kostkaMatrix' = case which of
+      'J' -> DM.mapWithKey (\kappa m -> DM.map ((*) (coeffsP DM.! kappa)) m) kostkaMatrix
+      'P' -> kostkaMatrix
+      'C' -> DM.mapWithKey (\kappa m -> DM.map ((*) (coeffsC DM.! kappa)) m) kostkaMatrix
+      'Q' -> DM.mapWithKey (\kappa m -> DM.map ((*) (coeffsQ DM.! kappa)) m) kostkaMatrix
+      _   -> error "_kostkaNumbers: should not happen."
+    mu_r_plus :: Partition -> (Int, Int) -> Int -> (MCP.Partition, (Int, Int), Int)
+    mu_r_plus mu pair@(i, j) r = 
+      (mkPartition (DF.toList $ S.reverse $ S.sort $ (S.adjust' ((P.+) r) i (S.adjust' (subtract r) j mu'))), pair, r)
+      where
+        mu' = S.fromList mu 
+    lambdas = reverse $ filter (\part -> partitionWidth part <= nv) (partitions weight)
+    lambdas' = map fromPartition lambdas
+    rec :: Int -> Map MCP.Partition (Map Partition (RatioOfSprays a))
+    rec n = if n == 1
+      then DM.singleton (MCP.Partition [weight]) (DM.singleton [weight] unitRatioOfSprays)
+      else DM.insert mu (DM.singleton mu' unitRatioOfSprays) (DM.fromList [(kappa, DM.insert mu' (newColumn DM.! kappa) (previous DM.! kappa)) | kappa <- kappas]) 
+      where
         previous = rec (n - 1)
         parts = take (n) lambdas
         (kappas, mu) = fromJust (unsnoc parts)
@@ -138,9 +190,8 @@ _kostkaNumbers nv weight alpha which = kostkaMatrix'
             previousRow = previous DM.! kappa
             nus = 
               filter ((dominates kappa) . fst3) [mu_r_plus mu' (i, j) r | (i, j) <- pairs, r <- [1 .. (mu' !! j P.+ mu' !! j) `div` 2]]
-            ee = _e kappa alpha - _e mu alpha
-            xs = [fromIntegral (mu' !! i P.- mu' !! j P.+ 2 P.* r) * (previousRow DM.! (fromPartition nu)) / ee | (nu, (i, j), r) <- nus]
-
+            ee = _eSymbolic kappa - _eSymbolic mu
+            xs = [((mu' !! i P.- mu' !! j P.+ 2 P.* r) .^ (previousRow DM.! (fromPartition nu))) %/% ee | (nu, (i, j), r) <- nus]
 
 
 
