@@ -186,7 +186,7 @@ skewSchurPol'
 skewSchurPol' = skewSchurPol
 
 -- | Symbolic skew Schur polynomial
-skewSchurPol :: forall a. (Ord a, AlgRing.C a)
+skewSchurPol :: forall a. (Eq a, AlgRing.C a)
   => Int       -- ^ number of variables
   -> Partition -- ^ outer partition of the skew partition
   -> Partition -- ^ inner partition of the skew partition

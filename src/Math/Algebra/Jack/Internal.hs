@@ -17,10 +17,13 @@ module Math.Algebra.Jack.Internal
   , isSkewPartition
   , sprayToMap
   , comboToSpray
-  , inverseTriangularMatrix )
+  , inverseTriangularMatrix
+  , _kostkaNumbers
+  , _e )
   where
 import           Prelude 
   hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger, recip)
+import qualified Prelude                                     as P  
 import           Algebra.Additive                            ( (+), (-), sum )
 import qualified Algebra.Additive                            as AlgAdd
 import           Algebra.Field                               ( (/), recip )
@@ -32,6 +35,8 @@ import qualified Algebra.Ring                                as AlgRing
 import           Algebra.ToInteger                           ( fromIntegral )
 import qualified Data.Foldable                               as DF
 import qualified Data.HashMap.Strict                         as HM
+import           Data.List.Extra                             ( unsnoc )
+import           Data.List                                   ( uncons )
 import           Data.List.Index                             ( iconcatMap )
 import           Data.Map.Strict                             ( Map )
 import qualified Data.Map.Strict                             as DM
@@ -48,7 +53,9 @@ import           Data.Matrix                                 (
                                                              , getElem
                                                              , fromLists
                                                              )
+import           Data.Maybe                                  ( fromJust )
 import qualified Data.Sequence                               as S
+import           Data.Tuple.Extra                            ( dupe, both, fst3 )
 import qualified Data.Vector                                 as V
 import           Math.Algebra.Hspray                         ( 
                                                                RatioOfSprays, (%:%)
@@ -58,10 +65,63 @@ import           Math.Algebra.Hspray                         (
                                                              , sumOfSprays
                                                              , FunctionLike (..)
                                                              )
+import           Math.Combinat.Partitions.Integer            (
+                                                               fromPartition
+                                                             , dualPartition
+                                                             , partitions
+                                                             , countPartitions
+                                                             , dominates
+                                                             , mkPartition
+                                                             )
 import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
 
 type Partition = [Int]
+
+
+_e :: AlgRing.C a => MCP.Partition -> a -> a
+_e lambda alpha = 
+  alpha * fromIntegral (_n (dualPartition lambda)) - fromIntegral (_n lambda)
+  where
+    _n mu = sum (zipWith (P.*) [0 .. ] (fromPartition mu))
+
+_kostkaNumbers :: forall a. (Eq a, AlgField.C a) => Int -> a -> Char -> Map (Partition, Partition) a
+_kostkaNumbers weight alpha which = DM.mapKeys (both fromPartition) (rec (countPartitions weight))
+  where
+    mu_r_plus :: Partition -> (Int, Int) -> Int -> (MCP.Partition, (Int, Int), Int)
+    mu_r_plus mu pair@(i, j) r = 
+      (mkPartition (DF.toList $ S.reverse $ S.sort $ (S.adjust' ((P.+) r) i (S.adjust' (subtract r) j mu'))), pair, r)
+      where
+        mu' = S.fromList mu 
+    rec :: Integer -> Map (MCP.Partition, MCP.Partition) a
+    rec n = if n == 1
+      then DM.singleton (dupe (MCP.Partition [weight])) AlgRing.one
+      else DM.union previous newColumn
+      where
+        n' = P.fromInteger n
+        previous = rec (n - 1)
+        parts = take (n') (reverse (partitions weight))
+        (kappas, mu) = fromJust (unsnoc parts)
+        newColumn = DM.insert (mu, mu) AlgRing.one (DM.fromList ([((kappa, mu), f kappa) | kappa <- kappas] ++ [((kappa, kappa), AlgRing.one) | kappa <- kappas]))
+        f kappa = AlgAdd.sum xs -- [g i j | i <- [0 .. l-2], j <- [i+1 .. l-1]]
+          where
+            mu' = fromPartition mu 
+            l = length mu'
+            pairs = [(i, j) | i <- [0 .. l-2], j <- [i+1 .. l-1]]
+            nus = 
+              filter ((dominates kappa) . fst3) [mu_r_plus mu' (i, j) r | (i, j) <- pairs, r <- [1 .. (mu' !! j P.+ mu' !! j) `div` 2]]
+            ee = _e kappa alpha - _e mu alpha
+            xs = [fromIntegral (mu' !! i P.- mu' !! j P.+ 2 P.* r) * (previous DM.! (kappa, nu)) / ee | (nu, (i, j), r) <- nus]
+
+
+
+
+
+
+
+
+
+
 
 inverseTriangularMatrix :: (Eq a, AlgField.C a) => Matrix a -> Matrix a
 inverseTriangularMatrix mat = 
@@ -251,14 +311,10 @@ _fromInt k = k .^ AlgRing.one
 
 skewSchurLRCoefficients :: Partition -> Partition -> DM.Map Partition Int
 skewSchurLRCoefficients lambda mu = 
-  DM.mapKeys toPartition (_lrRule lambda' mu')
+  DM.mapKeys fromPartition (_lrRule lambda' mu')
   where
-    toPartition :: MCP.Partition -> Partition
-    toPartition (MCP.Partition part) = part 
-    fromPartition :: Partition -> MCP.Partition
-    fromPartition part = MCP.Partition part
-    lambda' = fromPartition lambda
-    mu'     = fromPartition mu
+    lambda' = MCP.Partition lambda
+    mu'     = MCP.Partition mu
 
 isSkewPartition :: Partition -> Partition -> Bool
 isSkewPartition lambda mu = 
