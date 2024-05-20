@@ -39,6 +39,7 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , esCombination
                                                 , schurCombination
                                                 , jackCombination
+                                                , jackSymbolicCombination
                                                 , kostkaNumbersWithGivenLambda
                                                 )
 import Math.Combinat.Partitions.Integer         ( 
@@ -470,6 +471,32 @@ main = defaultMain $ testGroup
       sprays = [
           c *^ jackPol' 5 lambda alpha which 
           | (lambda, c) <- DM.toList (jackCombination alpha which p)
+        ]
+    assertEqual ""
+      p (sumOfSprays sprays)
+
+  , testCase "jackSymbolicCombination" $ do
+    let
+      alpha = 3
+      which = 'J'
+      poly = 3*^jackPol' 4 [2, 1, 1] alpha which ^-^ jackPol' 4 [2, 1] alpha which
+      combo = jackSymbolicCombination which poly
+      combo' = DM.filter (/= 0) (DM.map (evaluateAt [alpha]) combo)
+    assertEqual ""
+      combo' 
+      (
+        DM.fromList [([2, 1, 1], 3), ([2, 1], -1)]
+      )
+
+  , testCase "jackSymbolicCombination - 2" $ do
+    let
+      which = 'Q'
+      p = 4 *^ msPolynomial 5 [3, 1, 1] ^+^ psPolynomial 5 [3, 1] ^-^ 
+          5 *^ cshPolynomial 5 [2, 1] ^+^ unitSpray :: QSpray
+      alpha = 7
+      sprays = [
+          (evaluateAt [alpha] c) *^ jackPol' 5 lambda alpha which 
+          | (lambda, c) <- DM.toList (jackSymbolicCombination which p)
         ]
     assertEqual ""
       p (sumOfSprays sprays)
