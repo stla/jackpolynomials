@@ -37,7 +37,6 @@ import           Algebra.ToInteger                           ( fromIntegral )
 import qualified Data.Foldable                               as DF
 import qualified Data.HashMap.Strict                         as HM
 import           Data.List.Extra                             ( unsnoc )
-import           Data.List                                   ( uncons )
 import           Data.List.Index                             ( iconcatMap )
 import           Data.Map.Strict                             ( Map )
 import qualified Data.Map.Strict                             as DM
@@ -86,28 +85,29 @@ _e lambda alpha =
   where
     _n mu = sum (zipWith (P.*) [0 .. ] (fromPartition mu))
 
-_inverseKostkaMatrix :: forall a. (Eq a, AlgField.C a) => Int -> Int -> a -> Char -> Matrix a
-_inverseKostkaMatrix n weight alpha which = inverseTriangularMatrix (fromLists (map row lambdas))
+_inverseKostkaMatrix :: forall a. (Eq a, AlgField.C a) => Int -> Int -> a -> Char -> (Matrix a, [Partition])
+_inverseKostkaMatrix n weight alpha which = 
+  (inverseTriangularMatrix (fromLists (map row lambdas)), lambdas)
   where
-    kostkaNumbers = _kostkaNumbers weight alpha which
-    kappas = map fromPartition (partitions weight)
-    -- reverse to get an upper triangular Kostka matrix
-    lambdas = reverse $ filter (\lambda -> length lambda <= n) kappas
+    (kostkaNumbers, lambdas) = _kostkaNumbers n weight alpha which
+    -- kappas = map fromPartition (partitions weight)
+    -- -- reverse to get an upper triangular Kostka matrix
+    -- lambdas = reverse $ filter (\lambda -> length lambda <= n) kappas
     msCombo lambda = DM.mapKeys snd (DM.filterWithKey (\(kappa, _) _ -> kappa == lambda) kostkaNumbers)
     row lambda = map (flip (DM.findWithDefault AlgAdd.zero) (msCombo lambda)) lambdas
 
-_kostkaNumbers :: forall a. (Eq a, AlgField.C a) => Int -> a -> Char -> Map (Partition, Partition) a
-_kostkaNumbers weight alpha which = kostkaMatrix'
+_kostkaNumbers :: forall a. (AlgField.C a) => Int -> Int -> a -> Char -> (Map (Partition, Partition) a, [Partition])
+_kostkaNumbers nv weight alpha which = (kostkaMatrix', lambdas')
   where
     -- mm = DM.mapWithKey (\(kappa, mu) _ -> kappa)
     -- mmm = DM.map (\number -> )
     coeffsP = DM.fromList 
-      [let kappa = fromPartition lambda in (kappa, recip (jackCoeffP kappa alpha)) | lambda <- lambdas]
+      [(kappa, recip (jackCoeffP kappa alpha))| kappa <- lambdas']
     coeffsC = DM.fromList 
-      [let kappa = fromPartition lambda in (kappa, jackCoeffC kappa alpha / jackCoeffP kappa alpha) | lambda <- lambdas]    
+      [(kappa, jackCoeffC kappa alpha / jackCoeffP kappa alpha) | kappa <- lambdas']    
     coeffsQ = DM.fromList 
-      [let kappa = fromPartition lambda in (kappa, jackCoeffQ kappa alpha / jackCoeffP kappa alpha) | lambda <- lambdas]    
-    kostkaMatrix = DM.mapKeys (both fromPartition) (rec (countPartitions weight))
+      [(kappa, jackCoeffQ kappa alpha / jackCoeffP kappa alpha) | kappa <- lambdas']    
+    kostkaMatrix = DM.mapKeys (both fromPartition) (rec (length lambdas))
     kostkaMatrix' = case which of
       'J' -> DM.mapWithKey (\(kappa, _) number -> number * coeffsP DM.! kappa) kostkaMatrix
       'P' -> kostkaMatrix
@@ -119,15 +119,15 @@ _kostkaNumbers weight alpha which = kostkaMatrix'
       (mkPartition (DF.toList $ S.reverse $ S.sort $ (S.adjust' ((P.+) r) i (S.adjust' (subtract r) j mu'))), pair, r)
       where
         mu' = S.fromList mu 
-    lambdas = reverse (partitions weight)
-    rec :: Integer -> Map (MCP.Partition, MCP.Partition) a
+    lambdas = reverse $ filter (\part -> MCP.partitionWidth part <= nv) (partitions weight)
+    lambdas' = map fromPartition lambdas
+    rec :: Int -> Map (MCP.Partition, MCP.Partition) a
     rec n = if n == 1
       then DM.singleton (dupe (MCP.Partition [weight])) AlgRing.one
       else DM.union previous newColumn
       where
-        n' = P.fromInteger n
         previous = rec (n - 1)
-        parts = take (n') lambdas
+        parts = take (n) lambdas
         (kappas, mu) = fromJust (unsnoc parts)
         newColumn = DM.insert (mu, mu) AlgRing.one (DM.fromList [((kappa, mu), f kappa) | kappa <- kappas])
         f kappa = AlgAdd.sum xs 

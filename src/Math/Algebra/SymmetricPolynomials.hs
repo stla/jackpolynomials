@@ -809,8 +809,8 @@ mspInJackBasis :: Rational -> Char -> Int -> Int -> Map Partition (Map Partition
 mspInJackBasis alpha which n weight = 
   DM.fromList (zip lambdas [maps i | i <- [1 .. length lambdas]])
   where
-    lambdas = reverse $ filter (\lambda -> length lambda <= n) $ map fromPartition (partitions weight)
-    matrix = _inverseKostkaMatrix n weight alpha which
+    -- lambdas = reverse $ filter (\lambda -> length lambda <= n) $ map fromPartition (partitions weight)
+    (matrix, lambdas) = _inverseKostkaMatrix n weight alpha which
     -- kappas = map fromPartition (partitions weight)
     -- -- reverse to get an upper triangular Kostka matrix
     -- lambdas = reverse $ filter (\lambda -> length lambda <= n) kappas
