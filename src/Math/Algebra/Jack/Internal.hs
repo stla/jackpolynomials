@@ -86,13 +86,29 @@ _e lambda alpha =
     _n mu = sum (zipWith (P.*) [0 .. ] (fromPartition mu))
 
 _kostkaNumbers :: forall a. (Eq a, AlgField.C a) => Int -> a -> Char -> Map (Partition, Partition) a
-_kostkaNumbers weight alpha which = DM.mapKeys (both fromPartition) (rec (countPartitions weight))
+_kostkaNumbers weight alpha which = kostkaMatrix'
   where
+    -- mm = DM.mapWithKey (\(kappa, mu) _ -> kappa)
+    -- mmm = DM.map (\number -> )
+    coeffsP = DM.fromList 
+      [let kappa = fromPartition lambda in (kappa, recip (jackCoeffP kappa alpha)) | lambda <- lambdas]
+    coeffsC = DM.fromList 
+      [let kappa = fromPartition lambda in (kappa, jackCoeffC kappa alpha / jackCoeffP kappa alpha) | lambda <- lambdas]    
+    coeffsQ = DM.fromList 
+      [let kappa = fromPartition lambda in (kappa, jackCoeffQ kappa alpha / jackCoeffP kappa alpha) | lambda <- lambdas]    
+    kostkaMatrix = DM.mapKeys (both fromPartition) (rec (countPartitions weight))
+    kostkaMatrix' = case which of
+      'J' -> DM.mapWithKey (\(kappa, _) number -> number * coeffsP DM.! kappa) kostkaMatrix
+      'P' -> kostkaMatrix
+      'C' -> DM.mapWithKey (\(kappa, _) number -> number * coeffsC DM.! kappa) kostkaMatrix
+      'Q' -> DM.mapWithKey (\(kappa, _) number -> number * coeffsQ DM.! kappa) kostkaMatrix
+      _   -> error "_kostkaNumbers: should not happen."
     mu_r_plus :: Partition -> (Int, Int) -> Int -> (MCP.Partition, (Int, Int), Int)
     mu_r_plus mu pair@(i, j) r = 
       (mkPartition (DF.toList $ S.reverse $ S.sort $ (S.adjust' ((P.+) r) i (S.adjust' (subtract r) j mu'))), pair, r)
       where
         mu' = S.fromList mu 
+    lambdas = reverse (partitions weight)
     rec :: Integer -> Map (MCP.Partition, MCP.Partition) a
     rec n = if n == 1
       then DM.singleton (dupe (MCP.Partition [weight])) AlgRing.one
@@ -100,10 +116,10 @@ _kostkaNumbers weight alpha which = DM.mapKeys (both fromPartition) (rec (countP
       where
         n' = P.fromInteger n
         previous = rec (n - 1)
-        parts = take (n') (reverse (partitions weight))
+        parts = take (n') lambdas
         (kappas, mu) = fromJust (unsnoc parts)
-        newColumn = DM.insert (mu, mu) AlgRing.one (DM.fromList ([((kappa, mu), f kappa) | kappa <- kappas] ++ [((kappa, kappa), AlgRing.one) | kappa <- kappas]))
-        f kappa = AlgAdd.sum xs -- [g i j | i <- [0 .. l-2], j <- [i+1 .. l-1]]
+        newColumn = DM.insert (mu, mu) AlgRing.one (DM.fromList [((kappa, mu), f kappa) | kappa <- kappas])
+        f kappa = AlgAdd.sum xs 
           where
             mu' = fromPartition mu 
             l = length mu'
