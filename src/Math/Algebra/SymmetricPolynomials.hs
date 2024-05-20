@@ -132,6 +132,7 @@ import           Math.Algebra.Jack.Internal       (
                                                   , sprayToMap
                                                   , comboToSpray 
                                                   , inverseTriangularMatrix
+                                                  , _inverseKostkaMatrix
                                                   )
 import           Math.Algebra.JackPol             ( 
                                                     jackPol'
@@ -808,16 +809,15 @@ mspInJackBasis :: Rational -> Char -> Int -> Int -> Map Partition (Map Partition
 mspInJackBasis alpha which n weight = 
   DM.fromList (zip lambdas [maps i | i <- [1 .. length lambdas]])
   where
-    kappas = map fromPartition (partitions weight)
-    -- reverse to get an upper triangular Kostka matrix
-    lambdas = reverse $ filter (\lambda -> length lambda <= n) kappas
-    msCombo lambda = msCombination (jackPol' weight lambda alpha which)
-    row lambda = map (flip (DM.findWithDefault 0) (msCombo lambda)) lambdas
-    kostkaMatrix = fromLists (map row lambdas)
-    matrix = inverseTriangularMatrix kostkaMatrix
-    -- matrix = case inverse kostkaMatrix of
-    --   Left _  -> error "mspInJackBasis: should not happen:"
-    --   Right m -> m 
+    lambdas = reverse $ filter (\lambda -> length lambda <= n) $ map fromPartition (partitions weight)
+    matrix = _inverseKostkaMatrix n weight alpha which
+    -- kappas = map fromPartition (partitions weight)
+    -- -- reverse to get an upper triangular Kostka matrix
+    -- lambdas = reverse $ filter (\lambda -> length lambda <= n) kappas
+    -- msCombo lambda = msCombination (jackPol' weight lambda alpha which)
+    -- row lambda = map (flip (DM.findWithDefault 0) (msCombo lambda)) lambdas
+    -- kostkaMatrix = fromLists (map row lambdas)
+    -- matrix = inverseTriangularMatrix kostkaMatrix
     maps i = DM.filter (/= 0) 
               (DM.fromList (zip lambdas (V.toList (getRow i matrix)))) -- (zip lambdas (filter (/= 0) $ V.toList (getRow i matrix))) -- filter should be wrong!
 
