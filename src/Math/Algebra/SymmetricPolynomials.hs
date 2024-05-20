@@ -69,6 +69,11 @@ import qualified Data.HashMap.Strict              as HM
 import           Data.List                        ( foldl1', nub )
 import           Data.List.Extra                  ( unsnoc )
 import qualified Data.IntMap.Strict               as IM
+import           Data.Map.Merge.Strict            ( 
+                                                    merge
+                                                  , dropMissing
+                                                  , zipWithMatched 
+                                                  )
 import           Data.Map.Strict                  ( 
                                                     Map
                                                   , unionsWith
@@ -76,15 +81,9 @@ import           Data.Map.Strict                  (
                                                   )
 import qualified Data.Map.Strict                  as DM
 import           Data.Matrix                      ( 
-                                                    fromLists 
-                                                  , getRow
+                                                    getRow
                                                   )
 import           Data.Maybe                       ( fromJust )
-import           Data.Map.Merge.Strict            ( 
-                                                    merge
-                                                  , dropMissing
-                                                  , zipWithMatched 
-                                                  )
 import           Data.Ratio                       ( (%) )
 import           Data.Sequence                    ( 
                                                     Seq
@@ -131,17 +130,10 @@ import           Math.Algebra.Jack.Internal       (
                                                   , _isPartition
                                                   , sprayToMap
                                                   , comboToSpray 
-                                                  , inverseTriangularMatrix
                                                   , _inverseKostkaMatrix
                                                   , _kostkaNumbers
                                                   , _symbolicKostkaNumbers
                                                   , _inverseSymbolicKostkaMatrix
-                                                  )
-import           Math.Algebra.JackPol             ( 
-                                                    jackPol'
-                                                  )
-import           Math.Algebra.JackSymbolicPol     ( 
-                                                    jackSymbolicPol'
                                                   )
 import           Math.Combinat.Compositions       ( compositions1 )
 import           Math.Combinat.Partitions.Integer ( 
@@ -754,9 +746,9 @@ esCombination' = _esCombination (flip (AlgMod.*>))
 cshInSchurBasis :: Int -> Partition -> Map Partition Rational
 cshInSchurBasis n mu = 
   DM.filterWithKey (\k _ -> length k <= n) 
-                    (DM.mapKeys fromPartition kostkaNumbers)
+                    (DM.mapKeys fromPartition kNumbers)
   where
-    kostkaNumbers = DM.map toRational (kostkaNumbersWithGivenMu (mkPartition mu))
+    kNumbers = DM.map toRational (kostkaNumbersWithGivenMu (mkPartition mu))
 
 -- | symmetric polynomial as a linear combination of Schur polynomials
 _schurCombination :: 
