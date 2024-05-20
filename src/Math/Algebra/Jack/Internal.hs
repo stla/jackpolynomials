@@ -20,6 +20,8 @@ module Math.Algebra.Jack.Internal
   , inverseTriangularMatrix
   , _kostkaNumbers
   , _inverseKostkaMatrix
+  , _symbolicKostkaNumbers
+  , _inverseSymbolicKostkaMatrix
   )
   where
 import           Prelude 
@@ -56,11 +58,12 @@ import           Data.Matrix                                 (
                                                              )
 import           Data.Maybe                                  ( fromJust )
 import qualified Data.Sequence                               as S
-import           Data.Tuple.Extra                            ( dupe, both, fst3 )
+import           Data.Tuple.Extra                            ( fst3 )
 import qualified Data.Vector                                 as V
 import           Math.Algebra.Hspray                         ( 
                                                                RatioOfSprays, (%:%), (%//%), (%/%)
                                                              , unitRatioOfSprays
+                                                             , zeroRatioOfSprays
                                                              , asRatioOfSprays
                                                              , Spray, (.^)
                                                              , Powers (..)
@@ -101,9 +104,6 @@ _inverseKostkaMatrix n weight alpha which =
   where
     kostkaNumbers = _kostkaNumbers n weight alpha which
     lambdas = reverse $ DM.keys kostkaNumbers
-    -- kappas = map fromPartition (partitions weight)
-    -- -- reverse to get an upper triangular Kostka matrix
-    -- lambdas = reverse $ filter (\lambda -> length lambda <= n) kappas
     msCombo lambda = kostkaNumbers DM.! lambda
     row lambda = map (flip (DM.findWithDefault AlgAdd.zero) (msCombo lambda)) lambdas
 
@@ -192,6 +192,16 @@ _symbolicKostkaNumbers nv weight which = kostkaMatrix'
               filter ((dominates kappa) . fst3) [mu_r_plus mu' (i, j) r | (i, j) <- pairs, r <- [1 .. (mu' !! j P.+ mu' !! j) `div` 2]]
             ee = _eSymbolic kappa - _eSymbolic mu
             xs = [((mu' !! i P.- mu' !! j P.+ 2 P.* r) .^ (previousRow DM.! (fromPartition nu))) %/% ee | (nu, (i, j), r) <- nus]
+
+_inverseSymbolicKostkaMatrix :: 
+  forall a. (Eq a, AlgField.C a) => Int -> Int -> Char -> (Matrix (RatioOfSprays a), [Partition])
+_inverseSymbolicKostkaMatrix n weight which = 
+  (inverseTriangularMatrix (fromLists (map row lambdas)), lambdas)
+  where
+    kostkaNumbers = _symbolicKostkaNumbers n weight which
+    lambdas = reverse $ DM.keys kostkaNumbers
+    msCombo lambda = kostkaNumbers DM.! lambda
+    row lambda = map (flip (DM.findWithDefault zeroRatioOfSprays) (msCombo lambda)) lambdas
 
 
 

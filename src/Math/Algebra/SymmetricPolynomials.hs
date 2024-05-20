@@ -55,7 +55,7 @@ module Math.Algebra.SymmetricPolynomials
   , symbolicHallInnerProduct''
   -- * Kostka numbers
   , kostkaNumbers
-  , symbolicKostkaNumbersWithGivenLambda
+  , symbolicKostkaNumbers
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -134,6 +134,7 @@ import           Math.Algebra.Jack.Internal       (
                                                   , inverseTriangularMatrix
                                                   , _inverseKostkaMatrix
                                                   , _kostkaNumbers
+                                                  , _symbolicKostkaNumbers
                                                   )
 import           Math.Algebra.JackPol             ( 
                                                     jackPol'
@@ -806,10 +807,8 @@ kostkaNumbers weight alpha = _kostkaNumbers weight weight alpha 'P'
 
 -- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) with symbolic parameter \(\alpha\) 
 -- for a given partition \(\lambda\).
-symbolicKostkaNumbersWithGivenLambda :: Partition -> Map Partition RatioOfQSprays
-symbolicKostkaNumbersWithGivenLambda lambda = msCombination jp
-  where
-    jp = jackSymbolicPol' (sum lambda) lambda 'P'
+symbolicKostkaNumbers :: Int -> Map Partition (Map Partition RatioOfQSprays)
+symbolicKostkaNumbers weight = _symbolicKostkaNumbers weight weight 'P'
 
 -- | monomial symmetric polynomial as a linear combination of Jack polynomials
 mspInJackBasis :: Rational -> Char -> Int -> Int -> Map Partition (Map Partition Rational)

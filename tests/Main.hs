@@ -17,7 +17,8 @@ import Math.Algebra.Hspray                      ( FunctionLike (..)
                                                 )
 import qualified Math.Algebra.Hspray            as Hspray
 import Math.Algebra.Jack                        ( schur, skewSchur 
-                                                , jack', zonal' )
+                                                , jack', zonal'
+                                                , Partition )
 import Math.Algebra.Jack.HypergeoPQ             ( hypergeoPQ )
 import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol'
                                                 , schurPol, schurPol', skewSchurPol' )
@@ -41,6 +42,7 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , jackCombination
                                                 , jackSymbolicCombination
                                                 , kostkaNumbers
+                                                , symbolicKostkaNumbers
                                                 )
 import Math.Combinat.Partitions.Integer         ( 
                                                   toPartition
@@ -508,4 +510,13 @@ main = defaultMain $ testGroup
       kn2 = DM.mapKeys fromPartition 
             (GT.kostkaNumbersWithGivenLambda (mkPartition lambda) :: DM.Map PI.Partition Rational)
     assertEqual "" kn1 kn2
+
+  , testCase "Symbolic Kostka numbers" $ do
+    let
+      lambda = [4, 3, 1]
+      kn1 = DM.map (evaluateAt [1]) (symbolicKostkaNumbers (sum lambda) DM.! lambda) :: DM.Map Partition Rational
+      kn2 = DM.mapKeys fromPartition 
+            (GT.kostkaNumbersWithGivenLambda (mkPartition lambda) :: DM.Map PI.Partition Rational)
+    assertEqual "" kn1 kn2
+
   ]
