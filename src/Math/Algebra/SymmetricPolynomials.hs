@@ -56,6 +56,7 @@ module Math.Algebra.SymmetricPolynomials
   -- * Kostka numbers
   , kostkaNumbers
   , symbolicKostkaNumbers
+  , jackSymbolicCombination'
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -100,6 +101,7 @@ import           Math.Algebra.Hspray              (
                                                   , Powers (..)
                                                   , QSpray
                                                   , QSpray'
+                                                  , ParametricSpray
                                                   , ParametricQSpray
                                                   , lone
                                                   , qlone
@@ -840,6 +842,14 @@ mspInJackSymbolicBasis which n weight =
     maps i = DM.filter (/= zeroRatioOfSprays) 
               (DM.fromDistinctDescList (zip lambdas (V.toList (getRow i matrix))))
 
+mspInJackSymbolicBasis' :: (Eq a, AlgField.C a) => Char -> Int -> Int -> Map Partition (Map Partition (RatioOfSprays a))
+mspInJackSymbolicBasis' which n weight = 
+  DM.fromDistinctDescList (zip lambdas [maps i | i <- [1 .. length lambdas]])
+  where
+    (matrix, lambdas) = _inverseSymbolicKostkaMatrix n weight which
+    maps i = DM.filter (/= AlgAdd.zero) 
+              (DM.fromDistinctDescList (zip lambdas (V.toList (getRow i matrix))))
+
 -- | Symmetric polynomial as a linear combination of Jack polynomials. 
 -- Symmetry is not checked.
 jackCombination :: 
@@ -852,8 +862,6 @@ jackCombination alpha which qspray =
     (\lambda -> (msPolynomialsInJackBasis IM.! (sum lambda)) DM.! lambda) 
       (*) qspray
   where
-    -- notNullAndDecreasing ys = 
-    --   not S.null ys && and [ys `index` i >= ys `index` (i+1) | i <- [0 .. S.length ys - 2]]
     weights = filter (/= 0) (map DF.sum (allExponents qspray))
     n = numberOfVariables qspray
     msPolynomialsInJackBasis = 
@@ -874,6 +882,21 @@ jackSymbolicCombination which qspray =
     n = numberOfVariables qspray
     msPolynomialsInJackBasis = 
       IM.fromList (zip weights (map (mspInJackSymbolicBasis which n) weights))
+
+jackSymbolicCombination' :: 
+  (Eq a, AlgField.C a)
+  => Char                   -- ^ which Jack polynomials, @'J'@, @'C'@, @'P'@ or @'Q'@
+  -> ParametricSpray a                 -- ^ spray representing a symmetric polynomial
+  -> Map Partition (RatioOfSprays a) -- ^ map representing the linear combination; a partition @lambda@ in the keys of this map corresponds to the term @coeff *^ jackSymbolicPol' n lambda which@, where @coeff@ is the value attached to this key and @n@ is the number of variables of the spray
+jackSymbolicCombination' which spray = 
+  _symmPolyCombination 
+    (\lambda -> (msPolynomialsInJackBasis IM.! (sum lambda)) DM.! lambda) 
+      (AlgRing.*) spray
+  where
+    weights = filter (/= 0) (map DF.sum (allExponents spray))
+    n = numberOfVariables spray
+    msPolynomialsInJackBasis = 
+      IM.fromList (zip weights (map (mspInJackSymbolicBasis' which n) weights))
 
 -- -- | symmetric polynomial as a linear combination of Jack polynomials
 -- _jackCombination :: 

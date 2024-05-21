@@ -1,4 +1,5 @@
 module Main ( main ) where
+import qualified Algebra.Module                 as AlgMod
 import qualified Data.Map.Strict                as DM
 import Data.Ratio                               ( (%) )
 import Math.Algebra.Hspray                      ( FunctionLike (..)
@@ -11,6 +12,7 @@ import Math.Algebra.Hspray                      ( FunctionLike (..)
                                                 , canCoerceToSimpleParametricSpray
                                                 , isHomogeneousSpray
                                                 , asRatioOfSprays
+                                                , constantRatioOfSprays
                                                 , (%//%)
                                                 , (/^)
                                                 , sumOfSprays
@@ -41,6 +43,7 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , schurCombination
                                                 , jackCombination
                                                 , jackSymbolicCombination
+                                                , jackSymbolicCombination'
                                                 , kostkaNumbers
                                                 , symbolicKostkaNumbers
                                                 )
@@ -502,6 +505,22 @@ main = defaultMain $ testGroup
         ]
     assertEqual ""
       p (sumOfSprays sprays)
+
+  , testCase "jackSymbolicCombination' (ParametricQSpray)" $ do
+    let
+      n = 4
+      which = 'J'
+      qspray = 7 *^ qlone 1
+      poly = 3 AlgMod.*> jackSymbolicPol' n [2, 1, 1] which ^+^ qspray AlgMod.*> jackSymbolicPol' n [2, 1] which
+      combo = jackSymbolicCombination' which poly
+      lambdas = DM.keys combo
+      coeffs = DM.elems combo
+    assertEqual ""
+      (lambdas, coeffs)
+      (
+        [[3, 1], [2, 2]]
+      , [constantRatioOfSprays 3, asRatioOfSprays qspray]
+      )
 
   , testCase "Kostka numbers" $ do
     let
