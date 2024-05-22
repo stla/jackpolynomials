@@ -831,8 +831,8 @@ msPolynomialsInJackSymbolicBasis which n weight =
     maps i = DM.filter (/= zeroRatioOfSprays) 
           (DM.fromDistinctDescList (zip lambdas (V.toList (getRow i matrix))))
 
--- | Symmetric polynomial as a linear combination of Jack polynomials. 
--- Symmetry is not checked.
+-- | Symmetric polynomial as a linear combination of Jack polynomials with a 
+-- given Jack parameter. Symmetry is not checked.
 jackCombination :: 
      Rational               -- ^ Jack parameter
   -> Char                   -- ^ which Jack polynomials, @'J'@, @'C'@, @'P'@ or @'Q'@
@@ -849,8 +849,8 @@ jackCombination alpha which qspray =
       IM.fromList 
         (zip weights (map (msPolynomialsInJackBasis alpha which n) weights))
 
--- | Symmetric polynomial as a linear combination of symbolic Jack polynomials. 
--- Symmetry is not checked.
+-- | Symmetric polynomial as a linear combination of Jack polynomials with 
+-- symbolic parameter. Symmetry is not checked.
 jackSymbolicCombination :: 
      Char                   -- ^ which Jack polynomials, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> QSpray                 -- ^ spray representing a symmetric polynomial
@@ -866,7 +866,8 @@ jackSymbolicCombination which qspray =
       IM.fromList 
       (zip weights (map (msPolynomialsInJackSymbolicBasis which n) weights))
 
--- | Symmetric parametric polynomial as a linear combination of symbolic Jack polynomials. 
+-- | Symmetric parametric polynomial as a linear combination of Jack polynomials 
+-- with symbolic parameter. 
 -- Similar to @jackSymbolicCombination@ but for a parametric spray.
 jackSymbolicCombination' :: 
   (Eq a, AlgField.C a)
