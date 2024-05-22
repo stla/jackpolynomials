@@ -17,7 +17,6 @@ module Math.Algebra.Jack.Internal
   , isSkewPartition
   , sprayToMap
   , comboToSpray
-  , inverseTriangularMatrix
   , _kostkaNumbers
   , _inverseKostkaMatrix
   , _symbolicKostkaNumbers

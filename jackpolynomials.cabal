@@ -21,8 +21,7 @@ library
                      , Math.Algebra.Jack
                      , Math.Algebra.JackPol
                      , Math.Algebra.JackSymbolicPol
-                     , Math.Algebra.Jack.Internal
---  other-modules:       Math.Algebra.Jack.Internal
+  other-modules:       Math.Algebra.Jack.Internal
   build-depends:       base >= 4.7 && < 5
                      , ilist >= 0.4.0.1 && < 0.4.1
                      , array >= 0.5.4.0 && < 0.6
