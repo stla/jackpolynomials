@@ -883,10 +883,12 @@ jackSymbolicCombination which qspray =
     msPolynomialsInJackBasis = 
       IM.fromList (zip weights (map (mspInJackSymbolicBasis which n) weights))
 
+-- | Symmetric parametric polynomial as a linear combination of symbolic Jack polynomials. 
+-- Similar to @jackSymbolicCombination@ but for a parametric spray.
 jackSymbolicCombination' :: 
   (Eq a, AlgField.C a)
-  => Char                   -- ^ which Jack polynomials, @'J'@, @'C'@, @'P'@ or @'Q'@
-  -> ParametricSpray a                 -- ^ spray representing a symmetric polynomial
+  => Char                            -- ^ which Jack polynomials, @'J'@, @'C'@, @'P'@ or @'Q'@
+  -> ParametricSpray a               -- ^ parametric spray representing a symmetric polynomial
   -> Map Partition (RatioOfSprays a) -- ^ map representing the linear combination; a partition @lambda@ in the keys of this map corresponds to the term @coeff *^ jackSymbolicPol' n lambda which@, where @coeff@ is the value attached to this key and @n@ is the number of variables of the spray
 jackSymbolicCombination' which spray = 
   _symmPolyCombination 

@@ -511,15 +511,16 @@ main = defaultMain $ testGroup
       n = 4
       which = 'J'
       qspray = 7 *^ qlone 1
-      poly = 3 AlgMod.*> jackSymbolicPol' n [2, 1, 1] which ^+^ qspray AlgMod.*> jackSymbolicPol' n [2, 1] which
+      poly = (3::Rational) AlgMod.*> jackSymbolicPol' n [2, 1, 1] which 
+              ^+^ qspray AlgMod.*> jackSymbolicPol' n [2, 1] which
       combo = jackSymbolicCombination' which poly
       lambdas = DM.keys combo
       coeffs = DM.elems combo
     assertEqual ""
       (lambdas, coeffs)
       (
-        [[3, 1], [2, 2]]
-      , [constantRatioOfSprays 3, asRatioOfSprays qspray]
+        [[2, 1], [2, 1, 1]]
+      , [asRatioOfSprays qspray, constantRatioOfSprays 3]
       )
 
   , testCase "Kostka numbers" $ do

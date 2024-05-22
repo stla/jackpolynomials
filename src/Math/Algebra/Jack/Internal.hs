@@ -98,14 +98,17 @@ _eSymbolic lambda =
     alpha = lone 1
     _n mu = sum (zipWith (P.*) [0 .. ] (fromPartition mu))
 
-_inverseKostkaMatrix :: forall a. (Eq a, AlgField.C a) => Int -> Int -> a -> Char -> (Matrix a, [Partition])
+_inverseKostkaMatrix :: 
+  forall a. (Eq a, AlgField.C a) 
+  => Int -> Int -> a -> Char -> (Matrix a, [Partition])
 _inverseKostkaMatrix n weight alpha which = 
   (inverseTriangularMatrix (fromLists (map row lambdas)), lambdas)
   where
     kostkaNumbers = _kostkaNumbers n weight alpha which
     lambdas = reverse $ DM.keys kostkaNumbers
     msCombo lambda = kostkaNumbers DM.! lambda
-    row lambda = map (flip (DM.findWithDefault AlgAdd.zero) (msCombo lambda)) lambdas
+    row lambda = 
+      map (flip (DM.findWithDefault AlgAdd.zero) (msCombo lambda)) lambdas
 
 _kostkaNumbers :: 
   forall a. (AlgField.C a) 
@@ -262,14 +265,21 @@ _symbolicKostkaNumbers nv weight which = kostkaMatrix'
               ]
 
 _inverseSymbolicKostkaMatrix :: 
-  forall a. (Eq a, AlgField.C a) => Int -> Int -> Char -> (Matrix (RatioOfSprays a), [Partition])
+  forall a. (Eq a, AlgField.C a) 
+  => Int -> Int -> Char -> (Matrix (RatioOfSprays a), [Partition])
 _inverseSymbolicKostkaMatrix n weight which = 
-  (inverseTriangularMatrix (fromLists (map row lambdas)), lambdas)
+--  (inverseTriangularMatrix (fromLists (map (\lambda -> map (row lambda) lambdas) lambdas)), lambdas)
+  (
+    inverseTriangularMatrix (fromLists [map (row mu) lambdas | mu <- lambdas])
+  , lambdas
+  )
   where
     kostkaNumbers = _symbolicKostkaNumbers n weight which
     lambdas = reverse $ DM.keys kostkaNumbers
     msCombo lambda = kostkaNumbers DM.! lambda
-    row lambda = map (flip (DM.findWithDefault zeroRatioOfSprays) (msCombo lambda)) lambdas
+    row = flip (DM.findWithDefault zeroRatioOfSprays) . msCombo
+    -- row lambda = 
+    --   map (flip (DM.findWithDefault zeroRatioOfSprays) (msCombo lambda)) lambdas
 
 inverseTriangularMatrix :: (Eq a, AlgField.C a) => Matrix a -> Matrix a
 inverseTriangularMatrix mat = 
