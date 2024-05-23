@@ -417,7 +417,7 @@ main = defaultMain $ testGroup
 
   , testCase "Schur polynomials combination of 'degenerate' symmetric polynomial" $ do
     let
-      poly = psPolynomial 3 [4]
+      poly = psPolynomial 3 [4] :: QSpray
       schurCombo = schurCombination poly
       jackCombo = jackCombination 1 'P' poly
       expected = DM.fromList [([2, 1, 1], 1), ([3, 1], -1), ([4], 1)]

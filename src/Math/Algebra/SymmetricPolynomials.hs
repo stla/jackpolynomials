@@ -812,12 +812,13 @@ symbolicKostkaNumbers weight = _symbolicKostkaNumbers weight weight 'P'
 
 -- | monomial symmetric polynomials in Jack polynomials basis
 msPolynomialsInJackBasis :: 
-  Rational -> Char -> Int -> Int -> Map Partition (Map Partition Rational)
+  forall a. (Eq a, AlgField.C a)
+  => a -> Char -> Int -> Int -> Map Partition (Map Partition a)
 msPolynomialsInJackBasis alpha which n weight = 
   DM.fromDistinctDescList (zip lambdas [maps i | i <- [1 .. length lambdas]])
   where
     (matrix, lambdas) = _inverseKostkaMatrix n weight alpha which
-    maps i = DM.filter (/= 0) 
+    maps i = DM.filter (/= AlgAdd.zero) 
           (DM.fromDistinctDescList (zip lambdas (V.toList (getRow i matrix))))
 
 -- | monomial symmetric polynomials in Jack polynomials basis
@@ -834,17 +835,18 @@ msPolynomialsInJackSymbolicBasis which n weight =
 -- | Symmetric polynomial as a linear combination of Jack polynomials with a 
 -- given Jack parameter. Symmetry is not checked.
 jackCombination :: 
-     Rational               -- ^ Jack parameter
+  (Eq a, AlgField.C a)
+  => a                      -- ^ Jack parameter
   -> Char                   -- ^ which Jack polynomials, @'J'@, @'C'@, @'P'@ or @'Q'@
-  -> QSpray                 -- ^ spray representing a symmetric polynomial
-  -> Map Partition Rational -- ^ map representing the linear combination; a partition @lambda@ in the keys of this map corresponds to the term @coeff *^ jackPol' n lambda alpha which@, where @coeff@ is the value attached to this key and @n@ is the number of variables of the spray
-jackCombination alpha which qspray = 
+  -> Spray a                -- ^ spray representing a symmetric polynomial
+  -> Map Partition a        -- ^ map representing the linear combination; a partition @lambda@ in the keys of this map corresponds to the term @coeff *^ jackPol' n lambda alpha which@, where @coeff@ is the value attached to this key and @n@ is the number of variables of the spray
+jackCombination alpha which spray = 
   _symmPolyCombination 
     (\lambda -> (combos IM.! (sum lambda)) DM.! lambda) 
-      (*) qspray
+      (AlgRing.*) spray
   where
-    weights = filter (/= 0) (map DF.sum (allExponents qspray))
-    n = numberOfVariables qspray
+    weights = filter (/= 0) (map DF.sum (allExponents spray))
+    n = numberOfVariables spray
     combos = 
       IM.fromList 
         (zip weights (map (msPolynomialsInJackBasis alpha which n) weights))
@@ -884,34 +886,6 @@ jackSymbolicCombination' which spray =
     combos = 
       IM.fromList 
       (zip weights (map (msPolynomialsInJackSymbolicBasis which n) weights))
-
--- -- | symmetric polynomial as a linear combination of Jack polynomials
--- _jackCombination :: 
---   forall a. (Eq a, AlgRing.C a) 
---   => (a -> Rational -> a) -> Rational -> Char -> Spray a -> Map Partition a
--- _jackCombination func alpha which = 
---   _symmPolyCombination (mspInJackBasis alpha which) func
-
--- -- | Symmetric polynomial as a linear combination of Jack polynomials. 
--- -- Symmetry is not checked.
--- jackCombination :: 
---   forall a. (Eq a, AlgField.C a) 
---   => Rational        -- ^ Jack parameter
---   -> Char            -- ^ which Jack polynomials, @'J'@, @'C'@, @'P'@ or @'Q'@
---   -> Spray a         -- ^ spray representing a symmetric polynomial
---   -> Map Partition a -- ^ map representing the linear combination; 
--- jackCombination = 
---   _jackCombination (\coef r -> coef AlgRing.* fromRational r)
-
--- -- | Symmetric polynomial as a linear combination of Jack polynomials. 
--- -- Same as @jackCombination@ but with other constraints on the base ring of the spray.
--- jackCombination' :: 
---   forall a. (Eq a, AlgMod.C Rational a, AlgRing.C a) 
---   => Rational 
---   -> Char 
---   -> Spray a 
---   -> Map Partition a
--- jackCombination' = _jackCombination (flip (AlgMod.*>))
 
 
 -- test :: Bool
