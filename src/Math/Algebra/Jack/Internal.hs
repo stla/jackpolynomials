@@ -23,6 +23,7 @@ module Math.Algebra.Jack.Internal
   , _inverseSymbolicKostkaMatrix
   , ssytxWithGivenShapeAndContent
   , charge
+  , _kostaFoulkesPolynomial
   )
   where
 import           Prelude 
@@ -44,6 +45,7 @@ import qualified Data.HashMap.Strict                         as HM
 import           Data.List                                   ( 
                                                                nub
                                                              , (\\)
+                                                             , foldl1'
                                                              )
 import           Data.List.Extra                             ( 
                                                                unsnoc
@@ -78,8 +80,9 @@ import           Math.Algebra.Hspray                         (
                                                              , zeroRatioOfSprays
                                                              , asRatioOfSprays
                                                              , Spray, (.^)
+                                                             , QSpray
                                                              , Powers (..)
-                                                             , lone, unitSpray
+                                                             , lone, qlone, unitSpray
                                                              , sumOfSprays
                                                              , FunctionLike (..)
                                                              )
@@ -124,11 +127,11 @@ isDominated :: Seq Int -> Seq Int -> Bool
 isDominated mu lambda = (MCP.Partition (DF.toList lambda)) `dominates` (MCP.Partition (DF.toList mu))
 
 -- assumes sum lambda == sum mu 
-ssytxWithGivenShapeAndContent :: Seq Int -> Seq Int -> [[[Int]]]
+ssytxWithGivenShapeAndContent :: Seq Int -> Seq Int -> [[Seq Int]]
 ssytxWithGivenShapeAndContent lambda mu = 
   if all (== 1) lambda 
     then if all (== 1) mu
-      then [[[i] | i <- [1 .. S.length lambda]]]
+      then [[S.singleton i | i <- [1 .. S.length lambda]]]
       else []
     else if isDominated mu lambda
       then nub all_ssytx
@@ -147,9 +150,18 @@ ssytxWithGivenShapeAndContent lambda mu =
             then nub $ map g (ssytxWithGivenShapeAndContent (dropTrailingZeros $ kappa) mu')
             else []
           where 
-            g ssyt = if i < length ssyt then (element i .~ ssyt !! i ++ [l]) ssyt else ssyt ++ [[l]]
+            g ssyt = if i < length ssyt then (element i .~ ssyt !! i |> l) ssyt else ssyt ++ [S.singleton l]
               -- where
               --   row = if i < length ssyt then ssyt !! i else []
+
+_kostaFoulkesPolynomial :: Seq Int -> Seq Int -> QSpray
+_kostaFoulkesPolynomial lambda mu = sumOfSprays sprays
+  where
+    tableaux = ssytxWithGivenShapeAndContent lambda mu
+    charges = map (charge . (\tableau -> foldl1' (S.><) $ map S.reverse tableau)) tableaux
+    --charges = map charge words
+    t = qlone 1
+    sprays = map (\e -> t^**^e) charges
 
 _e :: AlgRing.C a => MCP.Partition -> a -> a
 _e lambda alpha = 
