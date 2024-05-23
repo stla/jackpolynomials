@@ -57,6 +57,8 @@ module Math.Algebra.SymmetricPolynomials
   -- * Kostka numbers
   , kostkaNumbers
   , symbolicKostkaNumbers
+  -- * Kostka-Foulkes polynomials
+  , kostkaFoulkesPolynomial
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -136,6 +138,7 @@ import           Math.Algebra.Jack.Internal       (
                                                   , _kostkaNumbers
                                                   , _symbolicKostkaNumbers
                                                   , _inverseSymbolicKostkaMatrix
+                                                  , _kostkaFoulkesPolynomial
                                                   )
 import           Math.Combinat.Compositions       ( compositions1 )
 import           Math.Combinat.Partitions.Integer ( 
@@ -887,6 +890,15 @@ jackSymbolicCombination' which spray =
       IM.fromList 
       (zip weights (map (msPolynomialsInJackSymbolicBasis which n) weights))
 
+-- | Kostka-Foulkes polynomial of two given partitions. This is a univariate 
+-- polynomial whose value at @1@ is the Kostka number of the two partitions.
+kostkaFoulkesPolynomial :: 
+  (Eq a, AlgRing.C a) => Partition -> Partition -> Spray a
+kostkaFoulkesPolynomial lambda mu 
+  | not (_isPartition lambda) = error "kostkaFoulkesPolynomial: invalid partition."
+  | not (_isPartition mu)     = error "kostkaFoulkesPolynomial: invalid partition."
+  | otherwise                 = 
+      _kostkaFoulkesPolynomial (S.fromList lambda) (S.fromList mu)
 
 -- test :: Bool
 -- test = poly == sumOfSprays sprays

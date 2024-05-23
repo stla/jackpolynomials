@@ -21,8 +21,6 @@ module Math.Algebra.Jack.Internal
   , _inverseKostkaMatrix
   , _symbolicKostkaNumbers
   , _inverseSymbolicKostkaMatrix
-  , ssytxWithGivenShapeAndContent
-  , charge
   , _kostkaFoulkesPolynomial
   , _hallLittlewoodPolynomialsInSchurBasis
   , _transitionMatrixHallLittlewoodSchur
@@ -41,12 +39,10 @@ import           Algebra.Ring                                ( (*), product, one
                                                              )
 import qualified Algebra.Ring                                as AlgRing
 import           Algebra.ToInteger                           ( fromIntegral )
-import           Control.Lens                                ( (.~), element )
 import qualified Data.Foldable                               as DF
 import qualified Data.HashMap.Strict                         as HM
 import           Data.List                                   ( 
                                                                nub
-                                                             , (\\)
                                                              , foldl1'
                                                              )
 import           Data.List.Extra                             ( 
@@ -82,7 +78,6 @@ import           Math.Algebra.Hspray                         (
                                                              , zeroRatioOfSprays
                                                              , asRatioOfSprays
                                                              , Spray, (.^)
-                                                             , QSpray
                                                              , Powers (..)
                                                              , zeroSpray
                                                              , isZeroSpray
@@ -97,7 +92,6 @@ import           Math.Combinat.Partitions.Integer            (
                                                              , partitions
                                                              , dominates
                                                              , partitionWidth
-                                                             , dominatedPartitions
                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
@@ -109,9 +103,8 @@ charge w = if l == 0 || n == 1 then 0 else DF.sum indices' + charge w'
   where
     l = S.length w
     n = DF.maximum w
-    (positions', indices') = go 1 (S.singleton (fromJust $ S.elemIndexL 1 w)) (S.singleton 0)
-    -- w' = S.fromList [w `S.index` i | i <- [0 .. l-1] \\ positions']
-    -- S.deleteAt i (S.deleteAt j w)
+    (positions', indices') = 
+      go 1 (S.singleton (fromJust $ S.elemIndexL 1 w)) (S.singleton 0)
     w' = DF.foldr S.deleteAt w (S.sort positions')
     go :: Int -> Seq Int -> Seq Int -> (Seq Int, Seq Int)
     go r positions indices 
@@ -126,11 +119,10 @@ charge w = if l == 0 || n == 1 then 0 else DF.sum indices' + charge w'
             if isJust rindex
               then (1 + pos + fromJust rindex, index)
               else (fromJust (S.elemIndexL (r+1) w), index + 1)
-          -- pos' = 1 + if isJust rindex then fromJust rindex + pos else fromJust (S.elemIndexL (r+1) w)
-          -- index' = if isJust rindex then index else index + 1
 
 isDominated :: Seq Int -> Seq Int -> Bool
-isDominated mu lambda = (MCP.Partition (DF.toList lambda)) `dominates` (MCP.Partition (DF.toList mu))
+isDominated mu lambda = 
+  (MCP.Partition (DF.toList lambda)) `dominates` (MCP.Partition (DF.toList mu))
 
 -- assumes sum lambda == sum mu 
 ssytxWithGivenShapeAndContent :: Seq Int -> Seq Int -> [Seq (Seq Int)]
@@ -146,27 +138,29 @@ ssytxWithGivenShapeAndContent lambda mu =
     dropTrailingZeros = S.dropWhileR (== 0)
     isDecreasing s = 
       and [s `S.index` i >= s `S.index` (i+1) | i <- [0 .. S.length s - 2]]
-    l = S.length mu
-    mu' = dropTrailingZeros $ S.adjust' (subtract 1) (l-1) mu
+    l = S.length lambda
+    m = S.length mu
+    mu' = dropTrailingZeros $ S.adjust' (subtract 1) (m-1) mu
     zippedKappas = 
-      zip [0 ..] [S.adjust' (subtract 1) i lambda | i <- [0 .. S.length lambda - 1]]
+      zip [0 ..] [S.adjust' (subtract 1) i lambda | i <- [0 .. l - 1]]
     all_ssytx = concatMap f zippedKappas
       where
         f (i, kappa) = 
            if isDecreasing kappa 
             then nub $ 
-              map g (ssytxWithGivenShapeAndContent (dropTrailingZeros kappa) mu')
+              map g (ssytxWithGivenShapeAndContent kappa' mu')
             else []
           where 
+            kappa' = dropTrailingZeros kappa
             g ssyt = if i < S.length ssyt 
-              then S.adjust' (|> l) i ssyt 
-              else ssyt |> (S.singleton l)
-
+              then S.adjust' (|> m) i ssyt 
+              else ssyt |> (S.singleton m)
             -- g ssyt = if i < length ssyt 
             --   then (element i .~ ssyt !! i |> l) ssyt 
             --   else ssyt ++ [S.singleton l]
 
-_kostkaFoulkesPolynomial :: (Eq a, AlgRing.C a) => Seq Int -> Seq Int -> Spray a
+_kostkaFoulkesPolynomial :: 
+  (Eq a, AlgRing.C a) => Seq Int -> Seq Int -> Spray a
 _kostkaFoulkesPolynomial lambda mu = 
   if DF.sum lambda == DF.sum mu 
     then sumOfSprays sprays
@@ -175,7 +169,8 @@ _kostkaFoulkesPolynomial lambda mu =
     tableaux = ssytxWithGivenShapeAndContent lambda mu
     mm = lone' 1 -- TODO: fix lone' 1 0 (= fromList [(Powers {exponents = fromList [0], nvariables = 1},1 % 1)])
     sprays = 
-      map (mm . charge . ((foldl1' (S.><)) . (map S.reverse) . DF.toList)) tableaux
+      map (mm . charge . ((foldl1' (S.><)) . (map S.reverse) . DF.toList)) 
+            tableaux
 
 b :: (Eq a, AlgRing.C a) => Partition -> Spray a
 b lambda = productOfSprays sprays
@@ -183,20 +178,23 @@ b lambda = productOfSprays sprays
     table = [sum [fromEnum (k == j) | k <- lambda] | j <- nub lambda]
     sprays = map phi table
       where
-        phi r = productOfSprays [AlgRing.one +> AlgAdd.negate (lone' 1 i) | i <- [1 .. r]]
+        phi r = productOfSprays 
+                [AlgRing.one +> AlgAdd.negate (lone' 1 i) | i <- [1 .. r]]
 
 _transitionMatrixHallLittlewoodSchur :: 
   (Eq a, AlgRing.C a) => Char -> Int -> Map Partition (Map Partition (Spray a))
 _transitionMatrixHallLittlewoodSchur which weight = 
   DM.fromDistinctDescList $ case which of
-    'P' -> zip lambdas [maps i | i <- [1 .. length lambdas]]
-    'Q' -> zip lambdas [DM.mapWithKey (\lambda c -> b lambda ^*^ c) (maps i) | i <- [1 .. length lambdas]]
+    'P' -> zip lambdas [maps i | i <- rg]
+    'Q' -> zip lambdas 
+              [DM.mapWithKey (\lambda c -> b lambda ^*^ c) (maps i) | i <- rg]
     _ -> error "_transitionMatrixHallLittlewoodSchur: "
   where
     lambdas = reverse (map fromPartition (partitions weight))
+    rg = [1 .. length lambdas]
     kfs = map f lambdas
     f kappa = 
-      map (\mu -> _kostkaFoulkesPolynomial (S.fromList kappa) (S.fromList mu)) 
+      map (\mu -> _kostkaFoulkesPolynomial (S.fromList kappa) (S.fromList mu))
           lambdas 
     matrix = inverseUnitTriangularMatrix (fromLists kfs)
     maps i = DM.filter (not . isZeroSpray) 
@@ -211,31 +209,15 @@ _hallLittlewoodPolynomialsInSchurBasis which lambda =
     _ -> error "_hallLittlewoodPolynomialsInSchurBasis: "
   where
     weight = sum lambda
-    lambdas = reverse $ filter (<= lambda) (map fromPartition (partitions weight))
+    lambdas = 
+      reverse $ filter (<= lambda) (map fromPartition (partitions weight))
     kfs = map f lambdas
     f kappa = 
       map (\mu -> _kostkaFoulkesPolynomial (S.fromList kappa) (S.fromList mu)) 
           lambdas -- (dominatedPartitions kappa)
     matrix = inverseUnitTriangularMatrix (fromLists kfs)
-    l = length lambdas
     coeffs = DM.filter (not . isZeroSpray) 
           (DM.fromDistinctDescList (zip lambdas (V.toList (getRow 1 matrix))))
-
-  -- weight <- sum(lambda)
-  -- lambdas <- lapply(Columns(parts(weight)), removeTrailingZeros)
-  -- lambdaStrings <- vapply(lambdas, partitionAsString, character(1L))
-  -- names(lambdas) <- lambdaStrings
-  -- i <- match(partitionAsString(lambda), lambdaStrings)
-  -- lambdas <- lambdas[i:length(lambdas)]
-  -- kfs <- lapply(lambdas, function(kappa) {
-  --   dom <- lapply(Columns(dominatedPartitions(kappa)), removeTrailingZeros)
-  --   names(dom) <- vapply(dom, partitionAsString, character(1L))
-  --   lapply(dom, function(mu) {
-  --     KostaFoulkesPolynomial(kappa, mu)
-  --   })
-  -- })
-  -- coeffs <- invUnitTriMatrix(kfs)
-
 
 _e :: AlgRing.C a => MCP.Partition -> a -> a
 _e lambda alpha = 

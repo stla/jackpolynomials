@@ -46,6 +46,7 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , jackSymbolicCombination'
                                                 , kostkaNumbers
                                                 , symbolicKostkaNumbers
+                                                , kostkaFoulkesPolynomial
                                                 )
 import Math.Combinat.Partitions.Integer         ( 
                                                   toPartition
@@ -538,5 +539,16 @@ main = defaultMain $ testGroup
       kn2 = DM.mapKeys fromPartition 
             (GT.kostkaNumbersWithGivenLambda (mkPartition lambda) :: DM.Map PI.Partition Rational)
     assertEqual "" kn1 kn2
+
+  , testCase "Kostka-Foulkes polynomials" $ do
+    let 
+      lambda = [3, 1, 1]
+      mu = [1, 1, 1, 1, 1]
+      kfPoly = kostkaFoulkesPolynomial lambda mu :: Spray Int
+      kNumber = kostkaNumber (toPartition lambda) (toPartition mu)
+      kfPolyAt1 = evaluateAt [1] kfPoly
+      t = lone 1 :: Spray Int
+      expected = t^**^3 ^+^ t^**^4 ^+^ 2*^t^**^5 ^+^ t^**^6 ^+^ t^**^7
+    assertEqual "" (kfPoly, kfPolyAt1) (expected, kNumber)
 
   ]
