@@ -22,6 +22,7 @@ module Math.Algebra.Jack.Internal
   , _symbolicKostkaNumbers
   , _inverseSymbolicKostkaMatrix
   , ssytxWithGivenShapeAndContent
+  , charge
   )
   where
 import           Prelude 
@@ -42,6 +43,7 @@ import qualified Data.Foldable                               as DF
 import qualified Data.HashMap.Strict                         as HM
 import           Data.List                                   ( 
                                                                nub
+                                                             , (\\)
                                                              )
 import           Data.List.Extra                             ( 
                                                                unsnoc
@@ -62,7 +64,7 @@ import           Data.Matrix                                 (
                                                              , getElem
                                                              , fromLists
                                                              )
-import           Data.Maybe                                  ( fromJust )
+import           Data.Maybe                                  ( fromJust, isJust )
 import           Data.Sequence                               ( Seq )
 import qualified Data.Sequence                               as S
 import           Data.Tuple.Extra                            ( fst3 )
@@ -90,10 +92,30 @@ import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
 
 type Partition = [Int]
 
+charge :: Seq Int -> Int
+charge w = if l == 0 || n == 1 then 0 else sum indices' + charge w'
+  where
+    l = S.length w
+    n = DF.maximum w
+    (positions', indices') = go 1 [1 + (fromJust $ S.elemIndexL 1 w)] [0]
+    w' = S.fromList [w `S.index` i | i <- [0 .. l-1] \\ positions']
+    go :: Int -> [Int] -> [Int] -> ([Int], [Int])
+    go r positions indices 
+      | r == n    = (map (subtract 1) positions, indices)
+      | otherwise = go (r+1) (positions ++ [pos']) (indices ++ [index'])
+        where
+          pos = last positions
+          index = indices !! (r-1)
+          v = S.drop (pos) w
+          rindex = S.elemIndexL (r+1) v
+          h = if isJust (S.elemIndexL (r+1) w) then fromJust (S.elemIndexL (r+1) w) else error (show v)
+          pos' = 1 + if isJust rindex then fromJust rindex + pos else h -- fromJust (S.elemIndexL (r+1) w)
+          index' = if isJust rindex then index else index + 1
+
 isDominated :: Seq Int -> Seq Int -> Bool
 isDominated mu lambda = (MCP.Partition (DF.toList lambda)) `dominates` (MCP.Partition (DF.toList mu))
 
--- assumes sum lambda == sum mu and lambda dominates mu
+-- assumes sum lambda == sum mu 
 ssytxWithGivenShapeAndContent :: Seq Int -> Seq Int -> [[[Int]]]
 ssytxWithGivenShapeAndContent lambda mu = 
   if all (== 1) lambda 
