@@ -23,7 +23,8 @@ module Math.Algebra.Jack.Internal
   , _inverseSymbolicKostkaMatrix
   , ssytxWithGivenShapeAndContent
   , charge
-  , _kostaFoulkesPolynomial
+  , _kostkaFoulkesPolynomial
+  , _inverseKostkaFoulkesMatrix
   )
   where
 import           Prelude 
@@ -82,7 +83,9 @@ import           Math.Algebra.Hspray                         (
                                                              , Spray, (.^)
                                                              , QSpray
                                                              , Powers (..)
-                                                             , lone, qlone, unitSpray
+                                                             , zeroSpray
+                                                             , isZeroSpray
+                                                             , lone, lone', unitSpray
                                                              , sumOfSprays
                                                              , FunctionLike (..)
                                                              )
@@ -92,6 +95,7 @@ import           Math.Combinat.Partitions.Integer            (
                                                              , partitions
                                                              , dominates
                                                              , partitionWidth
+                                                             , dominatedPartitions
                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
@@ -127,11 +131,11 @@ isDominated :: Seq Int -> Seq Int -> Bool
 isDominated mu lambda = (MCP.Partition (DF.toList lambda)) `dominates` (MCP.Partition (DF.toList mu))
 
 -- assumes sum lambda == sum mu 
-ssytxWithGivenShapeAndContent :: Seq Int -> Seq Int -> [[Seq Int]]
+ssytxWithGivenShapeAndContent :: Seq Int -> Seq Int -> [Seq (Seq Int)]
 ssytxWithGivenShapeAndContent lambda mu = 
   if all (== 1) lambda 
     then if all (== 1) mu
-      then [[S.singleton i | i <- [1 .. S.length lambda]]]
+      then [S.fromList [S.singleton i | i <- [1 .. S.length lambda]]]
       else []
     else if isDominated mu lambda
       then nub all_ssytx
@@ -142,26 +146,64 @@ ssytxWithGivenShapeAndContent lambda mu =
       and [s `S.index` i >= s `S.index` (i+1) | i <- [0 .. S.length s - 2]]
     l = S.length mu
     mu' = dropTrailingZeros $ S.adjust' (subtract 1) (l-1) mu
-    kappas = [S.adjust' (subtract 1) i lambda | i <- [0 .. S.length lambda - 1]]
-    all_ssytx = concatMap f [0 .. length lambda - 1]
+    zippedKappas = 
+      zip [0 ..] [S.adjust' (subtract 1) i lambda | i <- [0 .. S.length lambda - 1]]
+    all_ssytx = concatMap f zippedKappas
       where
-        f i = let kappa = kappas !! i in
+        f (i, kappa) = 
            if isDecreasing kappa 
-            then nub $ map g (ssytxWithGivenShapeAndContent (dropTrailingZeros $ kappa) mu')
+            then nub $ 
+              map g (ssytxWithGivenShapeAndContent (dropTrailingZeros kappa) mu')
             else []
           where 
-            g ssyt = if i < length ssyt then (element i .~ ssyt !! i |> l) ssyt else ssyt ++ [S.singleton l]
-              -- where
-              --   row = if i < length ssyt then ssyt !! i else []
+            g ssyt = if i < S.length ssyt 
+              then S.adjust' (|> l) i ssyt 
+              else ssyt |> (S.singleton l)
 
-_kostaFoulkesPolynomial :: Seq Int -> Seq Int -> QSpray
-_kostaFoulkesPolynomial lambda mu = sumOfSprays sprays
+            -- g ssyt = if i < length ssyt 
+            --   then (element i .~ ssyt !! i |> l) ssyt 
+            --   else ssyt ++ [S.singleton l]
+
+_kostkaFoulkesPolynomial :: (Eq a, AlgRing.C a) => Seq Int -> Seq Int -> Spray a
+_kostkaFoulkesPolynomial lambda mu = 
+  if DF.sum lambda == DF.sum mu 
+    then sumOfSprays sprays
+    else zeroSpray
   where
     tableaux = ssytxWithGivenShapeAndContent lambda mu
-    charges = map (charge . (\tableau -> foldl1' (S.><) $ map S.reverse tableau)) tableaux
-    --charges = map charge words
-    t = qlone 1
-    sprays = map (\e -> t^**^e) charges
+    mm = lone' 1
+    sprays = 
+      map (mm . charge . ((foldl1' (S.><)) . (map S.reverse) . DF.toList)) tableaux
+
+_inverseKostkaFoulkesMatrix :: (Eq a, AlgRing.C a) => Int -> Map Partition (Map Partition (Spray a))
+_inverseKostkaFoulkesMatrix weight = 
+  DM.fromDistinctDescList (zip lambdas [maps i | i <- [1 .. length lambdas]])
+  where
+    parts = reverse $ partitions weight
+    kfs = map f parts
+    f kappa = 
+      map (\mu -> _kostkaFoulkesPolynomial (S.fromList (fromPartition kappa)) (S.fromList (fromPartition mu))) 
+          parts -- (dominatedPartitions kappa)
+    matrix = inverseUnitTriangularMatrix (fromLists kfs)
+    lambdas = map fromPartition parts
+    maps i = DM.filter (not . isZeroSpray) 
+          (DM.fromDistinctDescList (zip lambdas (V.toList (getRow i matrix))))
+
+  -- weight <- sum(lambda)
+  -- lambdas <- lapply(Columns(parts(weight)), removeTrailingZeros)
+  -- lambdaStrings <- vapply(lambdas, partitionAsString, character(1L))
+  -- names(lambdas) <- lambdaStrings
+  -- i <- match(partitionAsString(lambda), lambdaStrings)
+  -- lambdas <- lambdas[i:length(lambdas)]
+  -- kfs <- lapply(lambdas, function(kappa) {
+  --   dom <- lapply(Columns(dominatedPartitions(kappa)), removeTrailingZeros)
+  --   names(dom) <- vapply(dom, partitionAsString, character(1L))
+  --   lapply(dom, function(mu) {
+  --     KostaFoulkesPolynomial(kappa, mu)
+  --   })
+  -- })
+  -- coeffs <- invUnitTriMatrix(kfs)
+
 
 _e :: AlgRing.C a => MCP.Partition -> a -> a
 _e lambda alpha = 
@@ -379,6 +421,27 @@ inverseTriangularMatrix mat =
           | (u, v) <- vectors]
       )
     newRow = rowVector (V.snoc (V.replicate (d - 1) AlgAdd.zero) lastEntry)
+    invmat = (invminor <|> newColumn) <-> newRow
+
+inverseUnitTriangularMatrix :: (Eq a, AlgRing.C a) => Matrix a -> Matrix a
+inverseUnitTriangularMatrix mat = 
+  if d == 1 then mat else invmat
+  where
+    d = nrows mat
+    invminor = inverseUnitTriangularMatrix (minorMatrix d d mat)
+    lastColumn = V.init (getCol d mat)
+    vectors = [
+        (
+          V.drop (i-1) (getRow i invminor)
+        , V.drop (i-1) lastColumn
+        )
+        | i <- [1 .. d-1]
+      ] 
+    newColumn = colVector (V.fromList 
+        [AlgAdd.negate (V.foldl1 (AlgAdd.+) (V.zipWith (*) u v)) 
+          | (u, v) <- vectors]
+      )
+    newRow = rowVector (V.snoc (V.replicate (d - 1) AlgAdd.zero) AlgRing.one)
     invmat = (invminor <|> newColumn) <-> newRow
 
 _isPartition :: Partition -> Bool
