@@ -24,7 +24,8 @@ module Math.Algebra.Jack.Internal
   , ssytxWithGivenShapeAndContent
   , charge
   , _kostkaFoulkesPolynomial
-  , _inverseKostkaFoulkesMatrix
+  , _hallLittlewoodPolynomialsInSchurBasis
+  , _transitionMatrixHallLittlewoodSchur
   )
   where
 import           Prelude 
@@ -87,6 +88,7 @@ import           Math.Algebra.Hspray                         (
                                                              , isZeroSpray
                                                              , lone, lone', unitSpray
                                                              , sumOfSprays
+                                                             , productOfSprays
                                                              , FunctionLike (..)
                                                              )
 import           Math.Combinat.Partitions.Integer            (
@@ -171,23 +173,53 @@ _kostkaFoulkesPolynomial lambda mu =
     else zeroSpray
   where
     tableaux = ssytxWithGivenShapeAndContent lambda mu
-    mm = lone' 1
+    mm = lone' 1 -- TODO: fix lone' 1 0 (= fromList [(Powers {exponents = fromList [0], nvariables = 1},1 % 1)])
     sprays = 
       map (mm . charge . ((foldl1' (S.><)) . (map S.reverse) . DF.toList)) tableaux
 
-_inverseKostkaFoulkesMatrix :: (Eq a, AlgRing.C a) => Int -> Map Partition (Map Partition (Spray a))
-_inverseKostkaFoulkesMatrix weight = 
-  DM.fromDistinctDescList (zip lambdas [maps i | i <- [1 .. length lambdas]])
+b :: (Eq a, AlgRing.C a) => Partition -> Spray a
+b lambda = productOfSprays sprays
   where
-    parts = reverse $ partitions weight
-    kfs = map f parts
+    table = [sum [fromEnum (k == j) | k <- lambda] | j <- nub lambda]
+    sprays = map phi table
+      where
+        phi r = productOfSprays [AlgRing.one +> AlgAdd.negate (lone' 1 i) | i <- [1 .. r]]
+
+_transitionMatrixHallLittlewoodSchur :: 
+  (Eq a, AlgRing.C a) => Char -> Int -> Map Partition (Map Partition (Spray a))
+_transitionMatrixHallLittlewoodSchur which weight = 
+  DM.fromDistinctDescList $ case which of
+    'P' -> zip lambdas [maps i | i <- [1 .. length lambdas]]
+    'Q' -> zip lambdas [DM.mapWithKey (\lambda c -> b lambda ^*^ c) (maps i) | i <- [1 .. length lambdas]]
+    _ -> error "_transitionMatrixHallLittlewoodSchur: "
+  where
+    lambdas = reverse (map fromPartition (partitions weight))
+    kfs = map f lambdas
     f kappa = 
-      map (\mu -> _kostkaFoulkesPolynomial (S.fromList (fromPartition kappa)) (S.fromList (fromPartition mu))) 
-          parts -- (dominatedPartitions kappa)
+      map (\mu -> _kostkaFoulkesPolynomial (S.fromList kappa) (S.fromList mu)) 
+          lambdas 
     matrix = inverseUnitTriangularMatrix (fromLists kfs)
-    lambdas = map fromPartition parts
     maps i = DM.filter (not . isZeroSpray) 
           (DM.fromDistinctDescList (zip lambdas (V.toList (getRow i matrix))))
+
+_hallLittlewoodPolynomialsInSchurBasis :: 
+  (Eq a, AlgRing.C a) => Char -> Partition -> Map Partition (Spray a)
+_hallLittlewoodPolynomialsInSchurBasis which lambda = 
+  case which of
+    'P' -> coeffs
+    'Q' -> DM.map ((^*^) (b lambda)) coeffs
+    _ -> error "_hallLittlewoodPolynomialsInSchurBasis: "
+  where
+    weight = sum lambda
+    lambdas = reverse $ filter (<= lambda) (map fromPartition (partitions weight))
+    kfs = map f lambdas
+    f kappa = 
+      map (\mu -> _kostkaFoulkesPolynomial (S.fromList kappa) (S.fromList mu)) 
+          lambdas -- (dominatedPartitions kappa)
+    matrix = inverseUnitTriangularMatrix (fromLists kfs)
+    l = length lambdas
+    coeffs = DM.filter (not . isZeroSpray) 
+          (DM.fromDistinctDescList (zip lambdas (V.toList (getRow 1 matrix))))
 
   -- weight <- sum(lambda)
   -- lambdas <- lapply(Columns(parts(weight)), removeTrailingZeros)
