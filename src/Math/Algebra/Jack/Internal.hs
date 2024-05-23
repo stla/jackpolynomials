@@ -21,6 +21,7 @@ module Math.Algebra.Jack.Internal
   , _inverseKostkaMatrix
   , _symbolicKostkaNumbers
   , _inverseSymbolicKostkaMatrix
+  , ssytxWithGivenShapeAndContent
   )
   where
 import           Prelude 
@@ -36,9 +37,15 @@ import           Algebra.Ring                                ( (*), product, one
                                                              )
 import qualified Algebra.Ring                                as AlgRing
 import           Algebra.ToInteger                           ( fromIntegral )
+import           Control.Lens                                ( (.~), element )
 import qualified Data.Foldable                               as DF
 import qualified Data.HashMap.Strict                         as HM
-import           Data.List.Extra                             ( unsnoc )
+import           Data.List                                   ( 
+                                                               nub
+                                                             )
+import           Data.List.Extra                             ( 
+                                                               unsnoc
+                                                             )
 import           Data.List.Index                             ( iconcatMap )
 import           Data.Map.Strict                             ( Map )
 import qualified Data.Map.Strict                             as DM
@@ -83,6 +90,36 @@ import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
 
 type Partition = [Int]
 
+isDominated :: Seq Int -> Seq Int -> Bool
+isDominated mu lambda = (MCP.Partition (DF.toList lambda)) `dominates` (MCP.Partition (DF.toList mu))
+
+-- assumes sum lambda == sum mu and lambda dominates mu
+ssytxWithGivenShapeAndContent :: Seq Int -> Seq Int -> [[[Int]]]
+ssytxWithGivenShapeAndContent lambda mu = 
+  if all (== 1) lambda 
+    then if all (== 1) mu
+      then [[[i] | i <- [1 .. S.length lambda]]]
+      else []
+    else if isDominated mu lambda
+      then nub all_ssytx
+      else []
+  where
+    dropTrailingZeros = S.dropWhileR (== 0)
+    isDecreasing s = 
+      and [s `S.index` i >= s `S.index` (i+1) | i <- [0 .. S.length s - 2]]
+    l = S.length mu
+    mu' = dropTrailingZeros $ S.adjust' (subtract 1) (l-1) mu
+    kappas = [S.adjust' (subtract 1) i lambda | i <- [0 .. S.length lambda - 1]]
+    all_ssytx = concatMap f [0 .. length lambda - 1]
+      where
+        f i = let kappa = kappas !! i in
+           if isDecreasing kappa 
+            then nub $ map g (ssytxWithGivenShapeAndContent (dropTrailingZeros $ kappa) mu')
+            else []
+          where 
+            g ssyt = if i < length ssyt then (element i .~ ssyt !! i ++ [l]) ssyt else ssyt ++ [[l]]
+              -- where
+              --   row = if i < length ssyt then ssyt !! i else []
 
 _e :: AlgRing.C a => MCP.Partition -> a -> a
 _e lambda alpha = 
