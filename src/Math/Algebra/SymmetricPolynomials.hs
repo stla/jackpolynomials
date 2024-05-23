@@ -59,6 +59,8 @@ module Math.Algebra.SymmetricPolynomials
   , symbolicKostkaNumbers
   -- * Kostka-Foulkes polynomials
   , kostkaFoulkesPolynomial
+  -- * Hall-Littlewood polynomials
+  , hallLittlewoodPolynomial
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -105,6 +107,7 @@ import           Math.Algebra.Hspray              (
                                                   , QSpray'
                                                   , ParametricSpray
                                                   , ParametricQSpray
+                                                  , SimpleParametricSpray
                                                   , lone
                                                   , qlone
                                                   , lone'
@@ -139,6 +142,10 @@ import           Math.Algebra.Jack.Internal       (
                                                   , _symbolicKostkaNumbers
                                                   , _inverseSymbolicKostkaMatrix
                                                   , _kostkaFoulkesPolynomial
+                                                  , _hallLittlewoodPolynomialsInSchurBasis
+                                                  )
+import           Math.Algebra.JackPol             ( 
+                                                    schurPol
                                                   )
 import           Math.Combinat.Compositions       ( compositions1 )
 import           Math.Combinat.Partitions.Integer ( 
@@ -899,6 +906,25 @@ kostkaFoulkesPolynomial lambda mu
   | not (_isPartition mu)     = error "kostkaFoulkesPolynomial: invalid partition."
   | otherwise                 = 
       _kostkaFoulkesPolynomial (S.fromList lambda) (S.fromList mu)
+
+hallLittlewoodPolynomial :: 
+  (Eq a, AlgRing.C a) => Int -> Partition -> Char -> SimpleParametricSpray a
+hallLittlewoodPolynomial n lambda which 
+  | n < 0 = error "hallLittlewoodPolynomial: negative number of variables."
+  | not (_isPartition lambda) = 
+      error "hallLittlewoodPolynomial: invalid partition."
+  | not (which `elem` ['P', 'Q']) =
+      error "hallLittlewoodPolynomial: last argument must be 'P' or 'Q'."
+  | null lambda = unitSpray
+  | length lambda > n = zeroSpray
+  | otherwise = sumOfSprays sprays
+    where
+      coeffs = _hallLittlewoodPolynomialsInSchurBasis which lambda
+      sprays = 
+        DM.elems 
+          (DM.mapWithKey (\mu c -> c *^ (HM.map constantSpray (schurPol n mu))) coeffs)
+
+
 
 -- test :: Bool
 -- test = poly == sumOfSprays sprays

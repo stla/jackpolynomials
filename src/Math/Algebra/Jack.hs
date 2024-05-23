@@ -48,16 +48,16 @@ jack :: forall a. (Eq a, AlgField.C a)
   -> a         -- ^ Jack parameter
   -> Char      -- ^ which Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> a
-jack []       _      _     _     = error "jack: empty list of variables"
+jack []       _      _     _     = error "jack: empty list of variables."
 jack x@(x0:_) lambda alpha which =
   case _isPartition lambda of
-    False -> error "jack: invalid integer partition"
+    False -> error "jack: invalid integer partition."
     True -> case which of 
       'J' -> resultJ
       'C' -> jackCoeffC lambda alpha * resultJ
       'P' -> jackCoeffP lambda alpha * resultJ
       'Q' -> jackCoeffQ lambda alpha * resultJ
-      _   -> error "jack: please use 'J', 'C', 'P' or 'Q' for last argument"
+      _   -> error "jack: please use 'J', 'C', 'P' or 'Q' for last argument."
       where
       resultJ = jac (length x) 0 lambda lambda arr0 one
       nll = _N lambda lambda

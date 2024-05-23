@@ -1,9 +1,11 @@
 module Main ( main ) where
+import qualified Algebra.Additive               as AlgAdd
 import qualified Algebra.Module                 as AlgMod
 import qualified Data.Map.Strict                as DM
 import Data.Ratio                               ( (%) )
 import Math.Algebra.Hspray                      ( FunctionLike (..)
                                                 , Spray, QSpray
+                                                , SimpleParametricSpray
                                                 , lone, qlone 
                                                 , unitSpray
                                                 , evalSpray 
@@ -34,6 +36,7 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , symbolicHallInnerProduct
                                                 , symbolicHallInnerProduct''
                                                 , msPolynomial
+                                                , msCombination
                                                 , psPolynomial 
                                                 , psCombination
                                                 , cshPolynomial
@@ -47,6 +50,7 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , kostkaNumbers
                                                 , symbolicKostkaNumbers
                                                 , kostkaFoulkesPolynomial
+                                                , hallLittlewoodPolynomial
                                                 )
 import Math.Combinat.Partitions.Integer         ( 
                                                   toPartition
@@ -550,5 +554,28 @@ main = defaultMain $ testGroup
       t = lone 1 :: Spray Int
       expected = t^**^3 ^+^ t^**^4 ^+^ 2*^t^**^5 ^+^ t^**^6 ^+^ t^**^7
     assertEqual "" (kfPoly, kfPolyAt1) (expected, kNumber)
+
+  , testCase "Hall-Littlewood polynomial P" $ do
+    let
+      hlPoly = hallLittlewoodPolynomial 5 [2, 2, 1] 'P' :: SimpleParametricSpray Int
+      msCombo = msCombination hlPoly
+      t = lone 1 :: Spray Int
+      expected = DM.fromList 
+        [
+          ([2, 2, 1], unitSpray)
+        , ([2, 1, 1, 1], 2 +> (AlgAdd.negate (t ^+^ t^**^2)))
+        , ([1, 1, 1, 1, 1], 5 +> ((-4)*^t ^-^ 4*^t^**^2 ^+^ t^**^3 ^+^ t^**^4 ^+^ t^**^5))
+        ]
+    assertEqual "" msCombo expected
+
+  , testCase "Hall-Littlewood polynomial Q" $ do
+    let
+      hlQ2 = hallLittlewoodPolynomial 4 [2] 'Q' :: SimpleParametricSpray Int
+      hlQ22 = hallLittlewoodPolynomial 4 [2, 2] 'Q'
+      hlQ31 = hallLittlewoodPolynomial 4 [3, 1] 'Q'
+      hlQ4 = hallLittlewoodPolynomial 4 [4] 'Q'
+      spray = 1 +> (AlgAdd.negate (lone 1)) :: Spray Int
+      expected = hlQ22 ^+^ spray *^ hlQ31 ^+^ spray *^ hlQ4
+    assertEqual "" (hlQ2 ^**^ 2) expected
 
   ]
