@@ -863,9 +863,12 @@ jackCombination ::
   -> Spray a                -- ^ spray representing a symmetric polynomial
   -> Map Partition a        -- ^ map representing the linear combination; a partition @lambda@ in the keys of this map corresponds to the term @coeff *^ jackPol' n lambda alpha which@, where @coeff@ is the value attached to this key and @n@ is the number of variables of the spray
 jackCombination alpha which spray = 
-  _symmPolyCombination 
-    (\lambda -> (combos IM.! (sum lambda)) DM.! lambda) 
-      (AlgRing.*) spray
+  if not (which `elem` ['J', 'C', 'P', 'Q']) 
+    then error "jackCombination: invalid character, must be 'J', 'C', 'P' or 'Q'."
+    else
+      _symmPolyCombination 
+        (\lambda -> (combos IM.! (sum lambda)) DM.! lambda) 
+          (AlgRing.*) spray
   where
     weights = filter (/= 0) (map DF.sum (allExponents spray))
     n = numberOfVariables spray
@@ -880,9 +883,11 @@ jackSymbolicCombination ::
   -> QSpray                 -- ^ spray representing a symmetric polynomial
   -> Map Partition RatioOfQSprays -- ^ map representing the linear combination; a partition @lambda@ in the keys of this map corresponds to the term @coeff *^ jackSymbolicPol' n lambda which@, where @coeff@ is the value attached to this key and @n@ is the number of variables of the spray
 jackSymbolicCombination which qspray = 
-  _symmPolyCombination 
-    (\lambda -> (combos IM.! (sum lambda)) DM.! lambda) 
-      (AlgRing.*) (HM.map constantRatioOfSprays qspray)
+  if not (which `elem` ['J', 'C', 'P', 'Q']) 
+    then error "jackSymbolicCombination: invalid character, must be 'J', 'C', 'P' or 'Q'."
+    else _symmPolyCombination 
+      (\lambda -> (combos IM.! (sum lambda)) DM.! lambda) 
+        (AlgRing.*) (HM.map constantRatioOfSprays qspray)
   where
     weights = filter (/= 0) (map DF.sum (allExponents qspray))
     n = numberOfVariables qspray
@@ -899,9 +904,11 @@ jackSymbolicCombination' ::
   -> ParametricSpray a               -- ^ parametric spray representing a symmetric polynomial
   -> Map Partition (RatioOfSprays a) -- ^ map representing the linear combination; a partition @lambda@ in the keys of this map corresponds to the term @coeff *^ jackSymbolicPol' n lambda which@, where @coeff@ is the value attached to this key and @n@ is the number of variables of the spray
 jackSymbolicCombination' which spray = 
-  _symmPolyCombination 
-    (\lambda -> (combos IM.! (sum lambda)) DM.! lambda) 
-      (AlgRing.*) spray
+  if not (which `elem` ['J', 'C', 'P', 'Q']) 
+    then error "jackSymbolicCombination': invalid character, must be 'J', 'C', 'P' or 'Q'."
+    else _symmPolyCombination 
+      (\lambda -> (combos IM.! (sum lambda)) DM.! lambda) 
+        (AlgRing.*) spray
   where
     weights = filter (/= 0) (map DF.sum (allExponents spray))
     n = numberOfVariables spray
@@ -919,8 +926,14 @@ kostkaFoulkesPolynomial lambda mu
   | otherwise                 = 
       _kostkaFoulkesPolynomial (S.fromList lambda) (S.fromList mu)
 
+-- | Hall-Littlewood polynomial of a given partition. This is a multivariate 
+-- symmetric polynomial whose coefficients are polynomial in one parameter.
 hallLittlewoodPolynomial :: 
-  (Eq a, AlgRing.C a) => Int -> Partition -> Char -> SimpleParametricSpray a
+  (Eq a, AlgRing.C a) 
+  => Int       -- ^ number of variables
+  -> Partition -- ^ integer partition
+  -> Char      -- ^ which Hall-Littlewood polynomial, @'P'@ or @'Q'@
+  -> SimpleParametricSpray a
 hallLittlewoodPolynomial n lambda which 
   | n < 0 = error "hallLittlewoodPolynomial: negative number of variables."
   | not (_isPartition lambda) = 

@@ -201,8 +201,10 @@ import Math.Algebra.Hspray
 lambda = [2, 1]
 hlPoly = hallLittlewoodPolynomial 3 lambda 'P' :: SimpleParametricQSpray
 putStrLn $ prettySymmetricSimpleParametricQSpray ["t"] hlPoly
---- 
-hlPolyAt0 = 
+-- (1)*M[2,1] + (-t^2 - t + 2)*M[1,1,1]
+hlPolyAt0 = substituteParameters hlPoly [0]
+hlPolyAt0 == schurPol' 3 lambda
+-- True
 ```
 
 
