@@ -184,11 +184,10 @@ b lambda = productOfSprays sprays
 _transitionMatrixHallLittlewoodSchur :: 
   (Eq a, AlgRing.C a) => Char -> Int -> Map Partition (Map Partition (Spray a))
 _transitionMatrixHallLittlewoodSchur which weight = 
-  DM.fromDistinctDescList $ case which of
-    'P' -> zip lambdas [maps i | i <- rg]
-    'Q' -> zip lambdas 
+  DM.fromDistinctDescList $ if which == 'P' 
+    then zip lambdas [maps i | i <- rg]
+    else zip lambdas 
               [DM.mapWithKey (\lambda c -> b lambda ^*^ c) (maps i) | i <- rg]
-    _ -> error "_transitionMatrixHallLittlewoodSchur: "
   where
     lambdas = reverse (map fromPartition (partitions weight))
     rg = [1 .. length lambdas]

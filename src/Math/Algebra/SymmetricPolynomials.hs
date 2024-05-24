@@ -62,6 +62,7 @@ module Math.Algebra.SymmetricPolynomials
   , kostkaFoulkesPolynomial
   -- * Hall-Littlewood polynomials
   , hallLittlewoodPolynomial
+  , transitionsSchurToHallLittlewood
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -146,6 +147,7 @@ import           Math.Algebra.Jack.Internal       (
                                                   , _inverseSymbolicKostkaMatrix
                                                   , _kostkaFoulkesPolynomial
                                                   , _hallLittlewoodPolynomialsInSchurBasis
+                                                  , _transitionMatrixHallLittlewoodSchur
                                                   )
 import           Math.Algebra.JackPol             ( 
                                                     schurPol
@@ -950,7 +952,18 @@ hallLittlewoodPolynomial n lambda which
           (DM.mapWithKey 
             (\mu c -> c *^ (HM.map constantSpray (schurPol n mu))) coeffs)
 
-
+-- | Hall-Littlewood polynomials as linear combinations of Schur polynomials.
+transitionsSchurToHallLittlewood :: 
+     Int   -- ^ weight of the partitions of the Hall-Littlewood polynomials
+  -> Char  -- ^ which Hall-Littlewood polynomials, @'P'@ or @'Q'@
+  -> Map Partition (Map Partition (Spray Int))
+transitionsSchurToHallLittlewood weight which 
+  | weight <= 0                   = 
+      error "transitionsHallLittlewoodToSchur: negative weight."
+  | not (which `elem` ['P', 'Q']) =
+      error "transitionsHallLittlewoodToSchur: the character must be 'P' or 'Q'."
+  | otherwise                     = 
+      _transitionMatrixHallLittlewoodSchur which weight
 
 -- test :: Bool
 -- test = poly == sumOfSprays sprays
