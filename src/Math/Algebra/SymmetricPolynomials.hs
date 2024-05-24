@@ -42,6 +42,7 @@ module Math.Algebra.SymmetricPolynomials
   , prettySymmetricQSpray
   , prettySymmetricQSpray'
   , prettySymmetricParametricQSpray
+  , prettySymmetricSimpleParametricQSpray
   -- * Operators on the space of symmetric polynomials
   , laplaceBeltrami
   , calogeroSutherland
@@ -108,6 +109,7 @@ import           Math.Algebra.Hspray              (
                                                   , ParametricSpray
                                                   , ParametricQSpray
                                                   , SimpleParametricSpray
+                                                  , SimpleParametricQSpray
                                                   , lone
                                                   , qlone
                                                   , lone'
@@ -125,6 +127,7 @@ import           Math.Algebra.Hspray              (
                                                   , showQSpray
                                                   , showQSpray'
                                                   , showSpray
+                                                  , prettyQSprayXYZ
                                                   , zeroSpray
                                                   , unitSpray
                                                   , productOfSprays
@@ -253,7 +256,7 @@ prettySymmetricQSpray' spray = showQSpray' showSymmetricMonomials mspray
     mspray = makeMSpray spray
 
 -- | Prints a symmetric parametric spray as a linear combination of monomial 
--- symmetric polynomials
+-- symmetric polynomials.
 --
 -- >>> putStrLn $ prettySymmetricParametricQSpray ["a"] $ jackSymbolicPol' 3 [3, 1, 1] 'J'
 -- { [ 4*a^2 + 10*a + 6 ] }*M[3,1,1] + { [ 8*a + 12 ] }*M[2,2,1]
@@ -264,8 +267,17 @@ prettySymmetricParametricQSpray letters spray =
   where
     mspray = makeMSpray spray
 
+-- | Prints a symmetric simple parametric spray as a linear combination of monomial 
+-- symmetric polynomials.
+prettySymmetricSimpleParametricQSpray :: [String] -> SimpleParametricQSpray -> String
+prettySymmetricSimpleParametricQSpray letters spray = 
+  showSpray (prettyQSprayXYZ letters) ("(", ")") 
+            showSymmetricMonomials mspray
+  where
+    mspray = makeMSpray spray
+
 -- | Laplace-Beltrami operator on the space of homogeneous symmetric polynomials;
--- neither symmetry and homogeneity are checked
+-- neither symmetry and homogeneity are checked.
 laplaceBeltrami :: (Eq a, AlgField.C a) => a -> Spray a -> Spray a
 laplaceBeltrami alpha spray = 
   if isConstant spray 
@@ -922,7 +934,8 @@ hallLittlewoodPolynomial n lambda which
       coeffs = _hallLittlewoodPolynomialsInSchurBasis which lambda
       sprays = 
         DM.elems 
-          (DM.mapWithKey (\mu c -> c *^ (HM.map constantSpray (schurPol n mu))) coeffs)
+          (DM.mapWithKey 
+            (\mu c -> c *^ (HM.map constantSpray (schurPol n mu))) coeffs)
 
 
 

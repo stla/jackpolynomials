@@ -1,6 +1,6 @@
 # jackpolynomials
 
-***Jack, zonal, Schur and skew Schur polynomials.***
+***Jack, zonal, Schur, skew Schur, and Hall-Littlewood polynomials.***
 
 <!-- badges: start -->
 [![Stack-lts](https://github.com/stla/jackpolynomials/actions/workflows/Stack-lts.yml/badge.svg)](https://github.com/stla/jackpolynomials/actions/workflows/Stack-lts.yml)
@@ -10,8 +10,9 @@
 Schur polynomials have applications in combinatorics and zonal polynomials have
 applications in multivariate statistics. They are particular cases of
 [Jack polynomials](https://en.wikipedia.org/wiki/Jack_function). This package
-allows to evaluate these polynomials and to compute them in symbolic form. It 
-also provides some utilities for symmetric polynomials.
+allows to evaluate these polynomials as well as the Hall-Littlewood polynomials 
+and to compute them in symbolic form. It also provides some utilities for 
+symmetric polynomials.
 
 ___
 
@@ -179,6 +180,30 @@ prettyRatioOfQSpraysXYZ ["t"] $ evaluate hip [asRatioOfSprays (qlone 1)]
 -- [ 3*t^4 + 10*t^3 + 27*t^2 + 16*t ] %//% [ t^2 + 2*t + 1 ]
 ```
 
+
+### Hall-Littlewood polynomials
+
+The package can also compute the Hall-Littlewood polynomials. A Hall-Littlewood 
+polynomial is a multivariate symmetric polynomial associated to an integer 
+partition and whose coefficients depend on a parameter. More precisely, the 
+coefficients are some polynomials in this parameter. So the Hall-Littlewood 
+polynomials implemented in the package, returned by the 
+`hallLittlewoodPolynomial` function, are represented by some sprays of type 
+`SimpleParametricSpray a`, an alias of the type `Spray (Spray a)`. 
+
+When the value of the parameter of a Hall-Littlewood polynomial is `0`, then 
+this polynomial is the Schur polynomial of the given partition.
+
+```haskell
+import Math.Algebra.JackPol
+import Math.Algebra.SymmetricPolynomials 
+import Math.Algebra.Hspray 
+lambda = [2, 1]
+hlPoly = hallLittlewoodPolynomial 3 lambda 'P' :: SimpleParametricQSpray
+putStrLn $ prettySymmetricSimpleParametricQSpray ["t"] hlPoly
+--- 
+hlPolyAt0 = 
+```
 
 
 ## References

@@ -203,10 +203,9 @@ _transitionMatrixHallLittlewoodSchur which weight =
 _hallLittlewoodPolynomialsInSchurBasis :: 
   (Eq a, AlgRing.C a) => Char -> Partition -> Map Partition (Spray a)
 _hallLittlewoodPolynomialsInSchurBasis which lambda = 
-  case which of
-    'P' -> coeffs
-    'Q' -> DM.map ((^*^) (b lambda)) coeffs
-    _ -> error "_hallLittlewoodPolynomialsInSchurBasis: "
+  if which == 'P'
+    then coeffs
+    else DM.map ((^*^) (b lambda)) coeffs
   where
     weight = sum lambda
     lambdas = 

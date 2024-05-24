@@ -87,10 +87,16 @@ combination of some elementary symmetric polynomials
 combination of some Schur polynomials
 
 * new function `jackCombination`, to get a symmetric polynomial as a linear 
-combination of some Jack polynomials
+combination of some Jack polynomials with a fixed Jack parameter
 
 * new function `jackSymbolicCombination`, to get a symmetric polynomial as a linear 
 combination of some Jack polynomials with symbolic Jack parameter
 
 * new functions `kostkaNumbers` and `symbolicKostkaNumbers`, to get the Kostka 
 numbers with parameter
+
+1.4.3.0
+-------
+* new function `kostkaFoulkesPolynomial`, to get a Kostka-Foulkes polynomial
+
+* new function `hallLittlewoodPolynomial`, to get a Hall-Littlewood polynomial
