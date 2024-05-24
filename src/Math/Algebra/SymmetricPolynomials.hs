@@ -332,10 +332,10 @@ psPolynomial n lambda
       error "psPolynomial: invalid partition."
   | null lambda               = unitSpray
 --  | any (> n) lambda          = zeroSpray
---  | llambda > n               = zeroSpray
+  | llambda > n               = zeroSpray
   | otherwise                 = productOfSprays sprays
     where
-      -- llambda = length lambda
+      llambda = length lambda
       sprays = [HM.fromList $ [f i k | i <- [1 .. n]] | k <- lambda]
       f j k = (Powers expts j, AlgRing.one)
         where
@@ -651,10 +651,10 @@ cshPolynomial n lambda
   | not (_isPartition lambda) = 
       error "cshPolynomial: invalid partition."
   | null lambda               = unitSpray
---  | llambda > n               = zeroSpray
+  | llambda > n               = zeroSpray
   | otherwise                 = productOfSprays (map cshPolynomialK lambda)
     where
-      -- llambda = length lambda
+      llambda = length lambda
       cshPolynomialK k = sumOfSprays msSprays
         where
           parts = partitions k
