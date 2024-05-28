@@ -2,11 +2,15 @@ module Main ( main ) where
 import qualified Algebra.Additive               as AlgAdd
 import qualified Algebra.Module                 as AlgMod
 import qualified Data.Map.Strict                as DM
+import           Data.Matrix                    ( 
+                                                  fromLists
+                                                )
 import Data.Ratio                               ( (%) )
 import Math.Algebra.Hspray                      ( FunctionLike (..)
                                                 , Spray, QSpray
                                                 , SimpleParametricSpray
                                                 , lone, qlone 
+                                                , zeroSpray
                                                 , unitSpray
                                                 , evalSpray 
                                                 , evalParametricSpray'
@@ -18,6 +22,7 @@ import Math.Algebra.Hspray                      ( FunctionLike (..)
                                                 , (%//%)
                                                 , (/^)
                                                 , sumOfSprays
+                                                , detLaplace
                                                 )
 import qualified Math.Algebra.Hspray            as Hspray
 import Math.Algebra.Jack                        ( schur, skewSchur 
@@ -97,7 +102,21 @@ main = defaultMain $ testGroup
   "Tests"
 
   [ 
-  testCase "jackSymbolicPol J" $ do
+  testCase "Jacobi-Trudi identity" $ do
+    let 
+      n = 5
+      lambda = [3, 2, 1, 1]
+      schurPoly = schurPol' n lambda
+      h k 
+        | k < 0 = zeroSpray
+        | k == 0 = cshPolynomial n [] :: QSpray
+        | otherwise = cshPolynomial n [k] :: QSpray
+      row i = [h (lambda !! (i-1) + j - i) | j <- [1 .. 4]]
+      matrix = fromLists [row i | i <- [1 .. 4]]
+      det = detLaplace matrix
+    assertEqual "" det schurPoly
+
+  , testCase "jackSymbolicPol J" $ do
     let jp = jackSymbolicPol' 3 [3, 1] 'J'
         v  = evalParametricSpray' jp [2] [-3, 4, 5]
     assertEqual "" v 1488
