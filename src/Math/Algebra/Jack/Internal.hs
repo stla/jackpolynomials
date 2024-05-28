@@ -83,6 +83,7 @@ import           Math.Algebra.Hspray                         (
                                                              , asRatioOfSprays
                                                              , Spray, (.^)
                                                              , Powers (..)
+                                                             , QSpray, qlone
                                                              , zeroSpray
                                                              , isZeroSpray
                                                              , lone, lone', unitSpray
@@ -140,6 +141,15 @@ paths n lambda mu = filter columnStrictTableau x
           | m == 1 = [S.singleton i | i <- [a .. b]]
           | otherwise = [i <| combo | i <- [a .. b], combo <- combinations i b (m-1)]
     x = map (\combo -> lambda : (map (\i -> kappas !! i) (DF.toList combo)) ++ [mu']) combos
+
+psi_lambda_mu :: Seq Int -> Seq Int -> QSpray
+psi_lambda_mu lambda mu = productOfSprays sprays
+  where
+    mlambda = map (\j -> 1 + DF.sum (fmap (\k -> fromEnum (k == j)) lambda)) [1 .. lambda `S.index` 0]
+    mmu = map (\j -> DF.sum (fmap (\k -> fromEnum (k == j)) mu)) [1 .. lambda `S.index` 0]
+    t = qlone 1
+    is = filter (\i -> mlambda !! i == mmu !!i) [0 .. lambda `S.index` 0 - 1]
+    sprays = map (\i -> AlgAdd.negate (t^**^(mmu !! i) <+ (-1))) is
 
 
 
