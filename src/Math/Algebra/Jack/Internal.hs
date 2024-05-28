@@ -46,7 +46,6 @@ import qualified Data.HashMap.Strict                         as HM
 import           Data.List                                   ( 
                                                                nub
                                                              , foldl1'
-                                                             , uncons
                                                              )
 import           Data.List.Extra                             ( 
                                                                unsnoc
@@ -128,7 +127,7 @@ horizontalStrip lambda mu = all (`elem` [0, 1]) theta'
 columnStrictTableau :: [Seq Int] -> Bool
 columnStrictTableau tableau = 
   and (zipWith horizontalStrip tableau tail_tableau)
-  where (_, tail_tableau) = fromJust (uncons tableau)
+  where tail_tableau = drop 1 tableau
 
 _paths :: Int -> Seq Int -> Seq Int -> [[Seq Int]]
 _paths n lambda mu = filter columnStrictTableau tableaux
@@ -183,7 +182,7 @@ skewHallLittlewoodP n lambda mu =
     lones = [lone' i | i <- [1 .. n]]
     sprays nu = 
       [psi_lambda_mu next_nu_i nu_i *^ lone_i (DF.sum next_nu_i - DF.sum nu_i)
-        | (next_nu_i, nu_i, lone_i) <- zip3 (tail nu) nu lones]
+        | (next_nu_i, nu_i, lone_i) <- zip3 (drop 1 nu) nu lones]
 
 skewHallLittlewoodQ :: forall a. (Eq a, AlgRing.C a) 
   => Int -> Seq Int -> Seq Int -> SimpleParametricSpray a
@@ -194,7 +193,7 @@ skewHallLittlewoodQ n lambda mu =
     lones = [lone' i | i <- [1 .. n]]
     sprays nu = 
       [phi_lambda_mu next_nu_i nu_i *^ lone_i (DF.sum next_nu_i - DF.sum nu_i)
-        | (next_nu_i, nu_i, lone_i) <- zip3 (tail nu) nu lones]
+        | (next_nu_i, nu_i, lone_i) <- zip3 (drop 1 nu) nu lones]
 
 charge :: Seq Int -> Int
 charge w = if l == 0 || n == 1 then 0 else DF.sum indices' + charge w'
