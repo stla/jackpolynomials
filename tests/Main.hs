@@ -51,6 +51,8 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , symbolicKostkaNumbers
                                                 , kostkaFoulkesPolynomial
                                                 , hallLittlewoodPolynomial
+                                                , hallLittlewoodPolynomial'
+                                                , skewHallLittlewoodPolynomial'
                                                 )
 import Math.Combinat.Partitions.Integer         ( 
                                                   toPartition
@@ -577,5 +579,23 @@ main = defaultMain $ testGroup
       spray = 1 +> (AlgAdd.negate (lone 1)) :: Spray Int
       expected = hlQ22 ^+^ spray *^ hlQ31 ^+^ spray *^ hlQ4
     assertEqual "" (hlQ2 ^**^ 2) expected
+
+  , testCase "Skew Hall-Littlewood at t=0 is skew Schur polynomial" $ do
+    let
+      n = 3
+      lambda = [3, 2, 1]
+      mu = [1, 1]
+      skewHLpoly = skewHallLittlewoodPolynomial' n lambda mu 'P'
+      skewSchurPoly = skewSchurPol' n lambda mu
+    assertEqual "" skewSchurPoly (substituteParameters skewHLpoly [0])
+
+  , testCase "Skew Hall-Littlewood with mu=[] is Hall-Littlewood polynomial" $ do
+    let
+      n = 6
+      lambda = [3, 2, 1]
+      which = 'Q'
+      skewHLpoly = skewHallLittlewoodPolynomial' n lambda [] which
+      hlPoly = hallLittlewoodPolynomial' n lambda which
+    assertEqual "" skewHLpoly hlPoly
 
   ]
