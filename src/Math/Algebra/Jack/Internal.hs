@@ -84,6 +84,7 @@ import           Math.Algebra.Hspray                         (
                                                              , Spray, (.^)
                                                              , Powers (..)
                                                              , QSpray, qlone
+                                                             , SimpleParametricQSpray
                                                              , zeroSpray
                                                              , isZeroSpray
                                                              , lone, lone', unitSpray
@@ -98,6 +99,7 @@ import           Math.Combinat.Partitions.Integer            (
                                                              , dominates
                                                              , partitionWidth
                                                              , toPartition
+                                                             , mkPartition
                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
@@ -117,18 +119,18 @@ cartesianProduct (i:<|is)
       previous = cartesianProduct is
 
 horizontalStrip :: Seq Int -> Seq Int -> Bool
-horizontalStrip lambda mu = all (<= 1) theta'
+horizontalStrip lambda mu = all (`elem` [0, 1]) theta'
   where
-    lambda' = S.fromList $ fromPartition $ dualPartition (toPartition (DF.toList lambda))
-    mu' = S.fromList $ fromPartition $ dualPartition (toPartition (DF.toList mu))
+    lambda' = S.fromList $ fromPartition $ dualPartition (mkPartition (DF.toList lambda))
+    mu' = S.fromList $ fromPartition $ dualPartition (mkPartition (DF.toList mu))
     mu'' = mu' >< (S.replicate (S.length lambda' - S.length mu') 0)
     theta' = S.zipWith (-) lambda' mu''
 
 columnStrictTableau :: [Seq Int] -> Bool
 columnStrictTableau tableau = and (zipWith horizontalStrip tableau (tail tableau))
 
-paths :: Int -> Seq Int -> Seq Int -> [[Seq Int]]
-paths n lambda mu = filter columnStrictTableau x
+_paths :: Int -> Seq Int -> Seq Int -> [[Seq Int]]
+_paths n lambda mu = filter columnStrictTableau x
   where
     mu' = mu >< (S.replicate (S.length lambda - S.length mu) 0)
     diffs = S.zipWith (-) lambda mu'
@@ -151,7 +153,14 @@ psi_lambda_mu lambda mu = productOfSprays sprays
     is = filter (\i -> mlambda !! i == mmu !!i) [0 .. lambda `S.index` 0 - 1]
     sprays = map (\i -> AlgAdd.negate (t^**^(mmu !! i) <+ (-1))) is
 
-
+skewHallLittlewoodP :: Int -> Seq Int -> Seq Int -> SimpleParametricQSpray
+skewHallLittlewoodP n lambda mu = sumOfSprays x
+  where
+    paths = _paths n lambda mu
+    lones = [lone i :: SimpleParametricQSpray | i <- [1 .. n]]
+    sprays nu = [psi_lambda_mu (nu !! i) (nu !! (i-1)) *^ (lones !! (i-1)) ^**^ (DF.sum (nu !! i) - DF.sum (nu !! (i-1)))
+                  | i <- [1 .. length nu - 1]]
+    x = [productOfSprays $ sprays (reverse path) | path <- paths]
 
 charge :: Seq Int -> Int
 charge w = if l == 0 || n == 1 then 0 else DF.sum indices' + charge w'
