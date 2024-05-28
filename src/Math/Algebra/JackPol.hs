@@ -142,7 +142,7 @@ schurPol :: forall a. (Eq a, AlgRing.C a)
 schurPol n lambda 
   | n < 0 = error "schurPol: negative number of variables."
   | not (_isPartition lambda) = 
-      error "schurPol: invalid integer partition"
+      error "schurPol: invalid integer partition."
   | n == 0 = if null lambda then unitSpray else zeroSpray
   | otherwise = sch n 1 lambda arr0
       where
@@ -200,7 +200,7 @@ skewSchurPol :: forall a. (Eq a, AlgRing.C a)
   -> Spray a
 skewSchurPol n lambda mu =
   case isSkewPartition lambda mu of
-    False -> error "skewSchurPol: invalid skew partition"
+    False -> error "skewSchurPol: invalid skew partition."
     True  -> DM.foldlWithKey' f zeroSpray lrCoefficients
   where
     lrCoefficients = skewSchurLRCoefficients lambda mu

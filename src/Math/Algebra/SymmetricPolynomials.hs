@@ -130,6 +130,7 @@ import           Math.Algebra.Hspray              (
                                                   , RatioOfQSprays
                                                   , constantRatioOfSprays
                                                   , zeroRatioOfSprays
+                                                  , unitRatioOfSprays
                                                   , prettyRatioOfQSpraysXYZ
                                                   , showNumSpray
                                                   , showQSpray
@@ -281,7 +282,8 @@ prettySymmetricParametricQSpray letters spray =
 
 -- | Prints a symmetric simple parametric spray as a linear combination of monomial 
 -- symmetric polynomials.
-prettySymmetricSimpleParametricQSpray :: [String] -> SimpleParametricQSpray -> String
+prettySymmetricSimpleParametricQSpray :: 
+  [String] -> SimpleParametricQSpray -> String
 prettySymmetricSimpleParametricQSpray letters spray = 
   showSpray (prettyQSprayXYZ letters) ("(", ")") 
             showSymmetricMonomials mspray
@@ -669,7 +671,8 @@ cshPolynomial n lambda
         where
           parts = partitions k
           msSprays = 
-            [msPolynomialUnsafe n (fromPartition part) | part <- parts, partitionWidth part <= n]
+            [msPolynomialUnsafe n (fromPartition part) 
+              | part <- parts, partitionWidth part <= n]
 
 -- | power sum polynomial as a linear combination of 
 -- complete symmetric homogeneous polynomials
@@ -830,9 +833,15 @@ schurCombination' = _schurCombination (flip (AlgMod.*>))
 -- \(K_{\lambda,\mu}(\alpha) \neq 0\).
 kostkaNumbers :: 
      Int      -- ^ weight of the partitions
-  -> Rational -- Jack parameter
+  -> Rational -- ^ Jack parameter
   -> Map Partition (Map Partition Rational)
-kostkaNumbers weight alpha = _kostkaNumbers weight weight alpha 'P'
+kostkaNumbers weight alpha 
+  | weight < 0 = 
+      error "kostkaNumbers: negative weight."
+  | weight == 0 =
+      DM.singleton [] (DM.singleton [] 1)
+  | otherwise =
+      _kostkaNumbers weight weight alpha 'P'
 
 -- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) with symbolic parameter \(\alpha\) 
 -- for a given weight of the partitions \(\lambda\) and \(\mu\). This returns a map 
@@ -842,7 +851,13 @@ kostkaNumbers weight alpha = _kostkaNumbers weight weight alpha 'P'
 -- partition \(\mu\) is included in the keys of this map if and only if 
 -- \(K_{\lambda,\mu}(\alpha) \neq 0\).
 symbolicKostkaNumbers :: Int -> Map Partition (Map Partition RatioOfQSprays)
-symbolicKostkaNumbers weight = _symbolicKostkaNumbers weight weight 'P'
+symbolicKostkaNumbers weight
+  | weight < 0 = 
+      error "symbolicKostkaNumbers: negative weight."
+  | weight == 0 =
+      DM.singleton [] (DM.singleton [] unitRatioOfSprays)
+  | otherwise =
+      _symbolicKostkaNumbers weight weight 'P'
 
 -- | monomial symmetric polynomials in Jack polynomials basis
 msPolynomialsInJackBasis :: 
@@ -933,8 +948,10 @@ jackSymbolicCombination' which spray =
 kostkaFoulkesPolynomial :: 
   (Eq a, AlgRing.C a) => Partition -> Partition -> Spray a
 kostkaFoulkesPolynomial lambda mu 
-  | not (_isPartition lambda) = error "kostkaFoulkesPolynomial: invalid partition."
-  | not (_isPartition mu)     = error "kostkaFoulkesPolynomial: invalid partition."
+  | not (_isPartition lambda) = 
+      error "kostkaFoulkesPolynomial: invalid partition."
+  | not (_isPartition mu)     = 
+      error "kostkaFoulkesPolynomial: invalid partition."
   | otherwise                 = 
       _kostkaFoulkesPolynomial (S.fromList lambda) (S.fromList mu)
 
