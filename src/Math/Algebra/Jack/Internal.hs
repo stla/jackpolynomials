@@ -44,6 +44,7 @@ import qualified Data.HashMap.Strict                         as HM
 import           Data.List                                   ( 
                                                                nub
                                                              , foldl1'
+                                                             , uncons
                                                              )
 import           Data.List.Extra                             ( 
                                                                unsnoc
@@ -68,6 +69,9 @@ import           Data.Maybe                                  ( fromJust, isJust 
 import           Data.Sequence                               ( 
                                                                Seq
                                                              , (|>) 
+                                                             , (<|)
+                                                             , (><)
+                                                             , Seq ( (:<|) )
                                                              )
 import qualified Data.Sequence                               as S
 import           Data.Tuple.Extra                            ( fst3 )
@@ -92,11 +96,52 @@ import           Math.Combinat.Partitions.Integer            (
                                                              , partitions
                                                              , dominates
                                                              , partitionWidth
+                                                             , toPartition
                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
 
 type Partition = [Int]
+
+isDecreasing :: Seq Int -> Bool
+isDecreasing s = 
+  and [s `S.index` i >= s `S.index` (i+1) | i <- [0 .. S.length s - 2]]
+
+cartesianProduct :: Seq Int -> [Seq Int]
+cartesianProduct (S.Empty) = []
+cartesianProduct (i:<|is)
+  | S.null is = [S.singleton j | j <- [i, i-1 .. 0]]
+  | otherwise = [j <| s | j <- [i, i-1 .. 0], s <- previous]
+    where
+      previous = cartesianProduct is
+
+horizontalStrip :: Seq Int -> Seq Int -> Bool
+horizontalStrip lambda mu = all (<= 1) theta'
+  where
+    lambda' = S.fromList $ fromPartition $ dualPartition (toPartition (DF.toList lambda))
+    mu' = S.fromList $ fromPartition $ dualPartition (toPartition (DF.toList mu))
+    mu'' = mu' >< (S.replicate (S.length lambda' - S.length mu') 0)
+    theta' = S.zipWith (-) lambda' mu''
+
+columnStrictTableau :: [Seq Int] -> Bool
+columnStrictTableau tableau = and (zipWith horizontalStrip tableau (tail tableau))
+
+paths :: Int -> Seq Int -> Seq Int -> [[Seq Int]]
+paths n lambda mu = filter columnStrictTableau x
+  where
+    mu' = mu >< (S.replicate (S.length lambda - S.length mu) 0)
+    diffs = S.zipWith (-) lambda mu'
+    grid = cartesianProduct diffs
+    kappas = filter isDecreasing [S.zipWith (+) kappa mu' | kappa <- grid]
+    combos = combinations 0 (length kappas - 1) (n-1)
+      where
+        combinations :: Int -> Int -> Int -> [Seq Int]
+        combinations a b m 
+          | m == 1 = [S.singleton i | i <- [a .. b]]
+          | otherwise = [i <| combo | i <- [a .. b], combo <- combinations i b (m-1)]
+    x = map (\combo -> lambda : (map (\i -> kappas !! i) (DF.toList combo)) ++ [mu']) combos
+
+
 
 charge :: Seq Int -> Int
 charge w = if l == 0 || n == 1 then 0 else DF.sum indices' + charge w'
@@ -136,8 +181,6 @@ ssytxWithGivenShapeAndContent lambda mu =
       else []
   where
     dropTrailingZeros = S.dropWhileR (== 0)
-    isDecreasing s = 
-      and [s `S.index` i >= s `S.index` (i+1) | i <- [0 .. S.length s - 2]]
     l = S.length lambda
     m = S.length mu
     mu' = dropTrailingZeros $ S.adjust' (subtract 1) (m-1) mu

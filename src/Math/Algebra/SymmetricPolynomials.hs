@@ -73,7 +73,10 @@ import qualified Algebra.Ring                     as AlgRing
 import           Algebra.ToInteger                ( fromIntegral )
 import qualified Data.Foldable                    as DF
 import qualified Data.HashMap.Strict              as HM
-import           Data.List                        ( foldl1', nub )
+import           Data.List                        ( 
+                                                    foldl1'
+                                                  , nub
+                                                  )
 import           Data.List.Extra                  ( unsnoc )
 import qualified Data.IntMap.Strict               as IM
 import           Data.Map.Merge.Strict            ( 
