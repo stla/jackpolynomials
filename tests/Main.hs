@@ -598,4 +598,33 @@ main = defaultMain $ testGroup
       hlPoly = hallLittlewoodPolynomial' n lambda which
     assertEqual "" skewHLpoly hlPoly
 
+  , testCase "Branching rule Hall-Littlewood P" $ do
+    let
+      lambda = [3, 1]
+      mus = [[], [1], [2], [3], [1, 1], [2, 1], [3, 1]]
+      nx = 2
+      nz = 2
+      which = 'P'
+      hlLambda = hallLittlewoodPolynomial' (nx+nz) lambda which
+      z = [lone 3, lone 4]
+      terms = [skewHallLittlewoodPolynomial' nx lambda mu which ^*^ 
+                changeVariables (hallLittlewoodPolynomial' nz mu which) z
+                  | mu <- mus]
+    assertEqual "" hlLambda (sumOfSprays terms)
+
+  , testCase "Branching rule Hall-Littlewood Q" $ do
+    let
+      lambda = [3, 1]
+      mus = [[], [1], [2], [3], [1, 1], [2, 1], [3, 1]]
+      nx = 2
+      nz = 2
+      which = 'Q'
+      hlLambda = hallLittlewoodPolynomial' (nx+nz) lambda which
+      z = [lone 3, lone 4]
+      terms = [skewHallLittlewoodPolynomial' nx lambda mu which ^*^ 
+                changeVariables (hallLittlewoodPolynomial' nz mu which) z
+                  | mu <- mus]
+    assertEqual "" hlLambda (sumOfSprays terms)
+
+
   ]
