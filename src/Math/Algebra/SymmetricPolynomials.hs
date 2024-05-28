@@ -60,10 +60,13 @@ module Math.Algebra.SymmetricPolynomials
   , symbolicKostkaNumbers
   -- * Kostka-Foulkes polynomials
   , kostkaFoulkesPolynomial
+  , kostkaFoulkesPolynomial'
   -- * Hall-Littlewood polynomials
   , hallLittlewoodPolynomial
+  , hallLittlewoodPolynomial'
   , transitionsSchurToHallLittlewood
   , skewHallLittlewoodPolynomial
+  , skewHallLittlewoodPolynomial'
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -935,6 +938,11 @@ kostkaFoulkesPolynomial lambda mu
   | otherwise                 = 
       _kostkaFoulkesPolynomial (S.fromList lambda) (S.fromList mu)
 
+-- | Kostka-Foulkes polynomial of two given partitions. This is a univariate 
+-- polynomial whose value at @1@ is the Kostka number of the two partitions.
+kostkaFoulkesPolynomial' :: Partition -> Partition -> QSpray
+kostkaFoulkesPolynomial' = kostkaFoulkesPolynomial
+
 -- | Hall-Littlewood polynomial of a given partition. This is a multivariate 
 -- symmetric polynomial whose coefficients are polynomial in one parameter.
 hallLittlewoodPolynomial :: 
@@ -959,6 +967,15 @@ hallLittlewoodPolynomial n lambda which
           (DM.mapWithKey 
             (\mu c -> c *^ (HM.map constantSpray (schurPol n mu))) coeffs)
 
+-- | Hall-Littlewood polynomial of a given partition. This is a multivariate 
+-- symmetric polynomial whose coefficients are polynomial in one parameter.
+hallLittlewoodPolynomial' :: 
+     Int       -- ^ number of variables
+  -> Partition -- ^ integer partition
+  -> Char      -- ^ which Hall-Littlewood polynomial, @'P'@ or @'Q'@
+  -> SimpleParametricQSpray
+hallLittlewoodPolynomial' = hallLittlewoodPolynomial
+
 -- | Hall-Littlewood polynomials as linear combinations of Schur polynomials.
 transitionsSchurToHallLittlewood :: 
      Int   -- ^ weight of the partitions of the Hall-Littlewood polynomials
@@ -972,8 +989,13 @@ transitionsSchurToHallLittlewood weight which
   | otherwise                     = 
       _transitionMatrixHallLittlewoodSchur which weight
 
-skewHallLittlewoodPolynomial :: 
-  Int -> Partition -> Partition -> Char -> SimpleParametricQSpray
+-- | Skew Hall-Littlewood polynomial
+skewHallLittlewoodPolynomial :: (Eq a, AlgRing.C a)
+  => Int       -- ^ number of variables
+  -> Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
+  -> Char      -- ^ which skew Hall-Littlewood polynomial, @'P'@ or @'Q'@
+  -> SimpleParametricSpray a
 skewHallLittlewoodPolynomial n lambda mu which 
   | n < 0 = 
       error "skewHallLittlewoodPolynomial: negative number of variables."
@@ -988,6 +1010,13 @@ skewHallLittlewoodPolynomial n lambda mu which
         then skewHallLittlewoodP n (S.fromList lambda) (S.fromList mu)
         else skewHallLittlewoodQ n (S.fromList lambda) (S.fromList mu)
   
+skewHallLittlewoodPolynomial' :: 
+     Int       -- ^ number of variables
+  -> Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
+  -> Char      -- ^ which skew Hall-Littlewood polynomial, @'P'@ or @'Q'@
+  -> SimpleParametricQSpray
+skewHallLittlewoodPolynomial' = skewHallLittlewoodPolynomial
 
 -- test :: Bool
 -- test = poly == sumOfSprays sprays

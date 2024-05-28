@@ -85,8 +85,7 @@ import           Math.Algebra.Hspray                         (
                                                              , asRatioOfSprays
                                                              , Spray, (.^)
                                                              , Powers (..)
-                                                             , QSpray, qlone
-                                                             , SimpleParametricQSpray
+                                                             , SimpleParametricSpray
                                                              , zeroSpray
                                                              , isZeroSpray
                                                              , lone, lone', unitSpray
@@ -149,7 +148,8 @@ _paths n lambda mu = filter columnStrictTableau tableaux
     tableaux = 
       map (\combo -> lambda : (map ((!!) kappas) combo) ++ [mu']) combos
 
-psi_lambda_mu :: Seq Int -> Seq Int -> QSpray
+psi_lambda_mu :: forall a. (Eq a, AlgRing.C a) 
+  => Seq Int -> Seq Int -> Spray a
 psi_lambda_mu lambda mu = productOfSprays sprays
   where
     range = [1 .. lambda `S.index` 0]
@@ -158,10 +158,11 @@ psi_lambda_mu lambda mu = productOfSprays sprays
       , DF.sum (fmap (\k -> fromEnum (k == j)) mu)
       )
     pairs = filter (\(l, m) -> l == m) (map pair range)
-    t = qlone 1
-    sprays = map (\(_, m) -> AlgAdd.negate (t^**^m <+ (-1))) pairs
+    t = lone' 1
+    sprays = map (\(_, m) -> AlgRing.one +> AlgAdd.negate (t m)) pairs
 
-phi_lambda_mu :: Seq Int -> Seq Int -> QSpray
+phi_lambda_mu :: forall a. (Eq a, AlgRing.C a) 
+  => Seq Int -> Seq Int -> Spray a
 phi_lambda_mu lambda mu = productOfSprays sprays
   where
     range = [1 .. lambda `S.index` 0]
@@ -170,27 +171,29 @@ phi_lambda_mu lambda mu = productOfSprays sprays
       , 1 + DF.sum (fmap (\k -> fromEnum (k == j)) mu)
       )
     pairs = filter (\(l, m) -> l == m) (map pair range)
-    t = qlone 1
-    sprays = map (\(m, _) -> AlgAdd.negate (t^**^m <+ (-1))) pairs
+    t = lone' 1
+    sprays = map (\(m, _) -> AlgRing.one +> AlgAdd.negate (t m)) pairs
 
-skewHallLittlewoodP :: Int -> Seq Int -> Seq Int -> SimpleParametricQSpray
+skewHallLittlewoodP :: forall a. (Eq a, AlgRing.C a) 
+  => Int -> Seq Int -> Seq Int -> SimpleParametricSpray a
 skewHallLittlewoodP n lambda mu = 
   sumOfSprays [productOfSprays $ sprays (reverse path) | path <- paths]
   where
     paths = _paths n lambda mu
-    lones = [lone i :: SimpleParametricQSpray | i <- [1 .. n]]
+    lones = [lone' i | i <- [1 .. n]]
     sprays nu = 
-      [psi_lambda_mu next_nu_i nu_i *^ lone_i ^**^ (DF.sum next_nu_i - DF.sum nu_i)
+      [psi_lambda_mu next_nu_i nu_i *^ lone_i (DF.sum next_nu_i - DF.sum nu_i)
         | (next_nu_i, nu_i, lone_i) <- zip3 (tail nu) nu lones]
 
-skewHallLittlewoodQ :: Int -> Seq Int -> Seq Int -> SimpleParametricQSpray
+skewHallLittlewoodQ :: forall a. (Eq a, AlgRing.C a) 
+  => Int -> Seq Int -> Seq Int -> SimpleParametricSpray a
 skewHallLittlewoodQ n lambda mu = 
   sumOfSprays [productOfSprays $ sprays (reverse path) | path <- paths]
   where
     paths = _paths n lambda mu
-    lones = [lone i :: SimpleParametricQSpray | i <- [1 .. n]]
+    lones = [lone' i | i <- [1 .. n]]
     sprays nu = 
-      [phi_lambda_mu next_nu_i nu_i *^ lone_i ^**^ (DF.sum next_nu_i - DF.sum nu_i)
+      [phi_lambda_mu next_nu_i nu_i *^ lone_i (DF.sum next_nu_i - DF.sum nu_i)
         | (next_nu_i, nu_i, lone_i) <- zip3 (tail nu) nu lones]
 
 charge :: Seq Int -> Int
