@@ -46,6 +46,7 @@ import qualified Data.HashMap.Strict                         as HM
 import           Data.List                                   ( 
                                                                nub
                                                              , foldl1'
+                                                             , uncons
                                                              )
 import           Data.List.Extra                             ( 
                                                                unsnoc
@@ -103,6 +104,33 @@ import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
 
 type Partition = [Int]
+
+-- length lambda = length as = length bs; as <= bs; last bs >= length lambda
+flaggedSemiStandardYoungTableaux :: Partition -> [Int] -> [Int] -> [[[Int]]] 
+flaggedSemiStandardYoungTableaux lambda as bs = 
+  worker (repeat 0) lambda 0
+    where
+      worker _ [] _ = [[]] 
+      worker prevRow (s:ss) i
+        = [ (r:rs) 
+            | r <- row (bs !! i) s (as !! i) prevRow
+            , rs <- worker (map (+1) r) ss (i + 1) ]
+      -- weekly increasing lists of length @len@, pointwise at least @xs@, 
+      -- maximum value @n@, minimum value @prev@.
+      row :: Int -> Int -> Int -> [Int] -> [[Int]]
+      row n len prev xxs = 
+        if len == 0 
+          then [[]] 
+          else [ (j:js) | j <- [max x prev .. n] , js <- row n (len-1) j xs ]
+          where
+            (x, xs) = fromJust (uncons xxs)
+
+tableauWeight :: [[Int]] -> [Int]
+tableauWeight tableau = [count i | i <- [1 .. m]]
+  where
+    x = concat tableau
+    m = maximum x
+    count i = sum [fromEnum (k == i) | k <- x]
 
 isDecreasing :: Seq Int -> Bool
 isDecreasing s = 
