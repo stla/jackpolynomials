@@ -989,7 +989,8 @@ transitionsSchurToHallLittlewood weight which
   | otherwise                     = 
       _transitionMatrixHallLittlewoodSchur which weight
 
--- | Skew Hall-Littlewood polynomial
+-- | Skew Hall-Littlewood polynomial of a given skew partition. This is a multivariate 
+-- symmetric polynomial whose coefficients are polynomial in one parameter.
 skewHallLittlewoodPolynomial :: (Eq a, AlgRing.C a)
   => Int       -- ^ number of variables
   -> Partition -- ^ outer partition of the skew partition
@@ -1010,6 +1011,8 @@ skewHallLittlewoodPolynomial n lambda mu which
         then skewHallLittlewoodP n (S.fromList lambda) (S.fromList mu)
         else skewHallLittlewoodQ n (S.fromList lambda) (S.fromList mu)
   
+-- | Skew Hall-Littlewood polynomial of a given skew partition. This is a multivariate 
+-- symmetric polynomial whose coefficients are polynomial in one parameter.
 skewHallLittlewoodPolynomial' :: 
      Int       -- ^ number of variables
   -> Partition -- ^ outer partition of the skew partition

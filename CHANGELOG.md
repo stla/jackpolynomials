@@ -100,3 +100,6 @@ numbers with parameter
 * new function `kostkaFoulkesPolynomial`, to get a Kostka-Foulkes polynomial
 
 * new function `hallLittlewoodPolynomial`, to get a Hall-Littlewood polynomial
+
+* new function `skewHallLittlewoodPolynomial`, to get a skew Hall-Littlewood 
+polynomial
