@@ -121,16 +121,18 @@ cartesianProduct (i:<|is)
 horizontalStrip :: Seq Int -> Seq Int -> Bool
 horizontalStrip lambda mu = all (`elem` [0, 1]) theta'
   where
-    lambda' = S.fromList $ fromPartition $ dualPartition (mkPartition (DF.toList lambda))
-    mu' = S.fromList $ fromPartition $ dualPartition (mkPartition (DF.toList mu))
+    lambda' = S.fromList $ _dualPartition (DF.toList lambda)
+    mu' = S.fromList $ _dualPartition (DF.toList mu)
     mu'' = mu' >< (S.replicate (S.length lambda' - S.length mu') 0)
     theta' = S.zipWith (-) lambda' mu''
 
 columnStrictTableau :: [Seq Int] -> Bool
-columnStrictTableau tableau = and (zipWith horizontalStrip tableau (tail tableau))
+columnStrictTableau tableau = 
+  and (zipWith horizontalStrip tableau tail_tableau)
+  where (_, tail_tableau) = fromJust (uncons tableau)
 
 _paths :: Int -> Seq Int -> Seq Int -> [[Seq Int]]
-_paths n lambda mu = filter columnStrictTableau x
+_paths n lambda mu = filter columnStrictTableau tableaux
   where
     mu' = mu >< (S.replicate (S.length lambda - S.length mu) 0)
     diffs = S.zipWith (-) lambda mu'
@@ -138,29 +140,57 @@ _paths n lambda mu = filter columnStrictTableau x
     kappas = filter isDecreasing [S.zipWith (+) kappa mu' | kappa <- grid]
     combos = combinations 0 (length kappas - 1) (n-1)
       where
-        combinations :: Int -> Int -> Int -> [Seq Int]
+        combinations :: Int -> Int -> Int -> [[Int]]
         combinations a b m 
-          | m == 1 = [S.singleton i | i <- [a .. b]]
-          | otherwise = [i <| combo | i <- [a .. b], combo <- combinations i b (m-1)]
-    x = map (\combo -> lambda : (map (\i -> kappas !! i) (DF.toList combo)) ++ [mu']) combos
+          | m == 1 = [[i] | i <- [a .. b]]
+          | otherwise = 
+              [i : combo | i <- [a .. b], combo <- combinations i b (m-1)]
+    tableaux = 
+      map (\combo -> lambda : (map ((!!) kappas) combo) ++ [mu']) combos
 
 psi_lambda_mu :: Seq Int -> Seq Int -> QSpray
 psi_lambda_mu lambda mu = productOfSprays sprays
   where
-    mlambda = map (\j -> 1 + DF.sum (fmap (\k -> fromEnum (k == j)) lambda)) [1 .. lambda `S.index` 0]
-    mmu = map (\j -> DF.sum (fmap (\k -> fromEnum (k == j)) mu)) [1 .. lambda `S.index` 0]
+    range = [1 .. lambda `S.index` 0]
+    pair j = (
+        1 + DF.sum (fmap (\k -> fromEnum (k == j)) lambda)
+      , DF.sum (fmap (\k -> fromEnum (k == j)) mu)
+      )
+    pairs = filter (\(l, m) -> l == m) (map pair range)
     t = qlone 1
-    is = filter (\i -> mlambda !! i == mmu !!i) [0 .. lambda `S.index` 0 - 1]
-    sprays = map (\i -> AlgAdd.negate (t^**^(mmu !! i) <+ (-1))) is
+    sprays = map (\(_, m) -> AlgAdd.negate (t^**^m <+ (-1))) pairs
+
+phi_lambda_mu :: Seq Int -> Seq Int -> QSpray
+phi_lambda_mu lambda mu = productOfSprays sprays
+  where
+    range = [1 .. lambda `S.index` 0]
+    pair j = (
+        DF.sum (fmap (\k -> fromEnum (k == j)) lambda)
+      , 1 + DF.sum (fmap (\k -> fromEnum (k == j)) mu)
+      )
+    pairs = filter (\(l, m) -> l == m) (map pair range)
+    t = qlone 1
+    sprays = map (\(m, _) -> AlgAdd.negate (t^**^m <+ (-1))) pairs
 
 skewHallLittlewoodP :: Int -> Seq Int -> Seq Int -> SimpleParametricQSpray
-skewHallLittlewoodP n lambda mu = sumOfSprays x
+skewHallLittlewoodP n lambda mu = 
+  sumOfSprays [productOfSprays $ sprays (reverse path) | path <- paths]
   where
     paths = _paths n lambda mu
     lones = [lone i :: SimpleParametricQSpray | i <- [1 .. n]]
-    sprays nu = [psi_lambda_mu (nu !! i) (nu !! (i-1)) *^ (lones !! (i-1)) ^**^ (DF.sum (nu !! i) - DF.sum (nu !! (i-1)))
-                  | i <- [1 .. length nu - 1]]
-    x = [productOfSprays $ sprays (reverse path) | path <- paths]
+    sprays nu = 
+      [psi_lambda_mu next_nu_i nu_i *^ lone_i ^**^ (DF.sum next_nu_i - DF.sum nu_i)
+        | (next_nu_i, nu_i, lone_i) <- zip3 (tail nu) nu lones]
+
+skewHallLittlewoodQ :: Int -> Seq Int -> Seq Int -> SimpleParametricQSpray
+skewHallLittlewoodQ n lambda mu = 
+  sumOfSprays [productOfSprays $ sprays (reverse path) | path <- paths]
+  where
+    paths = _paths n lambda mu
+    lones = [lone i :: SimpleParametricQSpray | i <- [1 .. n]]
+    sprays nu = 
+      [phi_lambda_mu next_nu_i nu_i *^ lone_i ^**^ (DF.sum next_nu_i - DF.sum nu_i)
+        | (next_nu_i, nu_i, lone_i) <- zip3 (tail nu) nu lones]
 
 charge :: Seq Int -> Int
 charge w = if l == 0 || n == 1 then 0 else DF.sum indices' + charge w'
