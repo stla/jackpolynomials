@@ -24,6 +24,8 @@ module Math.Algebra.Jack.Internal
   , _kostkaFoulkesPolynomial
   , _hallLittlewoodPolynomialsInSchurBasis
   , _transitionMatrixHallLittlewoodSchur
+  , skewHallLittlewoodP
+  , skewHallLittlewoodQ
   )
   where
 import           Prelude 
@@ -98,8 +100,6 @@ import           Math.Combinat.Partitions.Integer            (
                                                              , partitions
                                                              , dominates
                                                              , partitionWidth
-                                                             , toPartition
-                                                             , mkPartition
                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
@@ -142,6 +142,7 @@ _paths n lambda mu = filter columnStrictTableau tableaux
       where
         combinations :: Int -> Int -> Int -> [[Int]]
         combinations a b m 
+          | m == 0 = [[]]
           | m == 1 = [[i] | i <- [a .. b]]
           | otherwise = 
               [i : combo | i <- [a .. b], combo <- combinations i b (m-1)]
@@ -264,8 +265,8 @@ _kostkaFoulkesPolynomial lambda mu =
       map (mm . charge . ((foldl1' (S.><)) . (map S.reverse) . DF.toList)) 
             tableaux
 
-b :: (Eq a, AlgRing.C a) => Partition -> Spray a
-b lambda = productOfSprays sprays
+b_lambda :: (Eq a, AlgRing.C a) => Partition -> Spray a
+b_lambda lambda = productOfSprays sprays
   where
     table = [sum [fromEnum (k == j) | k <- lambda] | j <- nub lambda]
     sprays = map phi table
@@ -279,7 +280,7 @@ _transitionMatrixHallLittlewoodSchur which weight =
   DM.fromDistinctDescList $ if which == 'P' 
     then zip lambdas [maps i | i <- rg]
     else zip lambdas 
-              [DM.mapWithKey (\lambda c -> b lambda ^*^ c) (maps i) | i <- rg]
+              [DM.mapWithKey (\lambda c -> b_lambda lambda ^*^ c) (maps i) | i <- rg]
   where
     lambdas = reverse (map fromPartition (partitions weight))
     rg = [1 .. length lambdas]
@@ -296,7 +297,7 @@ _hallLittlewoodPolynomialsInSchurBasis ::
 _hallLittlewoodPolynomialsInSchurBasis which lambda = 
   if which == 'P'
     then coeffs
-    else DM.map ((^*^) (b lambda)) coeffs
+    else DM.map ((^*^) (b_lambda lambda)) coeffs
   where
     weight = sum lambda
     lambdas = 

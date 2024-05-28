@@ -50,15 +50,20 @@ jackPol :: forall a. (Eq a, AlgField.C a)
   -> a         -- ^ Jack parameter
   -> Char      -- ^ which Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> Spray a
-jackPol n lambda alpha which =
-  case _isPartition lambda of
-    False -> error "jackPol: invalid integer partition"
-    True -> case which of 
+jackPol n lambda alpha which 
+  | n < 0 = error "jackPol: negative number of variables."
+  | not (_isPartition lambda) = error "jackPol: invalid integer partition."
+  | not (which `elem` ['J', 'C', 'P', 'Q']) = 
+      error "jackPol: please use 'J', 'C', 'P' or 'Q' for last argument."
+  | n == 0 = if null lambda
+      then unitSpray
+      else zeroSpray
+  | otherwise =
+    case which of 
       'J' -> resultJ
       'C' -> jackCoeffC lambda alpha *^ resultJ
       'P' -> jackCoeffP lambda alpha *^ resultJ
-      'Q' -> jackCoeffQ lambda alpha *^ resultJ
-      _   -> error "jackPol: please use 'J', 'C', 'P' or 'Q' for last argument"
+      _   -> jackCoeffQ lambda alpha *^ resultJ
       where
       resultJ = jac (length x) 0 lambda lambda arr0 one
       nll = _N lambda lambda
@@ -134,10 +139,12 @@ schurPol :: forall a. (Eq a, AlgRing.C a)
   => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> Spray a
-schurPol n lambda =
-  case _isPartition lambda of
-    False -> error "schurPol: invalid integer partition"
-    True -> sch n 1 lambda arr0
+schurPol n lambda 
+  | n < 0 = error "schurPol: negative number of variables."
+  | not (_isPartition lambda) = 
+      error "schurPol: invalid integer partition"
+  | n == 0 = if null lambda then unitSpray else zeroSpray
+  | otherwise = sch n 1 lambda arr0
       where
         x = map lone [1 .. n] :: [Spray a]
         nll = _N lambda lambda

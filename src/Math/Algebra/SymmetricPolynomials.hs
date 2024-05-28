@@ -63,6 +63,7 @@ module Math.Algebra.SymmetricPolynomials
   -- * Hall-Littlewood polynomials
   , hallLittlewoodPolynomial
   , transitionsSchurToHallLittlewood
+  , skewHallLittlewoodPolynomial
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -151,6 +152,9 @@ import           Math.Algebra.Jack.Internal       (
                                                   , _kostkaFoulkesPolynomial
                                                   , _hallLittlewoodPolynomialsInSchurBasis
                                                   , _transitionMatrixHallLittlewoodSchur
+                                                  , skewHallLittlewoodP
+                                                  , skewHallLittlewoodQ
+                                                  , isSkewPartition
                                                   )
 import           Math.Algebra.JackPol             ( 
                                                     schurPol
@@ -967,6 +971,23 @@ transitionsSchurToHallLittlewood weight which
       error "transitionsHallLittlewoodToSchur: the character must be 'P' or 'Q'."
   | otherwise                     = 
       _transitionMatrixHallLittlewoodSchur which weight
+
+skewHallLittlewoodPolynomial :: 
+  Int -> Partition -> Partition -> Char -> SimpleParametricQSpray
+skewHallLittlewoodPolynomial n lambda mu which 
+  | n < 0 = 
+      error "skewHallLittlewoodPolynomial: negative number of variables."
+  | not (isSkewPartition lambda mu) = 
+      error "skewHallLittlewoodPolynomial: invalid skew partition."
+  | not (which `elem` ['P', 'Q']) =
+      error "skewHallLittlewoodPolynomial: the character must be 'P' or 'Q'."
+  | n == 0 = 
+      if lambda == mu then unitSpray else zeroSpray
+  | otherwise = 
+      if which == 'P' 
+        then skewHallLittlewoodP n (S.fromList lambda) (S.fromList mu)
+        else skewHallLittlewoodQ n (S.fromList lambda) (S.fromList mu)
+  
 
 -- test :: Bool
 -- test = poly == sumOfSprays sprays
