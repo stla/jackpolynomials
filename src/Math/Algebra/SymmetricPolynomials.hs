@@ -67,6 +67,8 @@ module Math.Algebra.SymmetricPolynomials
   , transitionsSchurToHallLittlewood
   , skewHallLittlewoodPolynomial
   , skewHallLittlewoodPolynomial'
+  -- * Flagged Schur polynomials
+  , flaggedSchurPol
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -81,7 +83,10 @@ import           Data.List                        (
                                                     foldl1'
                                                   , nub
                                                   )
-import           Data.List.Extra                  ( unsnoc )
+import           Data.List.Extra                  ( 
+                                                    unsnoc
+                                                  , allSame
+                                                  )
 import qualified Data.IntMap.Strict               as IM
 import           Data.Map.Merge.Strict            ( 
                                                     merge
@@ -159,6 +164,9 @@ import           Math.Algebra.Jack.Internal       (
                                                   , skewHallLittlewoodP
                                                   , skewHallLittlewoodQ
                                                   , isSkewPartition
+                                                  , flaggedSemiStandardYoungTableaux
+                                                  , tableauWeight
+                                                  , isIncreasing
                                                   )
 import           Math.Algebra.JackPol             ( 
                                                     schurPol
@@ -1037,6 +1045,24 @@ skewHallLittlewoodPolynomial' ::
   -> Char      -- ^ which skew Hall-Littlewood polynomial, @'P'@ or @'Q'@
   -> SimpleParametricQSpray
 skewHallLittlewoodPolynomial' = skewHallLittlewoodPolynomial
+
+flaggedSchurPol :: 
+  (Eq a, AlgRing.C a) => Partition -> [Int] -> [Int] -> Spray a
+flaggedSchurPol lambda as bs
+  | not (allSame [llambda, las, lbs]) = 
+      error "flaggedSchurPol: the partition and the lists of lower bounds and upper bounds must have the same length."
+  | not (isIncreasing as) = 
+      error "flaggedSchurPol: the list of lower bounds is not increasing."
+  | not (isIncreasing bs) = 
+      error "flaggedSchurPol: the list of upper bounds is not increasing."
+  | otherwise = sumOfSprays sprays
+    where
+      llambda = length lambda
+      las = length as
+      lbs = length bs
+      tableaux = flaggedSemiStandardYoungTableaux lambda as bs
+      monomial tableau = productOfSprays $ zipWith lone' [1 ..] (tableauWeight tableau)
+      sprays = map monomial tableaux
 
 -- test :: Bool
 -- test = poly == sumOfSprays sprays

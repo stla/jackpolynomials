@@ -26,6 +26,9 @@ module Math.Algebra.Jack.Internal
   , _transitionMatrixHallLittlewoodSchur
   , skewHallLittlewoodP
   , skewHallLittlewoodQ
+  , flaggedSemiStandardYoungTableaux
+  , tableauWeight
+  , isIncreasing
   )
   where
 import           Prelude 
@@ -131,6 +134,10 @@ tableauWeight tableau = [count i | i <- [1 .. m]]
     x = concat tableau
     m = maximum x
     count i = sum [fromEnum (k == i) | k <- x]
+
+isIncreasing :: [Int] -> Bool
+isIncreasing s = 
+  and [s !! i <= s !! (i+1) | i <- [0 .. length s - 2]]
 
 isDecreasing :: Seq Int -> Bool
 isDecreasing s = 
