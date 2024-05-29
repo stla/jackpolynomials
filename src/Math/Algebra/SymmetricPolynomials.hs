@@ -69,6 +69,7 @@ module Math.Algebra.SymmetricPolynomials
   , skewHallLittlewoodPolynomial'
   -- * Flagged Schur polynomials
   , flaggedSchurPol
+  , flaggedSchurPol'
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -1046,15 +1047,24 @@ skewHallLittlewoodPolynomial' ::
   -> SimpleParametricQSpray
 skewHallLittlewoodPolynomial' = skewHallLittlewoodPolynomial
 
+-- | Flagged Schur polynomial.
 flaggedSchurPol :: 
-  (Eq a, AlgRing.C a) => Partition -> [Int] -> [Int] -> Spray a
+  (Eq a, AlgRing.C a) 
+  => Partition -- ^ integer partition
+  -> [Int]     -- ^ lower bounds
+  -> [Int]     -- ^ upper bounds
+  -> Spray a
 flaggedSchurPol lambda as bs
+  | not (_isPartition lambda) =
+      error "flaggedSchurPol: invalid partition."
   | not (allSame [llambda, las, lbs]) = 
       error "flaggedSchurPol: the partition and the lists of lower bounds and upper bounds must have the same length."
   | not (isIncreasing as) = 
       error "flaggedSchurPol: the list of lower bounds is not increasing."
   | not (isIncreasing bs) = 
       error "flaggedSchurPol: the list of upper bounds is not increasing."
+  | any (== True) (zipWith (>) as bs) = 
+      error "flaggedSchurPol: lower bounds must be smaller than upper bounds."
   | otherwise = sumOfSprays sprays
     where
       llambda = length lambda
@@ -1063,6 +1073,15 @@ flaggedSchurPol lambda as bs
       tableaux = flaggedSemiStandardYoungTableaux lambda as bs
       monomial tableau = productOfSprays $ zipWith lone' [1 ..] (tableauWeight tableau)
       sprays = map monomial tableaux
+
+-- | Flagged Schur polynomial.
+flaggedSchurPol' :: 
+     Partition -- ^ integer partition
+  -> [Int]     -- ^ lower bounds
+  -> [Int]     -- ^ upper bounds
+  -> QSpray
+flaggedSchurPol' = flaggedSchurPol
+
 
 -- test :: Bool
 -- test = poly == sumOfSprays sprays
