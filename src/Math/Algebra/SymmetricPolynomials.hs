@@ -1208,7 +1208,7 @@ skewFactorialSchurPol n lambda mu y
           a = entries !! (j-1)
       in (a, a + offset + j - i) 
     factor tableau i j = 
-      let (a, k) = idx tableau i j in lones !! (a-1) <+ y IM.! (k-1)
+      let (a, k) = idx tableau i j in lones !! (a-1) <+ y IM.! k
     i_ = [1 .. length lambda]
     ij_ tableau = 
       [(i, j) | i <- i_, j <- [1 .. length (snd (tableau !! (i-1)))]]

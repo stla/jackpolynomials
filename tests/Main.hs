@@ -129,7 +129,7 @@ main = defaultMain $ testGroup
     let 
       n = 3
       lambda = [3, 2, 2]
-      mu = [1, 1]
+      mu = [2, 1]
     --   y = IM.fromList (zip [-2 .. 6] (repeat 0))
     --   skewFactorialSchurPoly = skewFactorialSchurPol' n lambda mu y
     -- assertEqual "" skewFactorialSchurPoly (skewSchurPol' n lambda mu)
@@ -139,7 +139,7 @@ main = defaultMain $ testGroup
       skewFactorialSchurPoly = skewFactorialSchurPol' n lambda mu y
       kappa r = if r == 0 then [] else [r]
       h r a = if r < 0 then zeroSpray else factorialSchurPol' n (kappa r) a
-      getSequence imap = [imap IM.! i | i <- [0 .. IM.size imap - 1]]
+      getSequence imap = [imap IM.! i | i <- [1 .. IM.size imap]]
       h' i j = h (lambda !! (i-1) - mu' !! (j-1) - i + j) (getSequence (tau (mu' !! (j-1) - j + 1)))
       l = length lambda
       row i = [h' i j | j <- [1 .. l]]
