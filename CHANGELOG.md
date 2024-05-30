@@ -103,3 +103,5 @@ numbers with parameter
 
 * new function `skewHallLittlewoodPolynomial`, to get a skew Hall-Littlewood 
 polynomial
+
+* new function `flaggedSchurPol`, to get a flagged Schur polynomial

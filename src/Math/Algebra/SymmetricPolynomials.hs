@@ -1047,7 +1047,8 @@ skewHallLittlewoodPolynomial' ::
   -> SimpleParametricQSpray
 skewHallLittlewoodPolynomial' = skewHallLittlewoodPolynomial
 
--- | Flagged Schur polynomial.
+-- | Flagged Schur polynomial. A flagged Schur polynomial is not symmetric 
+-- in general.
 flaggedSchurPol :: 
   (Eq a, AlgRing.C a) 
   => Partition -- ^ integer partition
@@ -1071,10 +1072,12 @@ flaggedSchurPol lambda as bs
       las = length as
       lbs = length bs
       tableaux = flaggedSemiStandardYoungTableaux lambda as bs
-      monomial tableau = productOfSprays $ zipWith lone' [1 ..] (tableauWeight tableau)
+      monomial tableau = 
+        productOfSprays $ zipWith lone' [1 ..] (tableauWeight tableau)
       sprays = map monomial tableaux
 
--- | Flagged Schur polynomial.
+-- | Flagged Schur polynomial. A flagged Schur polynomial is not symmetric 
+-- in general.
 flaggedSchurPol' :: 
      Partition -- ^ integer partition
   -> [Int]     -- ^ lower bounds

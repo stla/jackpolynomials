@@ -124,7 +124,7 @@ flaggedSemiStandardYoungTableaux lambda as bs =
       row n len prev xxs = 
         if len == 0 
           then [[]] 
-          else [ (j:js) | j <- [max x prev .. n] , js <- row n (len-1) j xs ]
+          else [ (j:js) | j <- [max x prev .. n], js <- row n (len-1) j xs ]
           where
             (x, xs) = fromJust (uncons xxs)
 
