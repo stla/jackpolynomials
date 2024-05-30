@@ -138,11 +138,11 @@ tableauWeight tableau = [count i | i <- [1 .. m]]
     count i = sum [fromEnum (k == i) | k <- x]
 
 flaggedSkewTableaux :: Partition -> Partition -> [Int] -> [Int] -> [[(Int,[Int])]]
-flaggedSkewTableaux lambda mu as bs = worker us vs ds (repeat 1) 0
+flaggedSkewTableaux lambda mu as bs = worker uus vvs dds (repeat 1) 0
   where
-    us = mu ++ (replicate (length lambda - length mu) 0)
-    vs = zipWith (-) lambda us
-    ds = _diffSequence us
+    uus = mu ++ (replicate (length lambda - length mu) 0)
+    vvs = zipWith (-) lambda uus
+    dds = _diffSequence uus
     _diffSequence :: [Int] -> [Int]
     _diffSequence = go where
       go (x:ys@(y:_)) = (x-y) : go ys 
@@ -156,6 +156,8 @@ flaggedSkewTableaux lambda mu as bs = worker us vs ds (repeat 1) 0
           , let lb' = (replicate d 1 ++ map (+1) this) 
           , rest <- worker us vs ds lb' (i + 1)] 
     worker []     _      _      _  _ = [ [] ]
+    worker (_:_)  []     _      _  _ = [ [] ]
+    worker (_:_)  (_:_)  []     _  _ = [ [] ]
     -- @row length minimum lowerbound@
     -- weekly increasing lists of length @len@, pointwise at least @xs@, 
     -- maximum value @n@, minimum value @prev@.

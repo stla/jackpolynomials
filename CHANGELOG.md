@@ -105,3 +105,5 @@ numbers with parameter
 polynomial
 
 * new function `flaggedSchurPol`, to get a flagged Schur polynomial
+
+* new function `flaggedSkewSchurPol`, to get a flagged skew Schur polynomial
