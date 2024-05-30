@@ -1146,12 +1146,14 @@ flaggedSkewSchurPol' ::
   -> QSpray
 flaggedSkewSchurPol' = flaggedSkewSchurPol
 
--- | Factorial Schur polynomial.
+-- | Factorial Schur polynomial. See
+-- [Kreiman's paper](https://www.combinatorics.org/ojs/index.php/eljc/article/view/v15i1r84/pdf)
+-- /Products of factorial Schur functions/ for the definition.
 factorialSchurPol :: 
   (Eq a, AlgRing.C a)
-  => Int
-  -> Partition
-  -> [a]
+  => Int       -- ^ number of variables
+  -> Partition -- ^ integer partition
+  -> [a]       -- ^ the \(y\) sequence
   -> Spray a
 factorialSchurPol n lambda y 
   | n < 0 = 
@@ -1175,21 +1177,25 @@ factorialSchurPol n lambda y
     spray tableau = productOfSprays (factors tableau)
     sprays = map spray tableaux
 
--- | Factorial Schur polynomial.
+-- | Factorial Schur polynomial. See
+-- [Kreiman's paper](https://www.combinatorics.org/ojs/index.php/eljc/article/view/v15i1r84/pdf)
+-- /Products of factorial Schur functions/ for the definition.
 factorialSchurPol' :: 
-     Int
-  -> Partition
-  -> [Rational]
+     Int        -- ^ number of variables
+  -> Partition  -- ^ integer partition
+  -> [Rational] -- ^ the \(y\) sequence
   -> QSpray
 factorialSchurPol' = factorialSchurPol
 
--- | Skew factorial Schur polynomial.
+-- | Skew factorial Schur polynomial. See 
+-- [Macdonald's paper](https://www.kurims.kyoto-u.ac.jp/EMIS/journals/SLC/opapers/s28macdonald.pdf)
+-- /Schur functions: theme and variations/, 6th variation, for the definition.
 skewFactorialSchurPol :: 
   (Eq a, AlgRing.C a)
-  => Int
-  -> Partition
-  -> Partition
-  -> IntMap a
+  => Int       -- ^ number of variables
+  -> Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
+  -> IntMap a  -- ^ the \(a\) sequence
   -> Spray a
 skewFactorialSchurPol n lambda mu y 
   | n < 0 = 
@@ -1216,11 +1222,14 @@ skewFactorialSchurPol n lambda mu y
     spray tableau = productOfSprays (factors (getSkewTableau tableau))
     sprays = map spray skewTableaux
 
+-- | Skew factorial Schur polynomial. See 
+-- [Macdonald's paper](https://www.kurims.kyoto-u.ac.jp/EMIS/journals/SLC/opapers/s28macdonald.pdf)
+-- /Schur functions: theme and variations/, 6th variation, for the definition.
 skewFactorialSchurPol' :: 
-     Int
-  -> Partition
-  -> Partition
-  -> IntMap Rational
+     Int             -- ^ number of variables
+  -> Partition       -- ^ outer partition of the skew partition
+  -> Partition       -- ^ inner partition of the skew partition
+  -> IntMap Rational -- ^ the \(a\) sequence
   -> QSpray
 skewFactorialSchurPol' = skewFactorialSchurPol
 

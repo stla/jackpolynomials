@@ -108,7 +108,16 @@ main = defaultMain $ testGroup
   "Tests"
 
   [ 
-  testCase "Factorial Schur polynomial" $ do
+  testCase "Factorial Schur polynomial with y=[0 .. ] is Schur polynomial" $ do
+    let 
+      n = 4
+      lambda = [3, 3, 2, 2]
+      y = replicate (n + lambda !! 0 - 1) 0
+      factorialSchurPoly = factorialSchurPol' n lambda y
+      schurPoly = schurPol' n lambda
+    assertEqual "" schurPoly factorialSchurPoly
+
+  , testCase "Factorial Schur polynomial as determinant" $ do
     let 
       n = 3
       lambda = [3, 2, 2]
@@ -125,14 +134,20 @@ main = defaultMain $ testGroup
       det = detLaplace matrix
     assertEqual "" det (vandermonde ^*^ factorialSchurPoly)
 
-  , testCase "Skew factorial Schur polynomial" $ do
+  , testCase "Skew factorial Schur polynomial with y=0 is skew Schur polynomial" $ do
+    let 
+      n = 5
+      lambda = [4, 3, 2, 2]
+      mu = [2, 2]
+      y = IM.fromList (zip [-2 .. 8] (repeat 0))
+      skewFactorialSchurPoly = skewFactorialSchurPol' n lambda mu y
+    assertEqual "" skewFactorialSchurPoly (skewSchurPol' n lambda mu)
+
+  , testCase "Skew factorial Schur polynomial as determinant" $ do
     let 
       n = 3
       lambda = [3, 2, 2]
       mu = [2, 1]
-    --   y = IM.fromList (zip [-2 .. 6] (repeat 0))
-    --   skewFactorialSchurPoly = skewFactorialSchurPol' n lambda mu y
-    -- assertEqual "" skewFactorialSchurPoly (skewSchurPol' n lambda mu)
       mu' = mu ++ [0]
       y = IM.fromList (zip [-2 ..] [2, 6, 1, 2, 3, 4, 5, 6, 7])
       tau r = IM.mapKeys (subtract r) y
@@ -140,7 +155,8 @@ main = defaultMain $ testGroup
       kappa r = if r == 0 then [] else [r]
       h r a = if r < 0 then zeroSpray else factorialSchurPol' n (kappa r) a
       getSequence imap = [imap IM.! i | i <- [1 .. IM.size imap]]
-      h' i j = h (lambda !! (i-1) - mu' !! (j-1) - i + j) (getSequence (tau (mu' !! (j-1) - j + 1)))
+      h' i j = h (lambda !! (i-1) - mu' !! (j-1) - i + j) 
+                  (getSequence (tau (mu' !! (j-1) - j + 1)))
       l = length lambda
       row i = [h' i j | j <- [1 .. l]]
       matrix = fromLists [row i | i <- [1 .. l]]
