@@ -114,11 +114,11 @@ main = defaultMain $ testGroup
       factorialSchurPoly = factorialSchurPol' n lambda [] y
       lones = [qlone i | i <- [1 .. n]]
       vandermonde = productOfSprays [lones !! (i-1) ^-^ lones !! (j-1) | i <- [1 .. n-1], j <- [i+1 .. n]]
-      x j k = productOfSprays [lones !! (j-1) <+ (- (y !! i)) | i <- [0 .. k-1]]
+      x j k = productOfSprays [lones !! (j-1) <+ (y !! i) | i <- [0 .. k-1]]
       l = length lambda
-      row i = [x j (lambda !! (i-1) + n - i) | j <- [1 .. l]]
+      row i = [x i (lambda !! (j-1) + n - j) | j <- [1 .. l]]
       matrix = fromLists [row i | i <- [1 .. l]]
-      det = AlgAdd.negate $ detLaplace matrix
+      det = detLaplace matrix
     assertEqual "" det (vandermonde ^*^ factorialSchurPoly)
 
   , testCase "Flagged Schur polynomial" $ do
