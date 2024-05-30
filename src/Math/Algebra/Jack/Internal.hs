@@ -29,6 +29,8 @@ module Math.Algebra.Jack.Internal
   , flaggedSemiStandardYoungTableaux
   , tableauWeight
   , isIncreasing
+  , flaggedSkewTableaux
+  , skewTableauWeight
   )
   where
 import           Prelude 
@@ -132,6 +134,44 @@ tableauWeight :: [[Int]] -> [Int]
 tableauWeight tableau = [count i | i <- [1 .. m]]
   where
     x = concat tableau
+    m = maximum x
+    count i = sum [fromEnum (k == i) | k <- x]
+
+flaggedSkewTableaux :: Partition -> Partition -> [Int] -> [Int] -> [[(Int,[Int])]]
+flaggedSkewTableaux lambda mu as bs = worker us vs ds (repeat 1) 0
+  where
+    us = mu ++ (replicate (length lambda - length mu) 0)
+    vs = zipWith (-) lambda us
+    ds = _diffSequence us
+    _diffSequence :: [Int] -> [Int]
+    _diffSequence = go where
+      go (x:ys@(y:_)) = (x-y) : go ys 
+      go [x] = [x]
+      go []  = []
+    -- | @worker inner outerMinusInner innerdiffs lowerbound
+    worker :: [Int] -> [Int] -> [Int] -> [Int] -> Int -> [[(Int,[Int])]]
+    worker (u:us) (v:vs) (d:ds) lb i 
+      = [ (u, this):rest 
+          | this <- row (bs !! i) v (as !! i) lb 
+          , let lb' = (replicate d 1 ++ map (+1) this) 
+          , rest <- worker us vs ds lb' (i + 1)] 
+    worker []     _      _      _  _ = [ [] ]
+    -- @row length minimum lowerbound@
+    -- weekly increasing lists of length @len@, pointwise at least @xs@, 
+    -- maximum value @n@, minimum value @prev@.
+    row :: Int -> Int -> Int -> [Int] -> [[Int]]
+    row n len prev xxs = 
+      if len == 0 
+        then [[]] 
+        else [ (j:js) | j <- [max x prev .. n], js <- row n (len-1) j xs ]
+        where
+          (x, xs) = fromJust (uncons xxs)
+
+skewTableauWeight :: [(Int, [Int])] -> [Int]
+skewTableauWeight skewT = [count i | i <- [1 .. m]]
+  where
+    (_, entries) = unzip skewT
+    x = concat entries
     m = maximum x
     count i = sum [fromEnum (k == i) | k <- x]
 
