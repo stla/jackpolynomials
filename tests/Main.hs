@@ -59,6 +59,7 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , hallLittlewoodPolynomial'
                                                 , skewHallLittlewoodPolynomial'
                                                 , flaggedSchurPol'
+                                                , flaggedSkewSchurPol'
                                                 )
 import Math.Combinat.Partitions.Integer         ( 
                                                   toPartition
@@ -110,6 +111,16 @@ main = defaultMain $ testGroup
       flaggedSchurPoly = flaggedSchurPol' lambda [1, 1, 1, 1] [n, n, n, n]
       schurPoly = schurPol' n lambda
     assertEqual "" flaggedSchurPoly schurPoly
+
+  , testCase "Flagged skew Schur polynomial" $ do
+    let 
+      lambda = [5, 3, 2, 2]
+      mu = [3, 1, 1]
+      n = 5
+      flaggedSkewSchurPoly = 
+        flaggedSkewSchurPol' lambda mu [1, 1, 1, 1] [n, n, n, n]
+      skewSchurPoly = skewSchurPol' n lambda mu
+    assertEqual "" flaggedSkewSchurPoly skewSchurPoly
 
   , testCase "Jacobi-Trudi identity" $ do
     let 

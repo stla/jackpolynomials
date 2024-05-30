@@ -70,6 +70,8 @@ module Math.Algebra.SymmetricPolynomials
   -- * Flagged Schur polynomials
   , flaggedSchurPol
   , flaggedSchurPol'
+  , flaggedSkewSchurPol
+  , flaggedSkewSchurPol'
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -168,6 +170,8 @@ import           Math.Algebra.Jack.Internal       (
                                                   , flaggedSemiStandardYoungTableaux
                                                   , tableauWeight
                                                   , isIncreasing
+                                                  , flaggedSkewTableaux
+                                                  , skewTableauWeight
                                                   )
 import           Math.Algebra.JackPol             ( 
                                                     schurPol
@@ -1085,6 +1089,45 @@ flaggedSchurPol' ::
   -> QSpray
 flaggedSchurPol' = flaggedSchurPol
 
+-- | Flagged skew Schur polynomial. A flagged skew Schur polynomial is not symmetric 
+-- in general.
+flaggedSkewSchurPol :: 
+  (Eq a, AlgRing.C a) 
+  => Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
+  -> [Int]     -- ^ lower bounds
+  -> [Int]     -- ^ upper bounds
+  -> Spray a
+flaggedSkewSchurPol lambda mu as bs
+  | not (isSkewPartition lambda mu) =
+      error "flaggedSkewSchurPol: invalid skew partition."
+  | not (allSame [llambda, las, lbs]) = 
+      error "flaggedSkewSchurPol: the outer partition and the lists of lower bounds and upper bounds must have the same length."
+  | not (isIncreasing as) = 
+      error "flaggedSkewSchurPol: the list of lower bounds is not increasing."
+  | not (isIncreasing bs) = 
+      error "flaggedSkewSchurPol: the list of upper bounds is not increasing."
+  | any (== True) (zipWith (>) as bs) = 
+      error "flaggedSkewSchurPol: lower bounds must be smaller than upper bounds."
+  | otherwise = sumOfSprays sprays
+    where
+      llambda = length lambda
+      las = length as
+      lbs = length bs
+      tableaux = flaggedSkewTableaux lambda mu as bs
+      monomial tableau = 
+        productOfSprays $ zipWith lone' [1 ..] (skewTableauWeight tableau)
+      sprays = map monomial tableaux
+
+-- | Flagged skew Schur polynomial. A flagged skew Schur polynomial is not symmetric 
+-- in general.
+flaggedSkewSchurPol' :: 
+     Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
+  -> [Int]     -- ^ lower bounds
+  -> [Int]     -- ^ upper bounds
+  -> QSpray
+flaggedSkewSchurPol' = flaggedSkewSchurPol
 
 -- test :: Bool
 -- test = poly == sumOfSprays sprays
