@@ -122,6 +122,29 @@ main = defaultMain $ testGroup
       skewSchurPoly = skewSchurPol' n lambda mu
     assertEqual "" flaggedSkewSchurPoly skewSchurPoly
 
+  , testCase "Jacobi-Trudi identity for flagged skew Schur polynomial" $ do
+    let 
+      lambda = [5, 3, 2, 2]
+      mu = [3, 1, 1]
+      as = [1, 1, 2, 4]
+      bs = [2, 3, 4, 5]
+      flaggedSkewSchurPoly = 
+        flaggedSkewSchurPol' lambda mu as bs
+      newVariables a b = map qlone [a .. b]
+      h k a b
+        | k < 0 = zeroSpray
+        | k == 0 = changeVariables (cshPolynomial n []) variables
+        | otherwise = changeVariables (cshPolynomial n [k]) variables
+          where
+            n = max 0 (b - a + 1)
+            variables = newVariables a b
+      l = length lambda
+      mu' = mu ++ [0]
+      row i = [h (lambda !! (i-1) - mu' !! (j-1) + j - i) (as !! (j-1)) (bs !! (i-1))| j <- [1 .. l]]
+      matrix = fromLists [row i | i <- [1 .. l]]
+      det = detLaplace matrix
+    assertEqual "" det flaggedSkewSchurPoly
+
   , testCase "Jacobi-Trudi identity" $ do
     let 
       n = 5
