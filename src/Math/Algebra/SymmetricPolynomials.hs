@@ -72,6 +72,9 @@ module Math.Algebra.SymmetricPolynomials
   , flaggedSchurPol'
   , flaggedSkewSchurPol
   , flaggedSkewSchurPol'
+  -- * Factorial Schur polynomials
+  , factorialSchurPol
+  , factorialSchurPol'
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -179,12 +182,20 @@ import           Math.Algebra.JackPol             (
 import           Math.Combinat.Compositions       ( compositions1 )
 import           Math.Combinat.Partitions.Integer ( 
                                                     fromPartition
+                                                  , toPartition
                                                   , mkPartition
                                                   , partitions 
                                                   , partitionWidth
                                                   )
+import           Math.Combinat.Partitions.Skew    ( 
+                                                    mkSkewPartition
+                                                  )
 import           Math.Combinat.Permutations       ( permuteMultiset )
 import           Math.Combinat.Tableaux.GelfandTsetlin ( kostkaNumbersWithGivenMu )
+import           Math.Combinat.Tableaux.Skew      ( 
+                                                    SkewTableau (..) 
+                                                  , semiStandardSkewTableaux 
+                                                  )
 
 
 -- | monomial symmetric polynomial
@@ -1128,6 +1139,39 @@ flaggedSkewSchurPol' ::
   -> [Int]     -- ^ upper bounds
   -> QSpray
 flaggedSkewSchurPol' = flaggedSkewSchurPol
+
+factorialSchurPol :: 
+  (Eq a, AlgRing.C a)
+  => Int
+  -> Partition
+  -> Partition
+  -> [a]
+  -> Spray a
+factorialSchurPol n lambda mu y = sumOfSprays sprays
+  where
+    skewPartition = mkSkewPartition (toPartition lambda, toPartition mu)
+    skewTableaux = semiStandardSkewTableaux n skewPartition
+    getSkewTableau (SkewTableau x) = x
+    lones = [lone i | i <- [1 .. n]]
+    idx tableau i j = 
+      let (offset, entries) = tableau !! (i-1) 
+          a = entries !! (j-1)
+      in (a, a + offset + j - i) 
+    factor tableau i j = 
+      let (a, k) = idx tableau i j in lones !! (a-1) <+ y !! (k-1)
+    i_ = [1 .. length lambda]
+    ij_ tableau = [(i, j) | i <- i_, j <- [1 .. length (snd (tableau !! (i-1)))]]
+    factors tableau = [factor tableau i j | (i, j) <- ij_ tableau]
+    spray tableau = productOfSprays (factors (getSkewTableau tableau))
+    sprays = map spray skewTableaux
+
+factorialSchurPol' :: 
+     Int
+  -> Partition
+  -> Partition
+  -> [Rational]
+  -> QSpray
+factorialSchurPol' = factorialSchurPol
 
 -- test :: Bool
 -- test = poly == sumOfSprays sprays

@@ -22,6 +22,7 @@ import Math.Algebra.Hspray                      ( FunctionLike (..)
                                                 , (%//%)
                                                 , (/^)
                                                 , sumOfSprays
+                                                , productOfSprays
                                                 , detLaplace
                                                 )
 import qualified Math.Algebra.Hspray            as Hspray
@@ -60,6 +61,7 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , skewHallLittlewoodPolynomial'
                                                 , flaggedSchurPol'
                                                 , flaggedSkewSchurPol'
+                                                , factorialSchurPol'
                                                 )
 import Math.Combinat.Partitions.Integer         ( 
                                                   toPartition
@@ -104,7 +106,22 @@ main = defaultMain $ testGroup
   "Tests"
 
   [ 
-  testCase "Flagged Schur polynomial" $ do
+  testCase "Factorial Schur polynomial" $ do
+    let 
+      n = 3
+      lambda = [3, 2, 2]
+      y = [2, 6, 1, 2, 3, 4]
+      factorialSchurPoly = factorialSchurPol' n lambda [] y
+      lones = [qlone i | i <- [1 .. n]]
+      vandermonde = productOfSprays [lones !! (i-1) ^-^ lones !! (j-1) | i <- [1 .. n-1], j <- [i+1 .. n]]
+      x j k = productOfSprays [lones !! (j-1) <+ (- (y !! i)) | i <- [0 .. k-1]]
+      l = length lambda
+      row i = [x j (lambda !! (i-1) + n - i) | j <- [1 .. l]]
+      matrix = fromLists [row i | i <- [1 .. l]]
+      det = AlgAdd.negate $ detLaplace matrix
+    assertEqual "" det (vandermonde ^*^ factorialSchurPoly)
+
+  , testCase "Flagged Schur polynomial" $ do
     let 
       lambda = [5, 3, 2, 2]
       n = 5

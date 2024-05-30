@@ -137,7 +137,8 @@ tableauWeight tableau = [count i | i <- [1 .. m]]
     m = maximum x
     count i = sum [fromEnum (k == i) | k <- x]
 
-flaggedSkewTableaux :: Partition -> Partition -> [Int] -> [Int] -> [[(Int,[Int])]]
+flaggedSkewTableaux :: 
+  Partition -> Partition -> [Int] -> [Int] -> [[(Int,[Int])]]
 flaggedSkewTableaux lambda mu as bs = worker uus vvs dds (repeat 1) 0
   where
     uus = mu ++ (replicate (length lambda - length mu) 0)
@@ -158,7 +159,6 @@ flaggedSkewTableaux lambda mu as bs = worker uus vvs dds (repeat 1) 0
     worker []     _      _      _  _ = [ [] ]
     worker (_:_)  []     _      _  _ = [ [] ]
     worker (_:_)  (_:_)  []     _  _ = [ [] ]
-    -- @row length minimum lowerbound@
     -- weekly increasing lists of length @len@, pointwise at least @xs@, 
     -- maximum value @n@, minimum value @prev@.
     row :: Int -> Int -> Int -> [Int] -> [[Int]]
