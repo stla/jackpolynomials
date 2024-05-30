@@ -75,6 +75,8 @@ module Math.Algebra.SymmetricPolynomials
   -- * Factorial Schur polynomials
   , factorialSchurPol
   , factorialSchurPol'
+  , skewFactorialSchurPol
+  , skewFactorialSchurPol'
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -92,6 +94,9 @@ import           Data.List                        (
 import           Data.List.Extra                  ( 
                                                     unsnoc
                                                   , allSame
+                                                  )
+import           Data.IntMap.Strict               ( 
+                                                    IntMap
                                                   )
 import qualified Data.IntMap.Strict               as IM
 import           Data.Map.Merge.Strict            ( 
@@ -191,6 +196,7 @@ import           Math.Combinat.Partitions.Skew    (
                                                     mkSkewPartition
                                                   )
 import           Math.Combinat.Permutations       ( permuteMultiset )
+import           Math.Combinat.Tableaux           ( semiStandardYoungTableaux )
 import           Math.Combinat.Tableaux.GelfandTsetlin ( kostkaNumbersWithGivenMu )
 import           Math.Combinat.Tableaux.Skew      ( 
                                                     SkewTableau (..) 
@@ -1140,14 +1146,58 @@ flaggedSkewSchurPol' ::
   -> QSpray
 flaggedSkewSchurPol' = flaggedSkewSchurPol
 
+-- | Factorial Schur polynomial.
 factorialSchurPol :: 
   (Eq a, AlgRing.C a)
   => Int
   -> Partition
-  -> Partition
   -> [a]
   -> Spray a
-factorialSchurPol n lambda mu y = sumOfSprays sprays
+factorialSchurPol n lambda y 
+  | n < 0 = 
+      error "factorialSchurPol: negative number of variables." 
+  | not (_isPartition lambda) =
+      error "factorialSchurPol: invalid integer partition."
+  | otherwise = 
+      sumOfSprays sprays
+  where
+    tableaux = semiStandardYoungTableaux n (toPartition lambda)
+    lones = [lone i | i <- [1 .. n]]
+    idx tableau i j = 
+      let row = tableau !! (i-1) 
+          a = row !! (j-1)
+      in (a, a + j - i) 
+    factor tableau i j = 
+      let (a, k) = idx tableau i j in lones !! (a-1) <+ y !! (k-1)
+    i_ = [1 .. length lambda]
+    ij_ = [(i, j) | i <- i_, j <- [1 .. lambda !! (i-1)]]
+    factors tableau = [factor tableau i j | (i, j) <- ij_]
+    spray tableau = productOfSprays (factors tableau)
+    sprays = map spray tableaux
+
+-- | Factorial Schur polynomial.
+factorialSchurPol' :: 
+     Int
+  -> Partition
+  -> [Rational]
+  -> QSpray
+factorialSchurPol' = factorialSchurPol
+
+-- | Skew factorial Schur polynomial.
+skewFactorialSchurPol :: 
+  (Eq a, AlgRing.C a)
+  => Int
+  -> Partition
+  -> Partition
+  -> IntMap a
+  -> Spray a
+skewFactorialSchurPol n lambda mu y 
+  | n < 0 = 
+      error "skewFactorialSchurPol: negative number of variables." 
+  | not (isSkewPartition lambda mu) =
+      error "skewFactorialSchurPol: invalid skew integer partition."
+  | otherwise = 
+      sumOfSprays sprays
   where
     skewPartition = mkSkewPartition (toPartition lambda, toPartition mu)
     skewTableaux = semiStandardSkewTableaux n skewPartition
@@ -1158,20 +1208,21 @@ factorialSchurPol n lambda mu y = sumOfSprays sprays
           a = entries !! (j-1)
       in (a, a + offset + j - i) 
     factor tableau i j = 
-      let (a, k) = idx tableau i j in lones !! (a-1) <+ y !! (k-1)
+      let (a, k) = idx tableau i j in lones !! (a-1) <+ y IM.! (k-1)
     i_ = [1 .. length lambda]
-    ij_ tableau = [(i, j) | i <- i_, j <- [1 .. length (snd (tableau !! (i-1)))]]
+    ij_ tableau = 
+      [(i, j) | i <- i_, j <- [1 .. length (snd (tableau !! (i-1)))]]
     factors tableau = [factor tableau i j | (i, j) <- ij_ tableau]
     spray tableau = productOfSprays (factors (getSkewTableau tableau))
     sprays = map spray skewTableaux
 
-factorialSchurPol' :: 
+skewFactorialSchurPol' :: 
      Int
   -> Partition
   -> Partition
-  -> [Rational]
+  -> IntMap Rational
   -> QSpray
-factorialSchurPol' = factorialSchurPol
+skewFactorialSchurPol' = skewFactorialSchurPol
 
 -- test :: Bool
 -- test = poly == sumOfSprays sprays

@@ -1,6 +1,7 @@
 module Main ( main ) where
 import qualified Algebra.Additive               as AlgAdd
 import qualified Algebra.Module                 as AlgMod
+import qualified Data.IntMap.Strict             as IM
 import qualified Data.Map.Strict                as DM
 import           Data.Matrix                    ( 
                                                   fromLists
@@ -62,6 +63,7 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , flaggedSchurPol'
                                                 , flaggedSkewSchurPol'
                                                 , factorialSchurPol'
+                                                , skewFactorialSchurPol'
                                                 )
 import Math.Combinat.Partitions.Integer         ( 
                                                   toPartition
@@ -111,15 +113,39 @@ main = defaultMain $ testGroup
       n = 3
       lambda = [3, 2, 2]
       y = [2, 6, 1, 2, 3, 4]
-      factorialSchurPoly = factorialSchurPol' n lambda [] y
+      factorialSchurPoly = factorialSchurPol' n lambda y
       lones = [qlone i | i <- [1 .. n]]
-      vandermonde = productOfSprays [lones !! (i-1) ^-^ lones !! (j-1) | i <- [1 .. n-1], j <- [i+1 .. n]]
+      vandermonde = 
+        productOfSprays [lones !! (i-1) ^-^ lones !! (j-1) 
+                         | i <- [1 .. n-1], j <- [i+1 .. n]]
       x j k = productOfSprays [lones !! (j-1) <+ (y !! i) | i <- [0 .. k-1]]
       l = length lambda
       row i = [x i (lambda !! (j-1) + n - j) | j <- [1 .. l]]
       matrix = fromLists [row i | i <- [1 .. l]]
       det = detLaplace matrix
     assertEqual "" det (vandermonde ^*^ factorialSchurPoly)
+
+  , testCase "Skew factorial Schur polynomial" $ do
+    let 
+      n = 3
+      lambda = [3, 2, 2]
+      mu = [1, 1]
+    --   y = IM.fromList (zip [-2 .. 6] (repeat 0))
+    --   skewFactorialSchurPoly = skewFactorialSchurPol' n lambda mu y
+    -- assertEqual "" skewFactorialSchurPoly (skewSchurPol' n lambda mu)
+      mu' = mu ++ [0]
+      y = IM.fromList (zip [-2 ..] [2, 6, 1, 2, 3, 4, 5, 6, 7])
+      tau r = IM.mapKeys (subtract r) y
+      skewFactorialSchurPoly = skewFactorialSchurPol' n lambda mu y
+      kappa r = if r == 0 then [] else [r]
+      h r a = if r < 0 then zeroSpray else factorialSchurPol' n (kappa r) a
+      getSequence imap = [imap IM.! i | i <- [0 .. IM.size imap - 1]]
+      h' i j = h (lambda !! (i-1) - mu' !! (j-1) - i + j) (getSequence (tau (mu' !! (j-1) - j + 1)))
+      l = length lambda
+      row i = [h' i j | j <- [1 .. l]]
+      matrix = fromLists [row i | i <- [1 .. l]]
+      det = detLaplace matrix
+    assertEqual "" det skewFactorialSchurPoly
 
   , testCase "Flagged Schur polynomial" $ do
     let 
