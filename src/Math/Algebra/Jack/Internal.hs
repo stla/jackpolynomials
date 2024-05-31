@@ -55,6 +55,7 @@ import           Data.List                                   (
                                                              )
 import           Data.List.Extra                             ( 
                                                                unsnoc
+                                                             , snoc
                                                              )
 import           Data.List.Index                             ( iconcatMap )
 import           Data.Map.Strict                             ( Map )
@@ -104,11 +105,53 @@ import           Math.Combinat.Partitions.Integer            (
                                                              , partitions
                                                              , dominates
                                                              , partitionWidth
+                                                             , toPartitionUnsafe
+                                                             , dropTailingZeros
                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
+import           Math.Combinat.Partitions.Skew               (
+                                                               SkewPartition
+                                                             , mkSkewPartition
+                                                             , skewPartitionElements
+                                                             )
+import           Math.Combinat.Tableaux.GelfandTsetlin       (
+                                                                GT
+                                                              , kostkaGelfandTsetlinPatterns
+                                                             )
 import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
 
 type Partition = [Int]
+
+gtPatternDiagonals :: GT -> (Int, [MCP.Partition])
+gtPatternDiagonals pattern = (corner, [diagonal j | j <- [1 .. l]])
+  where
+    l = length pattern - 1
+    corner = pattern !! l !! 0
+    diagonal j = 
+      (toPartitionUnsafe . dropTailingZeros) 
+        [pattern !! r !! c | (r, c) <- zip [l-j .. l] [0 .. j]]
+    -- diagonal 0 = [pattern !! l !! 0]
+    -- diagonal 1 = [pattern !! (l-1) !! 0, pattern !! l !! 1]
+    -- diagonal 2 = [pattern !! (l-2) !! 0, pattern (l-1) !! 1, pattern !! l !! 2]
+
+gtPatternToTableau :: GT -> [[Int]]
+gtPatternToTableau pattern = DF.toList (go 0 startingTableau)
+  where
+    (corner, diagonals) = gtPatternDiagonals pattern
+    diagonals' = toPartitionUnsafe [corner] : diagonals
+    l = length diagonals - 1
+    lambda = diagonals !! l
+    m = partitionWidth lambda
+    startingTableau = S.replicate m []
+    go i tableau
+      | i == 0 = go 1 (S.adjust' (++ replicate corner 1) 0 tableau)
+      | i == l+2 = tableau
+      | otherwise = 
+          go (i+1)
+            (growTableau (i+1) tableau (mkSkewPartition (diagonals' !! i, diagonals' !! (i-1))))
+    growTableau :: Int -> Seq [Int] -> SkewPartition -> Seq [Int]
+    growTableau j tableau skewPart =
+      DF.foldr (\(i, _) -> S.adjust' (flip snoc j) (i-1)) tableau (skewPartitionElements skewPart)
 
 -- length lambda = length as = length bs; as <= bs; last bs >= length lambda
 flaggedSemiStandardYoungTableaux :: Partition -> [Int] -> [Int] -> [[[Int]]] 
