@@ -121,7 +121,7 @@ main = defaultMain $ testGroup
     let 
       n = 3
       lambda = [3, 2, 2]
-      y = [2, 6, 1, 2, 3, 4]
+      y = [2, 6, 1, 2, 3]
       factorialSchurPoly = factorialSchurPol' n lambda y
       lones = [qlone i | i <- [1 .. n]]
       vandermonde = 

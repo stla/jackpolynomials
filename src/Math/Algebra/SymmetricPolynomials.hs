@@ -1081,6 +1081,8 @@ flaggedSchurPol lambda as bs
       error "flaggedSchurPol: invalid partition."
   | not (allSame [llambda, las, lbs]) = 
       error "flaggedSchurPol: the partition and the lists of lower bounds and upper bounds must have the same length."
+  | llambda == 0 =
+      unitSpray
   | not (isIncreasing as) = 
       error "flaggedSchurPol: the list of lower bounds is not increasing."
   | not (isIncreasing bs) = 
@@ -1126,6 +1128,8 @@ flaggedSkewSchurPol lambda mu as bs
       error "flaggedSkewSchurPol: the list of upper bounds is not increasing."
   | any (== True) (zipWith (>) as bs) = 
       error "flaggedSkewSchurPol: lower bounds must be smaller than upper bounds."
+  | lambda == mu =
+      unitSpray
   | otherwise = sumOfSprays sprays
     where
       llambda = length lambda
@@ -1160,9 +1164,12 @@ factorialSchurPol n lambda y
       error "factorialSchurPol: negative number of variables." 
   | not (_isPartition lambda) =
       error "factorialSchurPol: invalid integer partition."
+  | n == 0 = 
+      if l == 0 then unitSpray else zeroSpray
   | otherwise = 
       sumOfSprays sprays
   where
+    l = length lambda
     tableaux = semiStandardYoungTableaux n (toPartition lambda)
     lones = [lone i | i <- [1 .. n]]
     idx tableau i j = 
@@ -1171,7 +1178,7 @@ factorialSchurPol n lambda y
       in (a, a + j - i) 
     factor tableau i j = 
       let (a, k) = idx tableau i j in lones !! (a-1) <+ y !! (k-1)
-    i_ = [1 .. length lambda]
+    i_ = [1 .. l]
     ij_ = [(i, j) | i <- i_, j <- [1 .. lambda !! (i-1)]]
     factors tableau = [factor tableau i j | (i, j) <- ij_]
     spray tableau = productOfSprays (factors tableau)
@@ -1202,6 +1209,8 @@ skewFactorialSchurPol n lambda mu y
       error "skewFactorialSchurPol: negative number of variables." 
   | not (isSkewPartition lambda mu) =
       error "skewFactorialSchurPol: invalid skew integer partition."
+  | n == 0 = 
+      if lambda == mu then unitSpray else zeroSpray
   | otherwise = 
       sumOfSprays sprays
   where
