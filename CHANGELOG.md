@@ -107,3 +107,7 @@ polynomial
 * new function `flaggedSchurPol`, to get a flagged Schur polynomial
 
 * new function `flaggedSkewSchurPol`, to get a flagged skew Schur polynomial
+
+* new function `factorialSchurPol`, to get a factorial Schur polynomial
+
+* new function `skewFactorialSchurPol`, to get a skew factorial Schur polynomial
