@@ -131,7 +131,10 @@ gtPatternDiagonals pattern = (corner, [diagonal j | j <- [1 .. l]])
         [pattern !! r !! c | (r, c) <- zip [l-j .. l] [0 .. j]]
 
 gtPatternToTableau :: GT -> [Seq Int]
-gtPatternToTableau pattern = DF.toList $ go 0 startingTableau
+gtPatternToTableau pattern = 
+  if l >= 0 
+    then DF.toList $ go 0 startingTableau
+    else [S.singleton 1]
   where
     (corner, diagonals) = gtPatternDiagonals pattern
     diagonals' = toPartitionUnsafe [corner] : diagonals
@@ -153,7 +156,9 @@ gtPatternToTableau pattern = DF.toList $ go 0 startingTableau
 
 semiStandardTableauxWithGivenShapeAndWeight :: Partition -> Partition -> [[Seq Int]]
 semiStandardTableauxWithGivenShapeAndWeight lambda mu =
-  map gtPatternToTableau (kostkaGelfandTsetlinPatterns lambda' mu')
+  if lambda' `dominates` mu'
+    then map gtPatternToTableau (kostkaGelfandTsetlinPatterns lambda' mu')
+    else []
   where
     lambda' = toPartitionUnsafe lambda
     mu' = toPartitionUnsafe mu
