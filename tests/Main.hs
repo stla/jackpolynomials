@@ -149,7 +149,7 @@ main = defaultMain $ testGroup
       lambda = [3, 2, 2]
       mu = [2, 1]
       mu' = mu ++ [0]
-      y = IM.fromList (zip [-2 ..] [2, 6, 1, 2, 3, 4, 5, 6, 7])
+      y = IM.fromList (zip [-2 ..] [2, 6, 1, 2, 3, 4, 5, 6])
       tau r = IM.mapKeys (subtract r) y
       skewFactorialSchurPoly = skewFactorialSchurPol' n lambda mu y
       kappa r = if r == 0 then [] else [r]

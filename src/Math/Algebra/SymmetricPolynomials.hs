@@ -1157,7 +1157,7 @@ factorialSchurPol ::
   (Eq a, AlgRing.C a)
   => Int       -- ^ number of variables
   -> Partition -- ^ integer partition
-  -> [a]       -- ^ the \(y\) sequence
+  -> [a]       -- ^ the sequence denoted by \(y\) in the reference paper 
   -> Spray a
 factorialSchurPol n lambda y 
   | n < 0 = 
@@ -1190,7 +1190,7 @@ factorialSchurPol n lambda y
 factorialSchurPol' :: 
      Int        -- ^ number of variables
   -> Partition  -- ^ integer partition
-  -> [Rational] -- ^ the \(y\) sequence
+  -> [Rational] -- ^ the sequence denoted by \(y\) in the reference paper
   -> QSpray
 factorialSchurPol' = factorialSchurPol
 
@@ -1202,7 +1202,7 @@ skewFactorialSchurPol ::
   => Int       -- ^ number of variables
   -> Partition -- ^ outer partition of the skew partition
   -> Partition -- ^ inner partition of the skew partition
-  -> IntMap a  -- ^ the \(a\) sequence
+  -> IntMap a  -- ^ the sequence denoted by \(a\) in the reference paper
   -> Spray a
 skewFactorialSchurPol n lambda mu y 
   | n < 0 = 
@@ -1238,7 +1238,7 @@ skewFactorialSchurPol' ::
      Int             -- ^ number of variables
   -> Partition       -- ^ outer partition of the skew partition
   -> Partition       -- ^ inner partition of the skew partition
-  -> IntMap Rational -- ^ the \(a\) sequence
+  -> IntMap Rational -- ^ the sequence denoted by \(a\) in the reference paper
   -> QSpray
 skewFactorialSchurPol' = skewFactorialSchurPol
 
