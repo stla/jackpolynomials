@@ -983,7 +983,7 @@ kostkaFoulkesPolynomial lambda mu
   | not (_isPartition mu)     = 
       error "kostkaFoulkesPolynomial: invalid partition."
   | otherwise                 = 
-      _kostkaFoulkesPolynomial (S.fromList lambda) (S.fromList mu)
+      _kostkaFoulkesPolynomial lambda mu
 
 -- | Kostka-Foulkes polynomial of two given partitions. This is a univariate 
 -- polynomial whose value at @1@ is the Kostka number of the two partitions.

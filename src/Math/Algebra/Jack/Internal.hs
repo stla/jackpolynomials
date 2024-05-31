@@ -55,7 +55,6 @@ import           Data.List                                   (
                                                              )
 import           Data.List.Extra                             ( 
                                                                unsnoc
-                                                             , snoc
                                                              )
 import           Data.List.Index                             ( iconcatMap )
 import           Data.Map.Strict                             ( Map )
@@ -131,28 +130,28 @@ gtPatternDiagonals pattern = (corner, [diagonal j | j <- [1 .. l]])
       (toPartitionUnsafe . dropTailingZeros) 
         [pattern !! r !! c | (r, c) <- zip [l-j .. l] [0 .. j]]
 
-gtPatternToTableau :: GT -> [[Int]]
-gtPatternToTableau pattern = DF.toList (go 0 startingTableau)
+gtPatternToTableau :: GT -> [Seq Int]
+gtPatternToTableau pattern = DF.toList $ go 0 startingTableau
   where
     (corner, diagonals) = gtPatternDiagonals pattern
     diagonals' = toPartitionUnsafe [corner] : diagonals
     l = length diagonals - 1
     lambda = diagonals !! l
     m = partitionWidth lambda
-    startingTableau = S.replicate m []
+    startingTableau = S.replicate m S.Empty
     zippedDiagonals = zip diagonals diagonals'
     skewPartition i = mkSkewPartition (zippedDiagonals !! i)
     go i tableau
-      | i == 0 = go 1 (S.adjust' (++ replicate corner 1) 0 tableau)
+      | i == 0 = go 1 (S.adjust' (flip (><) (S.replicate corner 1)) 0 tableau)
       | i == l+2 = tableau
       | otherwise = 
           go (i+1) (growTableau (i+1) tableau (skewPartition (i-1)))
-    growTableau :: Int -> Seq [Int] -> SkewPartition -> Seq [Int]
+    growTableau :: Int -> Seq (Seq Int) -> SkewPartition -> Seq (Seq Int)
     growTableau j tableau skewPart =
-      DF.foldr (\(i, _) -> S.adjust' (flip snoc j) (i-1)) tableau 
+      DF.foldr (\(i, _) -> S.adjust' (flip (|>) j) (i-1)) tableau 
                 (skewPartitionElements skewPart)
 
-semiStandardTableauxWithGivenShapeAndWeight :: Partition -> Partition -> [[[Int]]]
+semiStandardTableauxWithGivenShapeAndWeight :: Partition -> Partition -> [[Seq Int]]
 semiStandardTableauxWithGivenShapeAndWeight lambda mu =
   map gtPatternToTableau (kostkaGelfandTsetlinPatterns lambda' mu')
   where
@@ -343,55 +342,54 @@ charge w = if l == 0 || n == 1 then 0 else DF.sum indices' + charge w'
               then (1 + pos + fromJust rindex, index)
               else (fromJust (S.elemIndexL (r+1) w), index + 1)
 
-isDominated :: Seq Int -> Seq Int -> Bool
-isDominated mu lambda = 
-  (MCP.Partition (DF.toList lambda)) `dominates` (MCP.Partition (DF.toList mu))
+-- isDominated :: Seq Int -> Seq Int -> Bool
+-- isDominated mu lambda = 
+--   (MCP.Partition (DF.toList lambda)) `dominates` (MCP.Partition (DF.toList mu))
 
--- assumes sum lambda == sum mu 
-ssytxWithGivenShapeAndContent :: Seq Int -> Seq Int -> [Seq (Seq Int)]
-ssytxWithGivenShapeAndContent lambda mu = 
-  if all (== 1) lambda 
-    then if all (== 1) mu
-      then [S.fromList [S.singleton i | i <- [1 .. S.length lambda]]]
-      else []
-    else if isDominated mu lambda
-      then nub all_ssytx
-      else []
-  where
-    dropTrailingZeros = S.dropWhileR (== 0)
-    l = S.length lambda
-    m = S.length mu
-    mu' = dropTrailingZeros $ S.adjust' (subtract 1) (m-1) mu
-    zippedKappas = 
-      zip [0 ..] [S.adjust' (subtract 1) i lambda | i <- [0 .. l - 1]]
-    all_ssytx = concatMap f zippedKappas
-      where
-        f (i, kappa) = 
-           if isDecreasing kappa 
-            then nub $ 
-              map g (ssytxWithGivenShapeAndContent kappa' mu')
-            else []
-          where 
-            kappa' = dropTrailingZeros kappa
-            g ssyt = if i < S.length ssyt 
-              then S.adjust' (|> m) i ssyt 
-              else ssyt |> (S.singleton m)
-            -- g ssyt = if i < length ssyt 
-            --   then (element i .~ ssyt !! i |> l) ssyt 
-            --   else ssyt ++ [S.singleton l]
+-- -- assumes sum lambda == sum mu 
+-- ssytxWithGivenShapeAndContent :: Seq Int -> Seq Int -> [Seq (Seq Int)]
+-- ssytxWithGivenShapeAndContent lambda mu = 
+--   if all (== 1) lambda 
+--     then if all (== 1) mu
+--       then [S.fromList [S.singleton i | i <- [1 .. S.length lambda]]]
+--       else []
+--     else if isDominated mu lambda
+--       then nub all_ssytx
+--       else []
+--   where
+--     dropTrailingZeros = S.dropWhileR (== 0)
+--     l = S.length lambda
+--     m = S.length mu
+--     mu' = dropTrailingZeros $ S.adjust' (subtract 1) (m-1) mu
+--     zippedKappas = 
+--       zip [0 ..] [S.adjust' (subtract 1) i lambda | i <- [0 .. l - 1]]
+--     all_ssytx = concatMap f zippedKappas
+--       where
+--         f (i, kappa) = 
+--            if isDecreasing kappa 
+--             then nub $ 
+--               map g (ssytxWithGivenShapeAndContent kappa' mu')
+--             else []
+--           where 
+--             kappa' = dropTrailingZeros kappa
+--             g ssyt = if i < S.length ssyt 
+--               then S.adjust' (|> m) i ssyt 
+--               else ssyt |> (S.singleton m)
+--             -- g ssyt = if i < length ssyt 
+--             --   then (element i .~ ssyt !! i |> l) ssyt 
+--             --   else ssyt ++ [S.singleton l]
 
 _kostkaFoulkesPolynomial :: 
-  (Eq a, AlgRing.C a) => Seq Int -> Seq Int -> Spray a
+  (Eq a, AlgRing.C a) => Partition -> Partition -> Spray a
 _kostkaFoulkesPolynomial lambda mu = 
-  if DF.sum lambda == DF.sum mu 
+  if sum lambda == sum mu 
     then sumOfSprays sprays
     else zeroSpray
   where
-    tableaux = ssytxWithGivenShapeAndContent lambda mu
+    tableaux = semiStandardTableauxWithGivenShapeAndWeight lambda mu
     mm = lone' 1 -- TODO: fix lone' 1 0 (= fromList [(Powers {exponents = fromList [0], nvariables = 1},1 % 1)])
     sprays = 
-      map (mm . charge . ((foldl1' (S.><)) . (map S.reverse) . DF.toList)) 
-            tableaux
+      map (mm . charge . ((foldl1' (S.><)) . (map S.reverse))) tableaux
 
 b_lambda :: (Eq a, AlgRing.C a) => Partition -> Spray a
 b_lambda lambda = productOfSprays sprays
@@ -414,7 +412,7 @@ _transitionMatrixHallLittlewoodSchur which weight =
     rg = [1 .. length lambdas]
     kfs = map f lambdas
     f kappa = 
-      map (\mu -> _kostkaFoulkesPolynomial (S.fromList kappa) (S.fromList mu))
+      map (\mu -> _kostkaFoulkesPolynomial kappa mu)
           lambdas 
     matrix = inverseUnitTriangularMatrix (fromLists kfs)
     maps i = DM.filter (not . isZeroSpray) 
@@ -432,7 +430,7 @@ _hallLittlewoodPolynomialsInSchurBasis which lambda =
       reverse $ filter (<= lambda) (map fromPartition (partitions weight))
     kfs = map f lambdas
     f kappa = 
-      map (\mu -> _kostkaFoulkesPolynomial (S.fromList kappa) (S.fromList mu)) 
+      map (\mu -> _kostkaFoulkesPolynomial kappa mu) 
           lambdas -- (dominatedPartitions kappa)
     matrix = inverseUnitTriangularMatrix (fromLists kfs)
     coeffs = DM.filter (not . isZeroSpray) 
