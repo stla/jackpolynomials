@@ -134,7 +134,7 @@ gtPatternToTableau :: GT -> [Seq Int]
 gtPatternToTableau pattern = 
   if l >= 0 
     then DF.toList $ go 0 startingTableau
-    else [S.singleton 1]
+    else [S.replicate corner 1]
   where
     (corner, diagonals) = gtPatternDiagonals pattern
     diagonals' = toPartitionUnsafe [corner] : diagonals
@@ -154,7 +154,8 @@ gtPatternToTableau pattern =
       DF.foldr (\(i, _) -> S.adjust' (flip (|>) j) (i-1)) tableau 
                 (skewPartitionElements skewPart)
 
-semiStandardTableauxWithGivenShapeAndWeight :: Partition -> Partition -> [[Seq Int]]
+semiStandardTableauxWithGivenShapeAndWeight :: 
+  Partition -> Partition -> [[Seq Int]]
 semiStandardTableauxWithGivenShapeAndWeight lambda mu =
   if lambda' `dominates` mu'
     then map gtPatternToTableau (kostkaGelfandTsetlinPatterns lambda' mu')
