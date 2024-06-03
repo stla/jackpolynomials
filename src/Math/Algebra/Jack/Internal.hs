@@ -127,8 +127,19 @@ type Partition = [Int]
 
 skewGelfandTsetlinPatterns :: Partition -> Partition -> [Int] 
   -> [[Partition]]
-skewGelfandTsetlinPatterns lambda mu weight = 
-  map (\path -> [path !! i | i <- lines]) (paths lambda)
+skewGelfandTsetlinPatterns lambda mu weight 
+  | not (isSkewPartition lambda mu) =
+      error "skewGelfandTsetlinPatterns: invalid skew partition."
+  | null weight =
+      error "skewGelfandTsetlinPatterns: the weight cannot be an empty list."
+  | any (< 0) weight =
+      []
+  | sum weight /= wLambda - sum mu = 
+      []
+  | lambda == mu =
+      [[lambda, lambda]]
+  | otherwise =
+      map (\path -> [path !! i | i <- lines]) (paths lambda)
   where
     m = lambda !! 0
     ellLambda = length lambda
