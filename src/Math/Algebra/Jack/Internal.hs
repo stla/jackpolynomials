@@ -167,6 +167,50 @@ test = length patterns == 12
     mu = [2,2,1]
     patterns = skewGelfandTsetlinPatterns lambda mu [3,3,2,1]
 
+skewGelfandTsetlinPatternToTableau :: [Partition] -> [(Int, Seq Int)]
+skewGelfandTsetlinPatternToTableau pattern = 
+  if ellLambda == 0
+    then []
+    else DF.toList skewTableau
+  where
+    lambda = pattern !! (length pattern - 1)
+    ellLambda = length lambda
+    mu = S.fromList (pattern !! 0)
+    mu' = mu >< (S.replicate (ellLambda - S.length mu) 0)
+    skewPartitionRows (kappa, nu) = 
+      concatMap (\(i, d) -> replicate d i) (zip [0 ..] differences)
+      where
+        differences = zipWith (-) kappa nu ++ drop (length nu) kappa
+    startingTableau = S.replicate ellLambda S.Empty
+    growTableau :: Seq (Seq Int) -> (Int, (Partition, Partition)) -> Seq (Seq Int)
+    growTableau tableau (j, skewPart) =
+      DF.foldr (S.adjust' (flip (|>) j)) tableau (skewPartitionRows skewPart)
+    skewPartitions = zip [1 ..] (zip (drop1 pattern) pattern)
+    skewTableau = 
+      S.zip mu' (DF.foldl growTableau startingTableau skewPartitions)
+
+test2 :: [[(Int, Seq Int)]]
+test2 = map skewGelfandTsetlinPatternToTableau patterns
+  where
+    lambda = [4,3,3,2,1,1]
+    mu = [2,2,1]
+    patterns = skewGelfandTsetlinPatterns lambda mu [3,3,2,1]
+
+-- skewGTpatternToTableau <- function(pattern) {
+--   if(ncol(pattern) == 0L) {
+--     return(list())
+--   }
+--   mu <- pattern[1L, ]
+--   skewTableau <- lapply(mu, function(i) {
+--     rep(NA_integer_, i)
+--   })
+--   partitions <- apply(pattern, 1L, removeTrailingZeros, simplify = FALSE)
+--   for(i in 2L:nrow(pattern)) {
+--     skewTableau <- 
+--       .growTableau(i-1L, skewTableau, partitions[[i]], partitions[[i-1L]])
+--   }
+--   skewTableau
+-- }
 
 -- partitionsGraph :: Partition -> Partition -> [Int] 
 --   -> Map Partition [Partition]
