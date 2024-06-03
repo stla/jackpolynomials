@@ -52,7 +52,6 @@ import           Data.List                                   (
                                                                nub
                                                              , foldl1'
                                                              , uncons
-                                                             , scanl1
                                                              )
 import           Data.List.Extra                             ( 
                                                                unsnoc
@@ -109,14 +108,9 @@ import           Math.Combinat.Partitions.Integer            (
                                                              , partitionWidth
                                                              , toPartitionUnsafe
                                                              , dropTailingZeros
-                                                             , partitions'
+--                                                             , partitions'
                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
-import           Math.Combinat.Partitions.Skew               (
-                                                               SkewPartition
-                                                             , mkSkewPartition
-                                                             , skewPartitionElements
-                                                             )
 import           Math.Combinat.Tableaux.GelfandTsetlin       (
                                                                 GT
                                                               , kostkaGelfandTsetlinPatterns
@@ -125,8 +119,7 @@ import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
 
 type Partition = [Int]
 
-skewGelfandTsetlinPatterns :: Partition -> Partition -> [Int] 
-  -> [[Seq Int]]
+skewGelfandTsetlinPatterns :: Partition -> Partition -> [Int] -> [[Seq Int]]
 skewGelfandTsetlinPatterns lambda mu weight 
   | not (isSkewPartition lambda mu) =
       error "skewGelfandTsetlinPatterns: invalid skew partition."
@@ -139,7 +132,7 @@ skewGelfandTsetlinPatterns lambda mu weight
   | lambda == mu =
       [[lambda', lambda']]
   | otherwise =
-      map (\path -> [path `S.index` i | i <- lines]) (paths lambda')
+      map (\path -> [path `S.index` i | i <- indices]) (paths lambda')
   where
     lambda' = S.fromList lambda
     m = lambda' `S.index` 0
@@ -147,20 +140,33 @@ skewGelfandTsetlinPatterns lambda mu weight
     wLambda = DF.sum lambda'
     rweight = reverse weight
     cumweight = scanl1 (+) (dropEnd1 (filter (/= 0) rweight))
-    listsOfPartitions = 
-      [lambda] : 
-      map ((map fromPartition) . (partitions' (m, ellLambda)) . ((-) wLambda)) cumweight ++
-      [[mu]]
-    f (v1, v2) = 
-      and (zipWith (>=) v1 v2) && and (zipWith (<=) (drop1 v1) (v2 ++ repeat 0))
-    targets (vs1, vs2) = [(S.fromList v1, [S.fromList v2 | v2 <- vs2, f (v1, v2)]) | v1 <- vs1]
-    graph = DM.fromList (concatMap targets (zip listsOfPartitions (drop1 listsOfPartitions)))
+    partitions' 
+      :: (Int,Int)     -- ^ (height,width)
+      -> Int           -- ^ d
+      -> [Seq Int]        
+    partitions' _ 0 = [S.empty] 
+    partitions' (0, _) d = if d == 0 then [S.empty] else []
+    partitions' (_, 0) d = if d == 0 then [S.empty] else []
+    partitions' (!h, !w) d = 
+      [i :<| p | i <- [1 .. min d h], p <- partitions' (i, w-1) (d-i)]
     mu' = S.fromList mu
+    listsOfPartitions = 
+      [lambda'] : 
+      map ((partitions' (m, ellLambda)) . ((-) wLambda)) cumweight ++
+      [[mu']]
+    zeros = S.replicate ellLambda 0
+    f v1 v2 = 
+      and (S.zipWith (>=) v1 v2) && 
+        and (S.zipWith (<=) (S.drop 1 v1) (v2 >< zeros))
+    targets (vs1, vs2) = [(v1, filter (f v1) vs2) | v1 <- vs1]
+    graph = 
+      DM.fromList 
+        (concatMap targets (zip listsOfPartitions (drop1 listsOfPartitions)))
     paths v = 
       if v == mu' 
-        then [S.singleton (S.fromList mu)]
+        then [S.singleton mu']
         else [v :<| path | w <- graph DM.! v, path <- paths w]
-    lines = map (subtract 1) (reverse (scanl1 (+) (1 : map (min 1) rweight)))
+    indices = map (subtract 1) (reverse (scanl1 (+) (1 : map (min 1) rweight)))
 
 test :: Bool
 test = length patterns == 12
@@ -199,87 +205,13 @@ test2 = map skewGelfandTsetlinPatternToTableau patterns
     mu = [2,2,1]
     patterns = skewGelfandTsetlinPatterns lambda mu [3,3,2,1]
 
--- skewGTpatternToTableau <- function(pattern) {
---   if(ncol(pattern) == 0L) {
---     return(list())
---   }
---   mu <- pattern[1L, ]
---   skewTableau <- lapply(mu, function(i) {
---     rep(NA_integer_, i)
---   })
---   partitions <- apply(pattern, 1L, removeTrailingZeros, simplify = FALSE)
---   for(i in 2L:nrow(pattern)) {
---     skewTableau <- 
---       .growTableau(i-1L, skewTableau, partitions[[i]], partitions[[i-1L]])
---   }
---   skewTableau
--- }
-
--- partitionsGraph :: Partition -> Partition -> [Int] 
---   -> Map Partition [Partition]
--- partitionsGraph lambda mu rweight = neighbors
---   where
---     m = lambda !! 0
---     ellLambda = length lambda
---     wLambda = sum lambda
---     listsOfPartitions = 
---       [lambda] : 
---       map ((map fromPartition) . (partitions' (m, ellLambda)) . ((-) wLambda)) (scanl1 (+) (init rweight)) ++
---       [[mu]]
---     -- n = length listsOfPartitions
---     -- pairs (set1, set2) = [(x, y) | x <- set1, y <- set2]
---     -- potentialEdges = map pairs (zip listsOfPartitions (drop1 listsOfPartitions))
---     f (v1, v2) = 
---       and (zipWith (>=) v1 v2) && and (zipWith (<=) (drop1 v1) (v2 ++ repeat 0))
---     targets (vs1, vs2) = [(v1, [v2 | v2 <- vs2, f (v1, v2)]) | v1 <- vs1]
---     neighbors = DM.fromList (concatMap targets (zip listsOfPartitions (drop1 listsOfPartitions)))
---     -- edges = map (filter f) potentialEdges
---     -- vertices = listsOfPartitions
---     -- targets i vertex = map snd (filter (\edge -> fst edge == vertex) (edges !! i)) 
---     -- neighbors = DM.fromList (concatMap (\i -> zip (vertices !! i) (map (targets i) (vertices !! i))) [0 .. n-2])
-
--- test :: Bool
--- test = length ps == 12
---   where
---     lambda = [4,3,3,2,1,1]
---     mu = [2,2,1]
---     gr = partitionsGraph lambda mu [1,2,3,3]
---     ps = paths gr lambda mu
--- -- getPathsFromTree :: Tree a -> [[a]]
--- -- getPathsFromTree (Node rootLabel subForest)
--- --   | null subForest = [[rootLabel]]
--- --   | otherwise = map (\path -> rootLabel : path) (concatMap getPathsFromTree subForest)
-
--- partitionsGraph :: Partition -> Partition -> [Int] 
---   -> (Graph, Vertex -> (Partition, Partition, [Partition]), Partition -> Maybe Vertex)
--- partitionsGraph lambda mu rweight = graphFromEdges edgesList
---   where
---     lambda' = toPartitionUnsafe lambda
---     mu' = toPartitionUnsafe mu
---     m = lambda !! 0
---     ellLambda = length lambda
---     wLambda = sum lambda
---     listOfPartitions = 
---       [lambda] : 
---       map ((map fromPartition) . (partitions' (m, ellLambda)) . ((-) wLambda)) (scanl1 (+) (init rweight)) ++
---       [[mu]]
---     pairs set1 set2 = [(x, y) | x <- set1, y <- set2]
---     potentialEdges = concatMap (\i -> pairs (listOfPartitions !! i) (listOfPartitions !! (i+1))) [0 .. length listOfPartitions - 2]
---     f edge = and (zipWith (>=) (fst edge) (snd edge)) && and (zipWith (<=) (tail (fst edge)) (init (snd edge)))
---     edges = filter f potentialEdges
---     targets vertex = map snd (filter (\edge -> fst edge == vertex) edges) 
---     vertices = concat listOfPartitions
---     edgesList = [(vertex, vertex, targets vertex) | vertex <- vertices]
-
-
-
-gtPatternDiagonals :: GT -> (Int, [MCP.Partition])
+gtPatternDiagonals :: GT -> (Int, [Partition])
 gtPatternDiagonals pattern = (corner, [diagonal j | j <- [1 .. l]])
   where
     l = length pattern - 1
     corner = pattern !! l !! 0
     diagonal j = 
-      (toPartitionUnsafe . dropTailingZeros) 
+      dropTailingZeros
         [pattern !! r !! c | (r, c) <- zip [l-j .. l] [0 .. j]]
 
 gtPatternToTableau :: GT -> [Seq Int]
@@ -289,22 +221,25 @@ gtPatternToTableau pattern =
     else [S.replicate corner 1]
   where
     (corner, diagonals) = gtPatternDiagonals pattern
-    diagonals' = toPartitionUnsafe [corner] : diagonals
+    diagonals' = [corner] : diagonals
     l = length diagonals - 1
     lambda = diagonals !! l
-    m = partitionWidth lambda
+    m = length lambda
     startingTableau = S.replicate m S.Empty
-    zippedDiagonals = zip diagonals diagonals'
-    skewPartition i = mkSkewPartition (zippedDiagonals !! i)
+    skewPartitions = zip diagonals diagonals'
+    skewPartitionRows (kappa, nu) = 
+      concatMap (\(i, d) -> replicate d i) (zip [0 ..] differences)
+      where
+        differences = zipWith (-) kappa nu ++ drop (length nu) kappa
     go i tableau
       | i == 0 = go 1 (S.adjust' (flip (><) (S.replicate corner 1)) 0 tableau)
       | i == l+2 = tableau
       | otherwise = 
-          go (i+1) (growTableau (i+1) tableau (skewPartition (i-1)))
-    growTableau :: Int -> Seq (Seq Int) -> SkewPartition -> Seq (Seq Int)
+          go (i+1) (growTableau (i+1) tableau (skewPartitions !! (i-1)))
+    growTableau :: 
+      Int -> Seq (Seq Int) -> (Partition, Partition) -> Seq (Seq Int)
     growTableau j tableau skewPart =
-      DF.foldr (\(i, _) -> S.adjust' (flip (|>) j) (i-1)) tableau 
-                (skewPartitionElements skewPart)
+      DF.foldr (S.adjust' (flip (|>) j)) tableau (skewPartitionRows skewPart)
 
 semiStandardTableauxWithGivenShapeAndWeight :: 
   Partition -> Partition -> [[Seq Int]]
