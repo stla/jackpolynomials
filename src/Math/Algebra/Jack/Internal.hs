@@ -77,7 +77,7 @@ import           Data.Matrix                                 (
                                                              )
 import           Data.Maybe                                  ( fromJust, isJust )
 import           Data.Sequence                               ( 
-                                                               Seq
+                                                               Seq 
                                                              , (|>) 
                                                              , (<|)
                                                              , (><)
@@ -126,7 +126,7 @@ import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
 type Partition = [Int]
 
 skewGelfandTsetlinPatterns :: Partition -> Partition -> [Int] 
-  -> [[Partition]]
+  -> [[Seq Int]]
 skewGelfandTsetlinPatterns lambda mu weight 
   | not (isSkewPartition lambda mu) =
       error "skewGelfandTsetlinPatterns: invalid skew partition."
@@ -137,13 +137,14 @@ skewGelfandTsetlinPatterns lambda mu weight
   | sum weight /= wLambda - sum mu = 
       []
   | lambda == mu =
-      [[lambda, lambda]]
+      [[lambda', lambda']]
   | otherwise =
-      map (\path -> [path !! i | i <- lines]) (paths lambda)
+      map (\path -> [path `S.index` i | i <- lines]) (paths lambda')
   where
-    m = lambda !! 0
-    ellLambda = length lambda
-    wLambda = sum lambda
+    lambda' = S.fromList lambda
+    m = lambda' `S.index` 0
+    ellLambda = S.length lambda'
+    wLambda = DF.sum lambda'
     rweight = reverse weight
     cumweight = scanl1 (+) (dropEnd1 (filter (/= 0) rweight))
     listsOfPartitions = 
@@ -152,12 +153,13 @@ skewGelfandTsetlinPatterns lambda mu weight
       [[mu]]
     f (v1, v2) = 
       and (zipWith (>=) v1 v2) && and (zipWith (<=) (drop1 v1) (v2 ++ repeat 0))
-    targets (vs1, vs2) = [(v1, [v2 | v2 <- vs2, f (v1, v2)]) | v1 <- vs1]
+    targets (vs1, vs2) = [(S.fromList v1, [S.fromList v2 | v2 <- vs2, f (v1, v2)]) | v1 <- vs1]
     graph = DM.fromList (concatMap targets (zip listsOfPartitions (drop1 listsOfPartitions)))
+    mu' = S.fromList mu
     paths v = 
-      if v == mu 
-        then [[mu]]
-        else [v : path | w <- graph DM.! v, path <- paths w]
+      if v == mu' 
+        then [S.singleton (S.fromList mu)]
+        else [v :<| path | w <- graph DM.! v, path <- paths w]
     lines = map (subtract 1) (reverse (scanl1 (+) (1 : map (min 1) rweight)))
 
 test :: Bool
@@ -167,27 +169,28 @@ test = length patterns == 12
     mu = [2,2,1]
     patterns = skewGelfandTsetlinPatterns lambda mu [3,3,2,1]
 
-skewGelfandTsetlinPatternToTableau :: [Partition] -> [(Int, Seq Int)]
+skewGelfandTsetlinPatternToTableau :: [Seq Int] -> [(Int, Seq Int)]
 skewGelfandTsetlinPatternToTableau pattern = 
   if ellLambda == 0
     then []
     else DF.toList skewTableau
   where
     lambda = pattern !! (length pattern - 1)
-    ellLambda = length lambda
-    mu = S.fromList (pattern !! 0)
+    ellLambda = S.length lambda
+    mu = pattern !! 0
     mu' = mu >< (S.replicate (ellLambda - S.length mu) 0)
     skewPartitionRows (kappa, nu) = 
-      concatMap (\(i, d) -> replicate d i) (zip [0 ..] differences)
+      concatMap (\(i, d) -> replicate d i) (S.zip indices differences)
       where
-        differences = zipWith (-) kappa nu ++ drop (length nu) kappa
+        indices = S.fromList [0 .. ellLambda]
+        differences = S.zipWith (-) kappa nu >< S.drop (S.length nu) kappa
     startingTableau = S.replicate ellLambda S.Empty
-    growTableau :: Seq (Seq Int) -> (Int, (Partition, Partition)) -> Seq (Seq Int)
+    growTableau :: Seq (Seq Int) -> (Int, (Seq Int, Seq Int)) -> Seq (Seq Int)
     growTableau tableau (j, skewPart) =
       DF.foldr (S.adjust' (flip (|>) j)) tableau (skewPartitionRows skewPart)
     skewPartitions = zip [1 ..] (zip (drop1 pattern) pattern)
     skewTableau = 
-      S.zip mu' (DF.foldl growTableau startingTableau skewPartitions)
+      S.zip mu' (DF.foldl' growTableau startingTableau skewPartitions)
 
 test2 :: [[(Int, Seq Int)]]
 test2 = map skewGelfandTsetlinPatternToTableau patterns
