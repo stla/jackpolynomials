@@ -62,6 +62,8 @@ import           Data.List                                   (
                                                              )
 import           Data.List.Extra                             ( 
                                                                unsnoc
+                                                             , drop1
+                                                             , dropEnd1
                                                              )
 import           Data.List.Index                             ( iconcatMap )
 import           Data.Map.Strict                             ( Map )
@@ -154,19 +156,25 @@ partitionsGraph lambda mu rweight = neighbors
       [lambda] : 
       map ((map fromPartition) . (partitions' (m, ellLambda)) . ((-) wLambda)) (scanl1 (+) (init rweight)) ++
       [[mu]]
-    n = length listsOfPartitions
-    pairs set1 set2 = [(x, y) | x <- set1, y <- set2]
-    potentialEdges = map (\i -> pairs (listsOfPartitions !! i) (listsOfPartitions !! (i+1))) [0 .. n - 2]
+    -- n = length listsOfPartitions
+    -- pairs (set1, set2) = [(x, y) | x <- set1, y <- set2]
+    -- potentialEdges = map pairs (zip listsOfPartitions (drop1 listsOfPartitions))
     f (v1, v2) = 
-      and (zipWith (>=) (v1) (v2)) && and (zipWith (<=) (tail (v1)) (init (v2')))
-      where
-        v2' = v2 ++ replicate (length v1 - length v2) 0
-    edges = map (filter f) potentialEdges
-    vertices = listsOfPartitions
-    targets i vertex = map snd (filter (\edge -> fst edge == vertex) (edges !! i)) 
-    neighbors = DM.fromList (concatMap (\i -> zip (vertices !! i) (map (targets i) (vertices !! i))) [0 .. n-2])
+      and (zipWith (>=) v1 v2) && and (zipWith (<=) (drop1 v1) (v2 ++ repeat 0))
+    targets (vs1, vs2) = [(v1, [v2 | v2 <- vs2, f (v1, v2)]) | v1 <- vs1]
+    neighbors = DM.fromList (concatMap targets (zip listsOfPartitions (drop1 listsOfPartitions)))
+    -- edges = map (filter f) potentialEdges
+    -- vertices = listsOfPartitions
+    -- targets i vertex = map snd (filter (\edge -> fst edge == vertex) (edges !! i)) 
+    -- neighbors = DM.fromList (concatMap (\i -> zip (vertices !! i) (map (targets i) (vertices !! i))) [0 .. n-2])
 
-
+test :: Bool
+test = length ps == 12
+  where
+    lambda = [4,3,3,2,1,1]
+    mu = [2,2,1]
+    gr = partitionsGraph lambda mu [1,2,3,3]
+    ps = paths gr lambda mu
 -- getPathsFromTree :: Tree a -> [[a]]
 -- getPathsFromTree (Node rootLabel subForest)
 --   | null subForest = [[rootLabel]]
