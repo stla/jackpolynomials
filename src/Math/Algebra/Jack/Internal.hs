@@ -47,12 +47,6 @@ import           Algebra.Ring                                ( (*), product, one
 import qualified Algebra.Ring                                as AlgRing
 import           Algebra.ToInteger                           ( fromIntegral )
 import qualified Data.Foldable                               as DF
-import           Data.Graph                                  ( 
-                                                               Tree (..)
-                                                             , Vertex
-                                                             , Graph
-                                                             , graphFromEdges
-                                                             )
 import qualified Data.HashMap.Strict                         as HM
 import           Data.List                                   ( 
                                                                nub
@@ -131,54 +125,72 @@ import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
 
 type Partition = [Int]
 
--- neighbors :: Eq a => [(a, [a])] -> a -> [a]
--- neighbors graph v = fromJust (lookup v graph)
-
-paths :: (Eq a, Ord a) => Map a [a] -> a -> a -> [[a]]
-paths g v w 
-  | v == w = [[v]]
-  | otherwise = [ v : path | n <- g DM.! v,
-                             path <- paths g n w ]
-
-grex :: [(Int, [Int])]
-grex = [(0,[]),(1,[]),(2,[1]),(3,[0,2]),(4,[2]),(5,[1]),(6,[0,2,5]),(7,[3,6])]
-
-partitionsGraph :: Partition -> Partition -> [Int] 
-  -> Map Partition [Partition]
-partitionsGraph lambda mu rweight = neighbors
+skewGelfandTsetlinPatterns :: Partition -> Partition -> [Int] 
+  -> [[Partition]]
+skewGelfandTsetlinPatterns lambda mu weight = 
+  map (\path -> [path !! i | i <- lines]) (paths lambda)
   where
-    lambda' = toPartitionUnsafe lambda
-    mu' = toPartitionUnsafe mu
     m = lambda !! 0
     ellLambda = length lambda
     wLambda = sum lambda
+    rweight = reverse weight
+    cumweight = scanl1 (+) (dropEnd1 (filter (/= 0) rweight))
     listsOfPartitions = 
       [lambda] : 
-      map ((map fromPartition) . (partitions' (m, ellLambda)) . ((-) wLambda)) (scanl1 (+) (init rweight)) ++
+      map ((map fromPartition) . (partitions' (m, ellLambda)) . ((-) wLambda)) cumweight ++
       [[mu]]
-    -- n = length listsOfPartitions
-    -- pairs (set1, set2) = [(x, y) | x <- set1, y <- set2]
-    -- potentialEdges = map pairs (zip listsOfPartitions (drop1 listsOfPartitions))
     f (v1, v2) = 
       and (zipWith (>=) v1 v2) && and (zipWith (<=) (drop1 v1) (v2 ++ repeat 0))
     targets (vs1, vs2) = [(v1, [v2 | v2 <- vs2, f (v1, v2)]) | v1 <- vs1]
-    neighbors = DM.fromList (concatMap targets (zip listsOfPartitions (drop1 listsOfPartitions)))
-    -- edges = map (filter f) potentialEdges
-    -- vertices = listsOfPartitions
-    -- targets i vertex = map snd (filter (\edge -> fst edge == vertex) (edges !! i)) 
-    -- neighbors = DM.fromList (concatMap (\i -> zip (vertices !! i) (map (targets i) (vertices !! i))) [0 .. n-2])
+    graph = DM.fromList (concatMap targets (zip listsOfPartitions (drop1 listsOfPartitions)))
+    paths v = 
+      if v == mu 
+        then [[mu]]
+        else [v : path | w <- graph DM.! v, path <- paths w]
+    lines = map (subtract 1) (reverse (scanl1 (+) (1 : map (min 1) rweight)))
 
 test :: Bool
-test = length ps == 12
+test = length patterns == 12
   where
     lambda = [4,3,3,2,1,1]
     mu = [2,2,1]
-    gr = partitionsGraph lambda mu [1,2,3,3]
-    ps = paths gr lambda mu
--- getPathsFromTree :: Tree a -> [[a]]
--- getPathsFromTree (Node rootLabel subForest)
---   | null subForest = [[rootLabel]]
---   | otherwise = map (\path -> rootLabel : path) (concatMap getPathsFromTree subForest)
+    patterns = skewGelfandTsetlinPatterns lambda mu [3,3,2,1]
+
+
+-- partitionsGraph :: Partition -> Partition -> [Int] 
+--   -> Map Partition [Partition]
+-- partitionsGraph lambda mu rweight = neighbors
+--   where
+--     m = lambda !! 0
+--     ellLambda = length lambda
+--     wLambda = sum lambda
+--     listsOfPartitions = 
+--       [lambda] : 
+--       map ((map fromPartition) . (partitions' (m, ellLambda)) . ((-) wLambda)) (scanl1 (+) (init rweight)) ++
+--       [[mu]]
+--     -- n = length listsOfPartitions
+--     -- pairs (set1, set2) = [(x, y) | x <- set1, y <- set2]
+--     -- potentialEdges = map pairs (zip listsOfPartitions (drop1 listsOfPartitions))
+--     f (v1, v2) = 
+--       and (zipWith (>=) v1 v2) && and (zipWith (<=) (drop1 v1) (v2 ++ repeat 0))
+--     targets (vs1, vs2) = [(v1, [v2 | v2 <- vs2, f (v1, v2)]) | v1 <- vs1]
+--     neighbors = DM.fromList (concatMap targets (zip listsOfPartitions (drop1 listsOfPartitions)))
+--     -- edges = map (filter f) potentialEdges
+--     -- vertices = listsOfPartitions
+--     -- targets i vertex = map snd (filter (\edge -> fst edge == vertex) (edges !! i)) 
+--     -- neighbors = DM.fromList (concatMap (\i -> zip (vertices !! i) (map (targets i) (vertices !! i))) [0 .. n-2])
+
+-- test :: Bool
+-- test = length ps == 12
+--   where
+--     lambda = [4,3,3,2,1,1]
+--     mu = [2,2,1]
+--     gr = partitionsGraph lambda mu [1,2,3,3]
+--     ps = paths gr lambda mu
+-- -- getPathsFromTree :: Tree a -> [[a]]
+-- -- getPathsFromTree (Node rootLabel subForest)
+-- --   | null subForest = [[rootLabel]]
+-- --   | otherwise = map (\path -> rootLabel : path) (concatMap getPathsFromTree subForest)
 
 -- partitionsGraph :: Partition -> Partition -> [Int] 
 --   -> (Graph, Vertex -> (Partition, Partition, [Partition]), Partition -> Maybe Vertex)
