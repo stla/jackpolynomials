@@ -185,25 +185,31 @@ skewGelfandTsetlinPatternToTableau pattern =
     ellLambda = S.length lambda
     mu = pattern !! 0
     mu' = mu >< (S.replicate (ellLambda - S.length mu) 0)
-    skewPartitionRows (kappa, nu) = 
-      concatMap (\(i, d) -> replicate d i) (S.zip indices differences)
+    skewPartitionRows kappa nu = 
+      concatMap (uncurry replicate) (S.zip differences indices)
       where
         indices = S.fromList [0 .. ellLambda]
         differences = S.zipWith (-) kappa nu >< S.drop (S.length nu) kappa
     startingTableau = S.replicate ellLambda S.Empty
-    growTableau :: Seq (Seq Int) -> (Int, (Seq Int, Seq Int)) -> Seq (Seq Int)
-    growTableau tableau (j, skewPart) =
-      DF.foldr (S.adjust' (flip (|>) j)) tableau (skewPartitionRows skewPart)
-    skewPartitions = zip [1 ..] (zip (drop1 pattern) pattern)
+    growTableau :: Seq (Seq Int) -> (Int, Seq Int, Seq Int) -> Seq (Seq Int)
+    growTableau tableau (j, kappa, nu) =
+      DF.foldr (S.adjust' (flip (|>) j)) tableau (skewPartitionRows kappa nu)
+    skewPartitions = zip3 [1 ..] (drop1 pattern) pattern
     skewTableau = 
       S.zip mu' (DF.foldl' growTableau startingTableau skewPartitions)
 
-test2 :: [[(Int, Seq Int)]]
-test2 = map skewGelfandTsetlinPatternToTableau patterns
+test2 :: Bool
+test2 = 
+  (skewTx !! 0, skewTx !! 11) == 
+    (
+      [(2,S.fromList [1,4]),(2,S.fromList [2]),(1,S.fromList [1,3]),(0,S.fromList [1,2]),(0,S.fromList [2]),(0,S.fromList [3])],
+      [(2,S.fromList [1,1]),(2,S.fromList [2]),(1,S.fromList [1,3]),(0,S.fromList [2,2]),(0,S.fromList [3]),(0,S.fromList [4])]
+    )
   where
     lambda = [4,3,3,2,1,1]
     mu = [2,2,1]
     patterns = skewGelfandTsetlinPatterns lambda mu [3,3,2,1]
+    skewTx = map skewGelfandTsetlinPatternToTableau patterns
 
 gtPatternDiagonals :: GT -> (Int, [Partition])
 gtPatternDiagonals pattern = (corner, [diagonal j | j <- [1 .. l]])
