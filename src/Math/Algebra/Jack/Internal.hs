@@ -124,13 +124,14 @@ sandwichedPartitions weight mu lambda =
   recursiveFun weight (lambda `S.index` 0) mu' lambda
   where
     mu' = mu >< (S.replicate (S.length lambda - S.length mu) 0)
+    dropTrailingZeros = S.dropWhileR (== 0)
     recursiveFun :: Int -> Int -> Seq Int -> Seq Int -> [Seq Int]
     recursiveFun d h0 a_as b_bs
       | d < 0 || d < DF.sum a_as || d > DF.sum b_bs = []
-      | d == 0 = [S.replicate (S.length a_as) 0]
+      | d == 0 = [S.empty]
       | otherwise = 
           concatMap 
-            (\h -> [h :<| hs | hs <- recursiveFun (d-h) h as bs])
+            (\h -> [h :<| dropTrailingZeros hs | hs <- recursiveFun (d-h) h as bs])
             [max 0 a .. min h0 b]
           where
             a = a_as `S.index` 0
@@ -156,23 +157,9 @@ skewGelfandTsetlinPatterns lambda mu weight
         else map DF.toList patterns
   where
     lambda' = S.fromList lambda
-    -- m = lambda' `S.index` 0
-    -- ellLambda = S.length lambda'
     wLambda = DF.sum lambda'
-    -- rweight = reverse weight
-    -- cumweight = scanl1 (+) (dropEnd1 (filter (/= 0) rweight))
-    -- partitions' 
-    --   :: (Int,Int)     -- ^ (height,width)
-    --   -> Int           -- ^ d
-    --   -> [Seq Int]        
-    -- partitions' _ 0 = [S.empty] 
-    -- partitions' (0, _) d = if d == 0 then [S.empty] else []
-    -- partitions' (_, 0) d = if d == 0 then [S.empty] else []
-    -- partitions' (!h, !w) d = 
-    --   [i :<| p | i <- [1 .. min d h], p <- partitions' (i, w-1) (d-i)]
     mu' = S.fromList mu
     wMu = DF.sum mu'
-    dropTrailingZeros = S.dropWhileR (== 0)
     zeros = S.replicate (S.length lambda') 0
     recursiveFun :: Seq Int -> Seq Int -> [Seq (Seq Int)]
     recursiveFun kappa w =
@@ -180,11 +167,11 @@ skewGelfandTsetlinPatterns lambda mu weight
         then
           if and (S.zipWith (>=) kappa mu') && 
               and (S.zipWith (>=) (mu' >< zeros) (S.drop 1 kappa))
-            then [S.fromList [mu', dropTrailingZeros kappa]]
+            then [S.fromList [mu', kappa]]
             else [] 
         else 
           concatMap
-            (\nu -> [list |> dropTrailingZeros kappa | list <- recursiveFun nu hw])
+            (\nu -> [list |> kappa | list <- recursiveFun nu hw])
               (sandwichedPartitions d (S.drop 1 kappa |> 0) kappa)
         where
           d = DF.sum kappa - w `S.index` 0
@@ -192,23 +179,6 @@ skewGelfandTsetlinPatterns lambda mu weight
     weight' = S.fromList weight
     patterns = recursiveFun lambda' (S.reverse weight')
     indices = map (subtract 1) (scanl1 (+) (1 : map (min 1) (reverse weight)))
-    -- listsOfPartitions = 
-    --   [lambda'] : 
-    --   map ((partitions' (m, ellLambda)) . ((-) wLambda)) cumweight ++
-    --   [[mu']]
-    -- zeros = S.replicate ellLambda 0
-    -- f v1 v2 = 
-    --   and (S.zipWith (>=) v1 v2) && 
-    --     and (S.zipWith (<=) (S.drop 1 v1) (v2 >< zeros))
-    -- targets (vs1, vs2) = [(v1, filter (f v1) vs2) | v1 <- vs1]
-    -- graph = 
-    --   DM.fromList 
-    --     (concatMap targets (zip listsOfPartitions (drop1 listsOfPartitions)))
-    -- paths v = 
-    --   if v == mu' 
-    --     then [S.singleton mu']
-    --     else [v :<| path | w <- graph DM.! v, path <- paths w]
-    -- indices = map (subtract 1) (reverse (scanl1 (+) (1 : map (min 1) rweight)))
 
 test :: Bool
 test = length patterns == 12
