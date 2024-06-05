@@ -1,6 +1,7 @@
 module Main ( main ) where
 import qualified Algebra.Additive               as AlgAdd
 import qualified Algebra.Module                 as AlgMod
+import qualified Data.HashMap.Strict            as HM
 import qualified Data.IntMap.Strict             as IM
 import qualified Data.Map.Strict                as DM
 import           Data.Matrix                    ( 
@@ -25,6 +26,7 @@ import Math.Algebra.Hspray                      ( FunctionLike (..)
                                                 , sumOfSprays
                                                 , productOfSprays
                                                 , detLaplace
+                                                , getConstantTerm
                                                 )
 import qualified Math.Algebra.Hspray            as Hspray
 import Math.Algebra.Jack                        ( schur, skewSchur 
@@ -57,6 +59,7 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , kostkaNumbers
                                                 , symbolicKostkaNumbers
                                                 , kostkaFoulkesPolynomial
+                                                , skewKostkaFoulkesPolynomial'
                                                 , hallLittlewoodPolynomial
                                                 , hallLittlewoodPolynomial'
                                                 , skewHallLittlewoodPolynomial'
@@ -677,6 +680,20 @@ main = defaultMain $ testGroup
       t = lone 1 :: Spray Int
       expected = t^**^3 ^+^ t^**^4 ^+^ 2*^t^**^5 ^+^ t^**^6 ^+^ t^**^7
     assertEqual "" (kfPoly, kfPolyAt1) (expected, kNumber)
+
+  , testCase "Skew Kostka-Foulkes polynomials" $ do
+    let 
+      lambda = [3, 3, 2, 1]
+      mu = [1, 1, 1]
+      n = sum lambda - sum mu
+      nus = map fromPartition (partitions n)
+      skewKFpolys = map (skewKostkaFoulkesPolynomial' lambda mu) nus
+      hlPolys = map (\nu -> hallLittlewoodPolynomial' n nu 'P') nus
+      combo = sumOfSprays $ zipWith (*^) skewKFpolys hlPolys
+      comboIsConstant = all (== 0) (map numberOfVariables (HM.elems combo))
+      combo' = HM.map getConstantTerm combo
+      skewSchurPoly = skewSchurPol' n lambda mu
+    assertEqual "" (comboIsConstant, combo') (True, skewSchurPoly)
 
   , testCase "Hall-Littlewood polynomial P" $ do
     let

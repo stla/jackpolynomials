@@ -61,6 +61,8 @@ module Math.Algebra.SymmetricPolynomials
   -- * Kostka-Foulkes polynomials
   , kostkaFoulkesPolynomial
   , kostkaFoulkesPolynomial'
+  , skewKostkaFoulkesPolynomial
+  , skewKostkaFoulkesPolynomial'
   -- * Hall-Littlewood polynomials
   , hallLittlewoodPolynomial
   , hallLittlewoodPolynomial'
@@ -170,6 +172,7 @@ import           Math.Algebra.Jack.Internal       (
                                                   , _symbolicKostkaNumbers
                                                   , _inverseSymbolicKostkaMatrix
                                                   , _kostkaFoulkesPolynomial
+                                                  , _skewKostkaFoulkesPolynomial
                                                   , _hallLittlewoodPolynomialsInSchurBasis
                                                   , _transitionMatrixHallLittlewoodSchur
                                                   , skewHallLittlewoodP
@@ -989,6 +992,27 @@ kostkaFoulkesPolynomial lambda mu
 -- polynomial whose value at @1@ is the Kostka number of the two partitions.
 kostkaFoulkesPolynomial' :: Partition -> Partition -> QSpray
 kostkaFoulkesPolynomial' = kostkaFoulkesPolynomial
+
+skewKostkaFoulkesPolynomial :: 
+  (Eq a, AlgRing.C a) 
+  => Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
+  -> Partition -- ^ integer partition; the equality of the weight of this partition with the weight of the skew partition is a necessary condition to get a non-zero polynomial
+  -> Spray a
+skewKostkaFoulkesPolynomial lambda mu nu 
+  | not (isSkewPartition lambda mu) =
+     error "skewKostkaFoulkesPolynomial: invalid skew partition"
+  | not (_isPartition nu) =
+     error "skewKostkaFoulkesPolynomial: invalid partition"
+  | otherwise = 
+      _skewKostkaFoulkesPolynomial lambda mu nu
+
+skewKostkaFoulkesPolynomial' :: 
+     Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
+  -> Partition -- ^ integer partition; the equality of the weight of this partition with the weight of the skew partition is a necessary condition to get a non-zero polynomial
+  -> QSpray
+skewKostkaFoulkesPolynomial' = skewKostkaFoulkesPolynomial 
 
 -- | Hall-Littlewood polynomial of a given partition. This is a multivariate 
 -- symmetric polynomial whose coefficients are polynomial in one parameter.

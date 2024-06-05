@@ -31,6 +31,7 @@ module Math.Algebra.Jack.Internal
   , isIncreasing
   , flaggedSkewTableaux
   , skewTableauWeight
+  , _skewKostkaFoulkesPolynomial
   )
   where
 import           Prelude 
@@ -56,7 +57,6 @@ import           Data.List                                   (
 import           Data.List.Extra                             ( 
                                                                unsnoc
                                                              , drop1
-                                                             , dropEnd1
                                                              )
 import           Data.List.Index                             ( iconcatMap )
 import           Data.Map.Strict                             ( Map )
@@ -112,7 +112,7 @@ import           Math.Combinat.Partitions.Integer            (
                                                              , partitionWidth
                                                              , toPartitionUnsafe
                                                              , dropTailingZeros
-                                                             , partitions'
+                                                            --  , partitions'
                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.GelfandTsetlin       (
@@ -148,7 +148,9 @@ skewGelfandTsetlinPatterns lambda mu weight
   | not (isSkewPartition lambda mu) =
       error "skewGelfandTsetlinPatterns: invalid skew partition."
   | null weight =
-      error "skewGelfandTsetlinPatterns: the weight cannot be an empty list."
+      if lambda == mu
+        then [[lambda']]
+        else []
   | any (< 0) weight =
       []
   | sum weight /= wLambda - wMu = 
@@ -164,12 +166,6 @@ skewGelfandTsetlinPatterns lambda mu weight
     wLambda = DF.sum lambda'
     mu' = S.fromList mu
     wMu = DF.sum mu'
-    -- zeros = S.replicate (S.length lambda') 0
-    -- f p1 p2 = S.zipWith max p1' p2'
-    --   where 
-    --     n = max (S.length p1) (S.length p2)
-    --     p1' = p1 >< (S.replicate (n - S.length p1) 0)
-    --     p2' = p2 >< (S.replicate (n - S.length p2) 0)
     recursiveFun :: Seq Int -> Seq Int -> [Seq (Seq Int)]
     recursiveFun kappa w =
       if d == wMu 
@@ -250,17 +246,16 @@ _skewKostkaFoulkesPolynomial lambda mu nu =
     tableaux = skewTableauxWithGivenShapeAndWeight lambda mu nu
     word skewT = mconcat (map S.reverse (snd (unzip skewT))) 
     mm = lone' 1 
-    sprays = 
-      map (mm . charge . word) tableaux
+    sprays = map (mm . charge . word) tableaux
 
-skfps :: ([Partition], [Spray Rational])
-skfps = (nus, sprays)
-  where
-    lambda = [3, 3, 1]
-    mu = [2, 1]
-    w = sum lambda - sum mu
-    nus = map fromPartition (partitions' (lambda !! 0, w) w)
-    sprays = map (_skewKostkaFoulkesPolynomial lambda mu) nus
+-- skfps :: ([Partition], [Spray Rational])
+-- skfps = (nus, sprays)
+--   where
+--     lambda = [3, 3, 1]
+--     mu = [2, 1]
+--     w = sum lambda - sum mu
+--     nus = map fromPartition (partitions' (lambda !! 0, w) w)
+--     sprays = map (_skewKostkaFoulkesPolynomial lambda mu) nus
 
 gtPatternDiagonals :: GT -> (Int, [Partition])
 gtPatternDiagonals pattern = (corner, [diagonal j | j <- [1 .. l]])
@@ -391,20 +386,20 @@ isDecreasing s =
 --     where
 --       previous = cartesianProduct is
 
-horizontalStrip :: Seq Int -> Seq Int -> Bool
-horizontalStrip mu lambda = 
---  all (`elem` [0, 1]) theta'
-  S.length lambda <= S.length mu + 1 && and (S.zipWith (>=) mu (S.drop 1 lambda)) -- 
-  -- where
-  --   lambda' = S.fromList $ _dualPartition (DF.toList lambda)
-  --   mu' = S.fromList $ _dualPartition (DF.toList mu)
-  --   mu'' = mu' >< (S.replicate (S.length lambda' - S.length mu') 0)
-  --   theta' = S.zipWith (-) lambda' mu''
+-- horizontalStrip :: Seq Int -> Seq Int -> Bool
+-- horizontalStrip mu lambda = 
+-- --  all (`elem` [0, 1]) theta'
+--   S.length lambda <= S.length mu + 1 && and (S.zipWith (>=) mu (S.drop 1 lambda)) -- 
+--   -- where
+--   --   lambda' = S.fromList $ _dualPartition (DF.toList lambda)
+--   --   mu' = S.fromList $ _dualPartition (DF.toList mu)
+--   --   mu'' = mu' >< (S.replicate (S.length lambda' - S.length mu') 0)
+--   --   theta' = S.zipWith (-) lambda' mu''
 
-columnStrictTableau :: [Seq Int] -> Bool
-columnStrictTableau tableau = 
-  and (zipWith horizontalStrip tableau tail_tableau)
-  where tail_tableau = drop 1 tableau
+-- columnStrictTableau :: [Seq Int] -> Bool
+-- columnStrictTableau tableau = 
+--   and (zipWith horizontalStrip tableau tail_tableau)
+--   where tail_tableau = drop 1 tableau
 
 _paths :: Int -> Seq Int -> Seq Int -> [[Seq Int]]
 _paths n lambda mu = 
