@@ -108,7 +108,7 @@ import           Math.Combinat.Partitions.Integer            (
                                                              , partitionWidth
                                                              , toPartitionUnsafe
                                                              , dropTailingZeros
---                                                             , partitions'
+                                                             , partitions'
                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.GelfandTsetlin       (
@@ -222,6 +222,34 @@ test2 =
     mu = [2,2,1]
     patterns = skewGelfandTsetlinPatterns lambda mu [3,3,2,1]
     skewTx = map skewGelfandTsetlinPatternToTableau patterns
+
+skewTableauxWithGivenShapeAndWeight :: 
+  Partition -> Partition -> [Int] -> [[(Int, Seq Int)]]
+skewTableauxWithGivenShapeAndWeight lambda mu weight = 
+  map skewGelfandTsetlinPatternToTableau 
+      (skewGelfandTsetlinPatterns lambda mu weight) 
+
+_skewKostkaFoulkesPolynomial :: 
+  (Eq a, AlgRing.C a) => Partition -> Partition -> Partition -> Spray a
+_skewKostkaFoulkesPolynomial lambda mu nu = 
+  if sum lambda == sum mu + sum nu
+    then sumOfSprays sprays
+    else zeroSpray
+  where
+    tableaux = skewTableauxWithGivenShapeAndWeight lambda mu nu
+    word skewT = mconcat (map S.reverse (snd (unzip skewT))) 
+    mm = lone' 1 
+    sprays = 
+      map (mm . charge . word) tableaux
+
+skfps :: ([Partition], [Spray Rational])
+skfps = (nus, sprays)
+  where
+    lambda = [3, 3, 1]
+    mu = [2, 1]
+    w = sum lambda - sum mu
+    nus = map fromPartition (partitions' (lambda !! 0, w) w)
+    sprays = map (_skewKostkaFoulkesPolynomial lambda mu) nus
 
 gtPatternDiagonals :: GT -> (Int, [Partition])
 gtPatternDiagonals pattern = (corner, [diagonal j | j <- [1 .. l]])
@@ -498,7 +526,7 @@ _kostkaFoulkesPolynomial lambda mu =
     else zeroSpray
   where
     tableaux = semiStandardTableauxWithGivenShapeAndWeight lambda mu
-    mm = lone' 1 -- TODO: fix lone' 1 0 (= fromList [(Powers {exponents = fromList [0], nvariables = 1},1 % 1)])
+    mm = lone' 1 
     sprays = 
       map (mm . charge . ((foldl1' (S.><)) . (map S.reverse))) tableaux
 
