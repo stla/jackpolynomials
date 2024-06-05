@@ -164,7 +164,7 @@ skewGelfandTsetlinPatterns lambda mu weight
     wLambda = DF.sum lambda'
     mu' = S.fromList mu
     wMu = DF.sum mu'
-    zeros = S.replicate (S.length lambda') 0
+    -- zeros = S.replicate (S.length lambda') 0
     -- f p1 p2 = S.zipWith max p1' p2'
     --   where 
     --     n = max (S.length p1) (S.length p2)
@@ -174,8 +174,8 @@ skewGelfandTsetlinPatterns lambda mu weight
     recursiveFun kappa w =
       if d == wMu 
         then
-          if S.length kappa >= S.length mu' && and (S.zipWith (>=) kappa mu') && 
-              S.length kappa <= S.length mu' +1 && and (S.zipWith (>=) (mu') (S.drop 1 kappa))
+          if ellKappa >= ellMu && and (S.zipWith (>=) kappa mu') && 
+              ellKappa <= ellMu + 1 && and (S.zipWith (>=) (mu') (S.drop 1 kappa))
             then [S.fromList [mu', kappa]]
             else [] 
         else 
@@ -183,6 +183,8 @@ skewGelfandTsetlinPatterns lambda mu weight
             (\nu -> [list |> kappa | list <- recursiveFun nu hw])
               (sandwichedPartitions d (S.drop 1 kappa |> 0) kappa)
         where
+          ellKappa = S.length kappa
+          ellMu = S.length mu'
           d = DF.sum kappa - w `S.index` 0
           hw = S.drop 1 w
     weight' = S.filter (/= 0) (S.fromList weight)
@@ -406,7 +408,7 @@ columnStrictTableau tableau =
 
 _paths :: Int -> Seq Int -> Seq Int -> [[Seq Int]]
 _paths n lambda mu = 
-  filter columnStrictTableau
+--  filter columnStrictTableau
     (concatMap 
      (skewGelfandTsetlinPatterns (DF.toList lambda) (DF.toList mu))
       (compositions n (DF.sum lambda - DF.sum mu)))
