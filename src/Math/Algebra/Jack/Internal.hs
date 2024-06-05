@@ -149,21 +149,18 @@ skewGelfandTsetlinPatterns :: Partition -> Partition -> [Int] -> [[Seq Int]]
 skewGelfandTsetlinPatterns lambda mu weight 
   | not (isSkewPartition lambda mu) =
       error "skewGelfandTsetlinPatterns: invalid skew partition."
-  | null weight =
-      if lambda == mu
-        then [[lambda']]
-        else []
   | any (< 0) weight =
       []
-  | sum weight /= wLambda - wMu = 
+  | wWeight /= wLambda - wMu = 
       []
-  | lambda == mu =
-      [[lambda', lambda']]
+  | wWeight == 0 =
+      [replicate (length weight + 1) lambda']
   | otherwise =
       if any (== 0) weight 
         then map (\pattern -> [pattern `S.index` i | i <- indices]) patterns
         else map DF.toList patterns
   where
+    wWeight = sum weight
     lambda' = S.fromList lambda
     wLambda = DF.sum lambda'
     mu' = S.fromList mu
