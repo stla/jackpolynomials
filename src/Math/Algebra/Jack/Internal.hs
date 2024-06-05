@@ -94,11 +94,15 @@ import           Math.Algebra.Hspray                         (
                                                              , Powers (..)
                                                              , SimpleParametricSpray
                                                              , zeroSpray
+                                                             , unitSpray
                                                              , isZeroSpray
-                                                             , lone, lone', unitSpray
+                                                             , lone, lone'
                                                              , sumOfSprays
                                                              , productOfSprays
                                                              , FunctionLike (..)
+                                                             )
+import           Math.Combinat.Compositions                  (
+                                                               compositions
                                                              )
 import           Math.Combinat.Partitions.Integer            (
                                                                fromPartition
@@ -161,12 +165,17 @@ skewGelfandTsetlinPatterns lambda mu weight
     mu' = S.fromList mu
     wMu = DF.sum mu'
     zeros = S.replicate (S.length lambda') 0
+    -- f p1 p2 = S.zipWith max p1' p2'
+    --   where 
+    --     n = max (S.length p1) (S.length p2)
+    --     p1' = p1 >< (S.replicate (n - S.length p1) 0)
+    --     p2' = p2 >< (S.replicate (n - S.length p2) 0)
     recursiveFun :: Seq Int -> Seq Int -> [Seq (Seq Int)]
     recursiveFun kappa w =
       if d == wMu 
         then
-          if and (S.zipWith (>=) kappa mu') && 
-              and (S.zipWith (>=) (mu' >< zeros) (S.drop 1 kappa))
+          if S.length kappa >= S.length mu' && and (S.zipWith (>=) kappa mu') && 
+              S.length kappa <= S.length mu' +1 && and (S.zipWith (>=) (mu') (S.drop 1 kappa))
             then [S.fromList [mu', kappa]]
             else [] 
         else 
@@ -176,7 +185,7 @@ skewGelfandTsetlinPatterns lambda mu weight
         where
           d = DF.sum kappa - w `S.index` 0
           hw = S.drop 1 w
-    weight' = S.fromList weight
+    weight' = S.filter (/= 0) (S.fromList weight)
     patterns = recursiveFun lambda' (S.reverse weight')
     indices = map (subtract 1) (scanl1 (+) (1 : map (min 1) (reverse weight)))
 
@@ -372,21 +381,23 @@ isDecreasing :: Seq Int -> Bool
 isDecreasing s = 
   and [s `S.index` i >= s `S.index` (i+1) | i <- [0 .. S.length s - 2]]
 
-cartesianProduct :: Seq Int -> [Seq Int]
-cartesianProduct (S.Empty) = []
-cartesianProduct (i:<|is)
-  | S.null is = [S.singleton j | j <- [i, i-1 .. 0]]
-  | otherwise = [j <| s | j <- [i, i-1 .. 0], s <- previous]
-    where
-      previous = cartesianProduct is
+-- cartesianProduct :: Seq Int -> [Seq Int]
+-- cartesianProduct (S.Empty) = []
+-- cartesianProduct (i:<|is)
+--   | S.null is = [S.singleton j | j <- [i, i-1 .. 0]]
+--   | otherwise = [j <| s | j <- [i, i-1 .. 0], s <- previous]
+--     where
+--       previous = cartesianProduct is
 
 horizontalStrip :: Seq Int -> Seq Int -> Bool
-horizontalStrip lambda mu = all (`elem` [0, 1]) theta'
-  where
-    lambda' = S.fromList $ _dualPartition (DF.toList lambda)
-    mu' = S.fromList $ _dualPartition (DF.toList mu)
-    mu'' = mu' >< (S.replicate (S.length lambda' - S.length mu') 0)
-    theta' = S.zipWith (-) lambda' mu''
+horizontalStrip mu lambda = 
+--  all (`elem` [0, 1]) theta'
+  S.length lambda <= S.length mu + 1 && and (S.zipWith (>=) mu (S.drop 1 lambda)) -- 
+  -- where
+  --   lambda' = S.fromList $ _dualPartition (DF.toList lambda)
+  --   mu' = S.fromList $ _dualPartition (DF.toList mu)
+  --   mu'' = mu' >< (S.replicate (S.length lambda' - S.length mu') 0)
+  --   theta' = S.zipWith (-) lambda' mu''
 
 columnStrictTableau :: [Seq Int] -> Bool
 columnStrictTableau tableau = 
@@ -394,26 +405,35 @@ columnStrictTableau tableau =
   where tail_tableau = drop 1 tableau
 
 _paths :: Int -> Seq Int -> Seq Int -> [[Seq Int]]
-_paths n lambda mu = filter columnStrictTableau tableaux
-  where
-    mu' = mu >< (S.replicate (S.length lambda - S.length mu) 0)
-    diffs = S.zipWith (-) lambda mu'
-    grid = cartesianProduct diffs
-    kappas = filter isDecreasing [S.zipWith (+) kappa mu' | kappa <- grid]
-    combos = combinations 0 (length kappas - 1) (n-1)
-      where
-        combinations :: Int -> Int -> Int -> [[Int]]
-        combinations a b m 
-          | m == 0 = [[]]
-          | m == 1 = [[i] | i <- [a .. b]]
-          | otherwise = 
-              [i : combo | i <- [a .. b], combo <- combinations i b (m-1)]
-    tableaux = 
-      map (\combo -> lambda : (map ((!!) kappas) combo) ++ [mu']) combos
+_paths n lambda mu = 
+  filter columnStrictTableau
+    (concatMap 
+     (skewGelfandTsetlinPatterns (DF.toList lambda) (DF.toList mu))
+      (compositions n (DF.sum lambda - DF.sum mu)))
+
+-- _paths :: Int -> Seq Int -> Seq Int -> [[Seq Int]]
+-- _paths n lambda mu = filter columnStrictTableau tableaux
+--   where
+--     mu' = mu >< (S.replicate (S.length lambda - S.length mu) 0)
+--     diffs = S.zipWith (-) lambda mu'
+--     grid = cartesianProduct diffs
+--     kappas = filter isDecreasing [S.zipWith (+) kappa mu' | kappa <- grid]
+--     combos = combinations 0 (length kappas - 1) (n-1)
+--       where
+--         combinations :: Int -> Int -> Int -> [[Int]]
+--         combinations a b m 
+--           | m == 0 = [[]]
+--           | m == 1 = [[i] | i <- [a .. b]]
+--           | otherwise = 
+--               [i : combo | i <- [a .. b], combo <- combinations i b (m-1)]
+--     tableaux = 
+--       map (\combo -> lambda : (map ((!!) kappas) combo) ++ [mu']) combos
 
 psi_lambda_mu :: forall a. (Eq a, AlgRing.C a) 
   => Seq Int -> Seq Int -> Spray a
-psi_lambda_mu lambda mu = productOfSprays sprays
+psi_lambda_mu lambda mu = if S.null lambda
+  then unitSpray
+  else productOfSprays sprays
   where
     range = [1 .. lambda `S.index` 0]
     pair j = (
@@ -426,7 +446,9 @@ psi_lambda_mu lambda mu = productOfSprays sprays
 
 phi_lambda_mu :: forall a. (Eq a, AlgRing.C a) 
   => Seq Int -> Seq Int -> Spray a
-phi_lambda_mu lambda mu = productOfSprays sprays
+phi_lambda_mu lambda mu = if S.null lambda
+  then unitSpray
+  else productOfSprays sprays
   where
     range = [1 .. lambda `S.index` 0]
     pair j = (
@@ -440,7 +462,7 @@ phi_lambda_mu lambda mu = productOfSprays sprays
 skewHallLittlewoodP :: forall a. (Eq a, AlgRing.C a) 
   => Int -> Seq Int -> Seq Int -> SimpleParametricSpray a
 skewHallLittlewoodP n lambda mu = 
-  sumOfSprays [productOfSprays $ sprays (reverse path) | path <- paths]
+  sumOfSprays [productOfSprays $ sprays path | path <- paths]
   where
     paths = _paths n lambda mu
     lones = [lone' i | i <- [1 .. n]]
@@ -451,7 +473,7 @@ skewHallLittlewoodP n lambda mu =
 skewHallLittlewoodQ :: forall a. (Eq a, AlgRing.C a) 
   => Int -> Seq Int -> Seq Int -> SimpleParametricSpray a
 skewHallLittlewoodQ n lambda mu = 
-  sumOfSprays [productOfSprays $ sprays (reverse path) | path <- paths]
+  sumOfSprays [productOfSprays $ sprays path | path <- paths]
   where
     paths = _paths n lambda mu
     lones = [lone' i | i <- [1 .. n]]
