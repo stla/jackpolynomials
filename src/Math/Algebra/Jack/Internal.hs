@@ -51,7 +51,7 @@ import qualified Data.Foldable                               as DF
 import qualified Data.HashMap.Strict                         as HM
 import           Data.List                                   ( 
                                                                nub
-                                                             , foldl1'
+                                                            --  , foldl1'
                                                              , uncons
                                                              )
 import           Data.List.Extra                             ( 
@@ -78,7 +78,7 @@ import           Data.Maybe                                  ( fromJust, isJust 
 import           Data.Sequence                               ( 
                                                                Seq 
                                                              , (|>) 
-                                                             , (<|)
+                                                            --  , (<|)
                                                              , (><)
                                                              , Seq ( (:<|) )
                                                              )
@@ -135,7 +135,9 @@ sandwichedPartitions weight mu lambda =
       | d == 0 = [S.empty]
       | otherwise = 
           concatMap 
-            (\h -> [h :<| dropTrailingZeros hs | hs <- recursiveFun (d-h) h as bs])
+            (\h -> 
+              [h :<| dropTrailingZeros hs | hs <- recursiveFun (d-h) h as bs]
+            )
             [max 0 a .. min h0 b]
           where
             a = a_as `S.index` 0
@@ -170,8 +172,10 @@ skewGelfandTsetlinPatterns lambda mu weight
     recursiveFun kappa w =
       if d == wMu 
         then
-          if ellKappa >= ellMu && and (S.zipWith (>=) kappa mu') && 
-              ellKappa <= ellMu + 1 && and (S.zipWith (>=) (mu') (S.drop 1 kappa))
+          if ellKappa >= ellMu && 
+              and (S.zipWith (>=) kappa mu') && 
+                ellKappa <= ellMu + 1 && 
+                  and (S.zipWith (>=) (mu') (S.drop 1 kappa))
             then [S.fromList [mu', kappa]]
             else [] 
         else 
@@ -187,12 +191,12 @@ skewGelfandTsetlinPatterns lambda mu weight
     patterns = recursiveFun lambda' (S.reverse weight')
     indices = map (subtract 1) (scanl1 (+) (1 : map (min 1) (reverse weight)))
 
-test :: Bool
-test = length patterns == 12
-  where
-    lambda = [4,3,3,2,1,1]
-    mu = [2,2,1]
-    patterns = skewGelfandTsetlinPatterns lambda mu [3,3,2,1]
+-- test :: Bool
+-- test = length patterns == 12
+--   where
+--     lambda = [4,3,3,2,1,1]
+--     mu = [2,2,1]
+--     patterns = skewGelfandTsetlinPatterns lambda mu [3,3,2,1]
 
 skewGelfandTsetlinPatternToTableau :: [Seq Int] -> [(Int, Seq Int)]
 skewGelfandTsetlinPatternToTableau pattern = 
@@ -217,18 +221,18 @@ skewGelfandTsetlinPatternToTableau pattern =
     skewTableau = 
       S.zip mu' (DF.foldl' growTableau startingTableau skewPartitions)
 
-test2 :: Bool
-test2 = 
-  (skewTx !! 0, skewTx !! 11) == 
-    (
-      [(2,S.fromList [1,4]),(2,S.fromList [2]),(1,S.fromList [1,3]),(0,S.fromList [1,2]),(0,S.fromList [2]),(0,S.fromList [3])],
-      [(2,S.fromList [1,1]),(2,S.fromList [2]),(1,S.fromList [1,3]),(0,S.fromList [2,2]),(0,S.fromList [3]),(0,S.fromList [4])]
-    )
-  where
-    lambda = [4,3,3,2,1,1]
-    mu = [2,2,1]
-    patterns = skewGelfandTsetlinPatterns lambda mu [3,3,2,1]
-    skewTx = map skewGelfandTsetlinPatternToTableau patterns
+-- test2 :: Bool
+-- test2 = 
+--   (skewTx !! 0, skewTx !! 11) == 
+--     (
+--       [(2,S.fromList [1,4]),(2,S.fromList [2]),(1,S.fromList [1,3]),(0,S.fromList [1,2]),(0,S.fromList [2]),(0,S.fromList [3])],
+--       [(2,S.fromList [1,1]),(2,S.fromList [2]),(1,S.fromList [1,3]),(0,S.fromList [2,2]),(0,S.fromList [3]),(0,S.fromList [4])]
+--     )
+--   where
+--     lambda = [4,3,3,2,1,1]
+--     mu = [2,2,1]
+--     patterns = skewGelfandTsetlinPatterns lambda mu [3,3,2,1]
+--     skewTx = map skewGelfandTsetlinPatternToTableau patterns
 
 skewTableauxWithGivenShapeAndWeight :: 
   Partition -> Partition -> [Int] -> [[(Int, Seq Int)]]
@@ -372,11 +376,12 @@ skewTableauWeight skewT = [count i | i <- [1 .. m]]
 
 isIncreasing :: [Int] -> Bool
 isIncreasing s = 
-  and [s !! i <= s !! (i+1) | i <- [0 .. length s - 2]]
+  and (zipWith (<=) s (drop1 s))
+  -- and [s !! i <= s !! (i+1) | i <- [0 .. length s - 2]]
 
-isDecreasing :: Seq Int -> Bool
-isDecreasing s = 
-  and [s `S.index` i >= s `S.index` (i+1) | i <- [0 .. S.length s - 2]]
+-- isDecreasing :: Seq Int -> Bool
+-- isDecreasing s = 
+--   and [s `S.index` i >= s `S.index` (i+1) | i <- [0 .. S.length s - 2]]
 
 -- cartesianProduct :: Seq Int -> [Seq Int]
 -- cartesianProduct (S.Empty) = []
@@ -476,7 +481,7 @@ skewHallLittlewoodQ n lambda mu =
     lones = [lone' i | i <- [1 .. n]]
     sprays nu = 
       [phi_lambda_mu next_nu_i nu_i *^ lone_i (DF.sum next_nu_i - DF.sum nu_i)
-        | (next_nu_i, nu_i, lone_i) <- zip3 (drop 1 nu) nu lones]
+        | (next_nu_i, nu_i, lone_i) <- zip3 (drop1 nu) nu lones]
 
 charge :: Seq Int -> Int
 charge w = if l == 0 || n == 1 then 0 else DF.sum indices' + charge w'
@@ -546,8 +551,9 @@ _kostkaFoulkesPolynomial lambda mu =
   where
     tableaux = semiStandardTableauxWithGivenShapeAndWeight lambda mu
     mm = lone' 1 
-    sprays = 
-      map (mm . charge . ((foldl1' (S.><)) . (map S.reverse))) tableaux
+    sprays =
+      map (mm . charge . (mconcat . (map S.reverse))) tableaux 
+--      map (mm . charge . ((foldl1' (S.><)) . (map S.reverse))) tableaux
 
 b_lambda :: (Eq a, AlgRing.C a) => Partition -> Spray a
 b_lambda lambda = productOfSprays sprays
