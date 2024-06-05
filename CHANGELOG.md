@@ -111,3 +111,11 @@ polynomial
 * new function `factorialSchurPol`, to get a factorial Schur polynomial
 
 * new function `skewFactorialSchurPol`, to get a skew factorial Schur polynomial
+
+1.4.4.0
+-------
+* new function `skewKostkaFoulkesPolynomial`, to get a skew Kosta-Foulkes 
+polynomial
+
+* the efficiency of the function `skewHallLittlewoodPolynomial` has been 
+greatly improved

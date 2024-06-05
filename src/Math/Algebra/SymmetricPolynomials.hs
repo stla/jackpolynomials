@@ -993,6 +993,7 @@ kostkaFoulkesPolynomial lambda mu
 kostkaFoulkesPolynomial' :: Partition -> Partition -> QSpray
 kostkaFoulkesPolynomial' = kostkaFoulkesPolynomial
 
+-- | Skew Kostka-Foulkes polynomial.
 skewKostkaFoulkesPolynomial :: 
   (Eq a, AlgRing.C a) 
   => Partition -- ^ outer partition of the skew partition
@@ -1007,6 +1008,7 @@ skewKostkaFoulkesPolynomial lambda mu nu
   | otherwise = 
       _skewKostkaFoulkesPolynomial lambda mu nu
 
+-- | Skew Kostka-Foulkes polynomial.
 skewKostkaFoulkesPolynomial' :: 
      Partition -- ^ outer partition of the skew partition
   -> Partition -- ^ inner partition of the skew partition
