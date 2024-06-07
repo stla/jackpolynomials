@@ -78,7 +78,6 @@ import           Data.Maybe                                  ( fromJust, isJust 
 import           Data.Sequence                               ( 
                                                                Seq 
                                                              , (|>) 
-                                                            --  , (<|)
                                                              , (><)
                                                              , Seq ( (:<|) )
                                                              )
@@ -112,7 +111,6 @@ import           Math.Combinat.Partitions.Integer            (
                                                              , partitionWidth
                                                              , toPartitionUnsafe
                                                              , dropTailingZeros
-                                                            --  , partitions'
                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.GelfandTsetlin       (
@@ -147,8 +145,8 @@ sandwichedPartitions weight mu lambda =
 
 skewGelfandTsetlinPatterns :: Partition -> Partition -> [Int] -> [[Seq Int]]
 skewGelfandTsetlinPatterns lambda mu weight 
-  | not (isSkewPartition lambda mu) =
-      error "skewGelfandTsetlinPatterns: invalid skew partition."
+  -- | not (isSkewPartition lambda mu) =
+  --     error "skewGelfandTsetlinPatterns: invalid skew partition."
   | any (< 0) weight =
       []
   | wWeight /= wLambda - wMu = 
@@ -188,13 +186,6 @@ skewGelfandTsetlinPatterns lambda mu weight
     patterns = recursiveFun lambda' (S.reverse weight')
     indices = map (subtract 1) (scanl1 (+) (1 : map (min 1) (reverse weight)))
 
--- test :: Bool
--- test = length patterns == 12
---   where
---     lambda = [4,3,3,2,1,1]
---     mu = [2,2,1]
---     patterns = skewGelfandTsetlinPatterns lambda mu [3,3,2,1]
-
 skewGelfandTsetlinPatternToTableau :: [Seq Int] -> [(Int, Seq Int)]
 skewGelfandTsetlinPatternToTableau pattern = 
   if ellLambda == 0
@@ -218,19 +209,6 @@ skewGelfandTsetlinPatternToTableau pattern =
     skewTableau = 
       S.zip mu' (DF.foldl' growTableau startingTableau skewPartitions)
 
--- test2 :: Bool
--- test2 = 
---   (skewTx !! 0, skewTx !! 11) == 
---     (
---       [(2,S.fromList [1,4]),(2,S.fromList [2]),(1,S.fromList [1,3]),(0,S.fromList [1,2]),(0,S.fromList [2]),(0,S.fromList [3])],
---       [(2,S.fromList [1,1]),(2,S.fromList [2]),(1,S.fromList [1,3]),(0,S.fromList [2,2]),(0,S.fromList [3]),(0,S.fromList [4])]
---     )
---   where
---     lambda = [4,3,3,2,1,1]
---     mu = [2,2,1]
---     patterns = skewGelfandTsetlinPatterns lambda mu [3,3,2,1]
---     skewTx = map skewGelfandTsetlinPatternToTableau patterns
-
 skewTableauxWithGivenShapeAndWeight :: 
   Partition -> Partition -> [Int] -> [[(Int, Seq Int)]]
 skewTableauxWithGivenShapeAndWeight lambda mu weight = 
@@ -248,15 +226,6 @@ _skewKostkaFoulkesPolynomial lambda mu nu =
     word skewT = mconcat (map S.reverse (snd (unzip skewT))) 
     mm = lone' 1 
     sprays = map (mm . charge . word) tableaux
-
--- skfps :: ([Partition], [Spray Rational])
--- skfps = (nus, sprays)
---   where
---     lambda = [3, 3, 1]
---     mu = [2, 1]
---     w = sum lambda - sum mu
---     nus = map fromPartition (partitions' (lambda !! 0, w) w)
---     sprays = map (_skewKostkaFoulkesPolynomial lambda mu) nus
 
 gtPatternDiagonals :: GT -> (Int, [Partition])
 gtPatternDiagonals pattern = (corner, [diagonal j | j <- [1 .. l]])
@@ -374,59 +343,12 @@ skewTableauWeight skewT = [count i | i <- [1 .. m]]
 isIncreasing :: [Int] -> Bool
 isIncreasing s = 
   and (zipWith (<=) s (drop1 s))
-  -- and [s !! i <= s !! (i+1) | i <- [0 .. length s - 2]]
-
--- isDecreasing :: Seq Int -> Bool
--- isDecreasing s = 
---   and [s `S.index` i >= s `S.index` (i+1) | i <- [0 .. S.length s - 2]]
-
--- cartesianProduct :: Seq Int -> [Seq Int]
--- cartesianProduct (S.Empty) = []
--- cartesianProduct (i:<|is)
---   | S.null is = [S.singleton j | j <- [i, i-1 .. 0]]
---   | otherwise = [j <| s | j <- [i, i-1 .. 0], s <- previous]
---     where
---       previous = cartesianProduct is
-
--- horizontalStrip :: Seq Int -> Seq Int -> Bool
--- horizontalStrip mu lambda = 
--- --  all (`elem` [0, 1]) theta'
---   S.length lambda <= S.length mu + 1 && and (S.zipWith (>=) mu (S.drop 1 lambda)) -- 
---   -- where
---   --   lambda' = S.fromList $ _dualPartition (DF.toList lambda)
---   --   mu' = S.fromList $ _dualPartition (DF.toList mu)
---   --   mu'' = mu' >< (S.replicate (S.length lambda' - S.length mu') 0)
---   --   theta' = S.zipWith (-) lambda' mu''
-
--- columnStrictTableau :: [Seq Int] -> Bool
--- columnStrictTableau tableau = 
---   and (zipWith horizontalStrip tableau tail_tableau)
---   where tail_tableau = drop 1 tableau
 
 _paths :: Int -> Seq Int -> Seq Int -> [[Seq Int]]
 _paths n lambda mu = 
---  filter columnStrictTableau
-    (concatMap 
-     (skewGelfandTsetlinPatterns (DF.toList lambda) (DF.toList mu))
-      (compositions n (DF.sum lambda - DF.sum mu)))
-
--- _paths :: Int -> Seq Int -> Seq Int -> [[Seq Int]]
--- _paths n lambda mu = filter columnStrictTableau tableaux
---   where
---     mu' = mu >< (S.replicate (S.length lambda - S.length mu) 0)
---     diffs = S.zipWith (-) lambda mu'
---     grid = cartesianProduct diffs
---     kappas = filter isDecreasing [S.zipWith (+) kappa mu' | kappa <- grid]
---     combos = combinations 0 (length kappas - 1) (n-1)
---       where
---         combinations :: Int -> Int -> Int -> [[Int]]
---         combinations a b m 
---           | m == 0 = [[]]
---           | m == 1 = [[i] | i <- [a .. b]]
---           | otherwise = 
---               [i : combo | i <- [a .. b], combo <- combinations i b (m-1)]
---     tableaux = 
---       map (\combo -> lambda : (map ((!!) kappas) combo) ++ [mu']) combos
+  concatMap 
+    (skewGelfandTsetlinPatterns (DF.toList lambda) (DF.toList mu))
+      (compositions n (DF.sum lambda - DF.sum mu))
 
 psi_lambda_mu :: forall a. (Eq a, AlgRing.C a) 
   => Seq Int -> Seq Int -> Spray a
@@ -502,43 +424,6 @@ charge w = if l == 0 || n == 1 then 0 else DF.sum indices' + charge w'
               then (1 + pos + fromJust rindex, index)
               else (fromJust (S.elemIndexL (r+1) w), index + 1)
 
--- isDominated :: Seq Int -> Seq Int -> Bool
--- isDominated mu lambda = 
---   (MCP.Partition (DF.toList lambda)) `dominates` (MCP.Partition (DF.toList mu))
-
--- -- assumes sum lambda == sum mu 
--- ssytxWithGivenShapeAndContent :: Seq Int -> Seq Int -> [Seq (Seq Int)]
--- ssytxWithGivenShapeAndContent lambda mu = 
---   if all (== 1) lambda 
---     then if all (== 1) mu
---       then [S.fromList [S.singleton i | i <- [1 .. S.length lambda]]]
---       else []
---     else if isDominated mu lambda
---       then nub all_ssytx
---       else []
---   where
---     dropTrailingZeros = S.dropWhileR (== 0)
---     l = S.length lambda
---     m = S.length mu
---     mu' = dropTrailingZeros $ S.adjust' (subtract 1) (m-1) mu
---     zippedKappas = 
---       zip [0 ..] [S.adjust' (subtract 1) i lambda | i <- [0 .. l - 1]]
---     all_ssytx = concatMap f zippedKappas
---       where
---         f (i, kappa) = 
---            if isDecreasing kappa 
---             then nub $ 
---               map g (ssytxWithGivenShapeAndContent kappa' mu')
---             else []
---           where 
---             kappa' = dropTrailingZeros kappa
---             g ssyt = if i < S.length ssyt 
---               then S.adjust' (|> m) i ssyt 
---               else ssyt |> (S.singleton m)
---             -- g ssyt = if i < length ssyt 
---             --   then (element i .~ ssyt !! i |> l) ssyt 
---             --   else ssyt ++ [S.singleton l]
-
 _kostkaFoulkesPolynomial :: 
   (Eq a, AlgRing.C a) => Partition -> Partition -> Spray a
 _kostkaFoulkesPolynomial lambda mu = 
@@ -550,7 +435,6 @@ _kostkaFoulkesPolynomial lambda mu =
     mm = lone' 1 
     sprays =
       map (mm . charge . (mconcat . (map S.reverse))) tableaux 
---      map (mm . charge . ((foldl1' (S.><)) . (map S.reverse))) tableaux
 
 b_lambda :: (Eq a, AlgRing.C a) => Partition -> Spray a
 b_lambda lambda = productOfSprays sprays
