@@ -78,13 +78,13 @@ import           Data.Matrix                                 (
                                                              )
 import           Data.Maybe                                  ( fromJust, isJust )
 import           Data.Sequence                               ( 
-                                                               Seq 
+                                                               Seq (..)
                                                              , (|>) 
+                                                             , (<|)
                                                              , (><)
-                                                             , Seq ( (:<|) )
                                                              )
 import qualified Data.Sequence                               as S
-import           Data.Tuple.Extra                            ( fst3 )
+import           Data.Tuple.Extra                            ( fst3, both )
 import qualified Data.Vector                                 as V
 import           Math.Algebra.Hspray                         ( 
                                                                RatioOfSprays, (%:%), (%//%), (%/%)
@@ -170,6 +170,27 @@ blambda lambda s = if DM.member s a then num %//% den else unitRatioOfSprays
     -- num = productOfSprays [unitSpray ^-^ q^**^(a DM.! s) ^*^ t^**^(l DM.! s + 1) | s <- pairs]
     -- den = productOfSprays [unitSpray ^-^ q^**^(a DM.! s + 1) ^*^ t^**^(l DM.! s) | s <- pairs]
 
+_dualPartition' :: Seq Int -> Seq Int
+_dualPartition' Empty = S.empty
+_dualPartition' xs = go 0 (_diffSequence' xs) S.empty where
+  go !i (d :<| ds) acc = go (i+1) ds (d <| acc)
+  go n  Empty     acc = finish n acc 
+  finish !j (k :<| ks) = S.replicate k j >< finish (j-1) ks
+  finish _  Empty     = S.empty
+  _diffSequence' (x :<| ys@(y :<| _)) = (x-y) <| _diffSequence' ys 
+  _diffSequence' (Empty :|> x)          = S.singleton x
+  _diffSequence' Empty           = S.empty
+
+srange' :: Seq Int -> Seq Int -> [(Int, Int)]
+srange' lambda mu = [(i+1, j+1) | i <- nonEmptyRows, j <- emptyColumns] -- r \\ c
+  where
+    lambda' = _dualPartition' lambda
+    mu' = _dualPartition' mu
+    bools = S.zipWith (==) lambda mu >< S.replicate (S.length lambda - S.length mu) False
+    nonEmptyRows = S.elemIndicesL False bools
+    bools' = S.zipWith (==) lambda' mu' -- >< S.replicate (S.length lambda' - S.length mu') False
+    emptyColumns = S.elemIndicesL True bools'
+
 srange :: Partition -> Partition -> [(Int, Int)]
 srange lambda mu = [(i+1, j+1) | i <- nonEmptyRows, j <- emptyColumns] -- r \\ c
   where
@@ -221,31 +242,38 @@ psiLambdaMu (lambda, mu) = AlgRing.product ratios
     ratio s = num s AlgField./ den s
     ratios = map ratio ss
 
-psiGT' :: (Eq a, AlgField.C a) => GT -> ([Spray a], [Spray a])
-psiGT' pattern = 
-  (numFactors, denFactors)
+psiLambdaMu' :: (Eq a, AlgField.C a) => (Seq Int, Seq Int) -> RatioOfSprays a
+psiLambdaMu' (lambda, mu) = AlgRing.product ratios
   where
-    lambdas = gtPatternDiagonals' pattern
-    ell = length lambdas - 1
-    q = lone 1
-    t = lone 2
-    poch = qPochammer q
-    pairs = zip lambdas (drop1 lambdas)
-    (numFactors, denFactors) = unzip [
-        let (lambda1, lambda2) = pairs !! (k-1)
-            l1i = lambda1 !! i
-            l1j = lambda1 !! j
-            l2i = lambda2 !! i
-            l2jp1 = lambda2 !! (j + 1)
-        in
-          (
-            poch (q^**^(l1i - l1j) ^*^ t^**^(j-i+1)) (l2i - l1i) 
-            ^*^ poch (q^**^(l1i - l2jp1 + 1) ^*^ t^**^(j-i)) (l2i - l1i)
-          , poch (q^**^(l1i - l1j + 1) ^*^ t^**^(j-i)) (l2i - l1i) 
-            ^*^ poch (q^**^(l1i - l2jp1) ^*^ t^**^(j-i+1)) (l2i - l1i)
-          )
-        | k <- [1 .. ell], j <- [0 .. k-1], i <- [0 .. j]
-      ]
+    ss = srange' lambda mu
+    ellLambda = S.length lambda
+    ellMu = S.length mu
+    mu'' = _dualPartition' mu
+    lambda'' = _dualPartition' lambda
+    q = lone' 1
+    t = lone' 2
+    num (i, j) =
+      if i <= ellMu && j <= (mu `S.index` (i-1))
+        then 
+          let a = mu `S.index` (i-1) - j
+              l = mu'' `S.index` (j-1) - i
+          in
+          (unitSpray ^-^ q a ^*^ t (l + 1))
+          %//% (unitSpray ^-^ q (a + 1) ^*^ t l)
+        else
+          unitRatioOfSprays
+    den (i, j) =
+      if i <= ellLambda && j <= (lambda `S.index` (i-1))
+        then 
+          let a = lambda `S.index` (i-1) - j
+              l = lambda'' `S.index` (j-1) - i
+          in
+          (unitSpray ^-^ q a ^*^ t (l + 1))
+          %//% (unitSpray ^-^ q (a + 1) ^*^ t l)
+        else
+          unitRatioOfSprays
+    ratio s = num s AlgField./ den s
+    ratios = map ratio ss
 
 psiGT :: (Eq a, AlgField.C a) => GT -> RatioOfSprays a
 psiGT pattern = 
@@ -254,7 +282,8 @@ psiGT pattern =
   where
     lambdas = gtPatternDiagonals' pattern
     pairs = zip (drop1 lambdas) lambdas
-    rOS = map psiLambdaMu pairs
+    rOS = map (psiLambdaMu' . (both S.fromList)) pairs
+--    rOS = map psiLambdaMu pairs
     -- ell = length lambdas - 1
     -- q = lone 1
     -- t = lone 2
