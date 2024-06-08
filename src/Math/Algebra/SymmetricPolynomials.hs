@@ -69,6 +69,9 @@ module Math.Algebra.SymmetricPolynomials
   , transitionsSchurToHallLittlewood
   , skewHallLittlewoodPolynomial
   , skewHallLittlewoodPolynomial'
+  -- * Macdonald polynomials
+  , macdonaldPolynomial
+  , macdonaldPolynomial'
   -- * Flagged Schur polynomials
   , flaggedSchurPol
   , flaggedSchurPol'
@@ -183,6 +186,8 @@ import           Math.Algebra.Jack.Internal       (
                                                   , isIncreasing
                                                   , flaggedSkewTableaux
                                                   , skewTableauWeight
+                                                  , macdonaldPolynomialP
+                                                  , macdonaldPolynomialQ
                                                   )
 import           Math.Algebra.JackPol             ( 
                                                     schurPol
@@ -1097,6 +1102,39 @@ skewHallLittlewoodPolynomial' ::
   -> Char      -- ^ which skew Hall-Littlewood polynomial, @'P'@ or @'Q'@
   -> SimpleParametricQSpray
 skewHallLittlewoodPolynomial' = skewHallLittlewoodPolynomial
+
+-- | Macdonald polynomial. This is a symmetric multivariate polynomial 
+-- depending on two parameters usually denoted by @q@ and @t@.
+--
+-- >>> macPoly = macdonaldPolynomial 3 [2, 1] 'P'
+-- >>> putStrLn $ prettySymmetricParametricQSpray ["q", "t"] macPoly
+-- { [ 1 ] }*M[2,1] + { [ 2*q.t^2 - q.t - q + t^2 + t - 2 ] %//% [ q.t^2 - 1 ] }*M[1,1,1]
+macdonaldPolynomial :: (Eq a, AlgField.C a) 
+  => Int        -- ^ number of variables
+  -> Partition  -- ^ integer partition
+  -> Char       -- ^ which Macdonald polynomial, @'P'@ or @'Q'@
+  -> ParametricSpray a
+macdonaldPolynomial n lambda which
+  | n < 0 = error "macdonaldPolynomial: negative number of variables."
+  | not (_isPartition lambda) = 
+      error "macdonaldPolynomial: invalid partition."
+  | not (which `elem` ['P', 'Q']) =
+      error "macdonaldPolynomial: last argument must be 'P' or 'Q'."
+  | null lambda = unitSpray
+  | length lambda > n = zeroSpray
+  | otherwise = 
+      if which == 'P'
+        then macdonaldPolynomialP n lambda
+        else macdonaldPolynomialQ n lambda
+
+-- | Macdonald polynomial. This is a symmetric multivariate polynomial 
+-- depending on two parameters usually denoted by @q@ and @t@.
+macdonaldPolynomial' ::  
+     Int        -- ^ number of variables
+  -> Partition  -- ^ integer partition
+  -> Char       -- ^ which Macdonald polynomial, @'P'@ or @'Q'@
+  -> ParametricQSpray
+macdonaldPolynomial' = macdonaldPolynomial
 
 -- | Flagged Schur polynomial. A flagged Schur polynomial is not symmetric 
 -- in general.

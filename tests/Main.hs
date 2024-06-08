@@ -11,6 +11,7 @@ import Data.Ratio                               ( (%) )
 import Math.Algebra.Hspray                      ( FunctionLike (..)
                                                 , Spray, QSpray
                                                 , SimpleParametricSpray
+                                                , asSimpleParametricSpray
                                                 , lone, qlone 
                                                 , zeroSpray
                                                 , unitSpray
@@ -62,6 +63,7 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , skewKostkaFoulkesPolynomial'
                                                 , hallLittlewoodPolynomial
                                                 , hallLittlewoodPolynomial'
+                                                , macdonaldPolynomial'
                                                 , skewHallLittlewoodPolynomial'
                                                 , flaggedSchurPol'
                                                 , flaggedSkewSchurPol'
@@ -764,5 +766,18 @@ main = defaultMain $ testGroup
                   | mu <- mus]
     assertEqual "" hlLambda (sumOfSprays terms)
 
+  , testCase "Macdonald polynomial at q=0 is Hall-Littlewood" $ do
+    let
+      n = 4
+      lambda = [2, 1, 1]
+      hlPolyP = hallLittlewoodPolynomial' n lambda 'P'
+      hlPolyQ = hallLittlewoodPolynomial' n lambda 'Q'
+      macPolyP = macdonaldPolynomial' n lambda 'P'
+      macPolyQ = macdonaldPolynomial' n lambda 'Q'
+      hlPolyP' = HM.map (substitute [Just 0, Nothing]) macPolyP
+      hlPolyQ' = HM.map (substitute [Just 0, Nothing]) macPolyQ
+    assertEqual "" 
+      (hlPolyP, hlPolyQ)
+      (asSimpleParametricSpray hlPolyP', asSimpleParametricSpray hlPolyQ')
 
   ]

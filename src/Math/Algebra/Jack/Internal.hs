@@ -424,7 +424,7 @@ macdonaldPolynomialP n lambda = sumOfSprays sprays
       ]
     zippedCompos = zip compos compos1
     term (compo, compo1) = 
-      coeffs DM.! compo1 *^ monomial (zip [1 ..] compo)
+      coeffs DM.! compo1 *^ monomial (filter ((/= 0) . snd) $ zip [1 ..] compo)
     sprays = map term zippedCompos
 
 test :: Bool
@@ -450,7 +450,7 @@ macdonaldPolynomialQ n lambda = sumOfSprays sprays
       ]
     zippedCompos = zip compos compos1
     term (compo, compo1) = 
-      coeffs DM.! compo1 *^ monomial (zip [1 ..] compo)
+      coeffs DM.! compo1 *^ monomial (filter ((/= 0) . snd) $ zip [1 ..] compo)
     sprays = map term zippedCompos
 
 test' :: Bool 
