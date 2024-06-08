@@ -113,6 +113,7 @@ import           Math.Combinat.Partitions.Integer            (
                                                              , dualPartition
                                                              , partitions
                                                              , dominates
+                                                             , dominatedPartitions
                                                              , partitionWidth
                                                              , toPartitionUnsafe
                                                              , dropTailingZeros
@@ -124,6 +125,7 @@ import           Math.Combinat.Partitions.Integer            (
 --                                                              , SkewPartition (..)
 --                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
+import           Math.Combinat.Permutations                  ( permuteMultiset )
 import           Math.Combinat.Tableaux.GelfandTsetlin       (
                                                                 GT
                                                               , kostkaGelfandTsetlinPatterns
@@ -410,22 +412,45 @@ phiGT pattern =
 
 macdonaldPolynomialP :: 
   (Eq a, AlgField.C a) => Int -> Partition -> ParametricSpray a
-macdonaldPolynomialP n lambda = sumOfSprays sprays
+macdonaldPolynomialP n lambda = 
+  HM.mapKeys (\expnts -> (Powers expnts (S.length expnts))) hashMap -- sumOfSprays sprays
   where
-    compos = compositions n (sum lambda)
-    compos1 = map (filter (/= 0)) compos
     lambda' = toPartitionUnsafe lambda
-    coeffs = DM.fromList 
+    mus = filter (\mu -> partitionWidth mu <= n) (dominatedPartitions lambda')
+    dropTrailingZeros = S.dropWhileR (== 0)
+    coeffs = HM.fromList 
       [
         (
-          compo1
-        , AlgAdd.sum (map psiGT (kostkaGelfandTsetlinPatterns' lambda' compo1))
-        ) | compo1 <- nub compos1
+          S.fromList (fromPartition mu)
+        , AlgAdd.sum (map psiGT (kostkaGelfandTsetlinPatterns lambda' mu))
+        ) | mu <- mus
       ]
-    zippedCompos = zip compos compos1
-    term (compo, compo1) = 
-      coeffs DM.! compo1 *^ monomial (filter ((/= 0) . snd) $ zip [1 ..] compo)
-    sprays = map term zippedCompos
+    hashMaps = 
+      map 
+        (\mu -> 
+          let mu' = fromPartition mu
+              mu'' = S.fromList mu'
+              mu''' = mu' ++ (replicate (n - S.length mu'') 0)
+              coeff = coeffs HM.! mu''
+              compos = permuteMultiset mu'''
+          in
+            HM.fromList [(dropTrailingZeros (S.fromList compo), coeff) | compo <- compos]
+        ) mus
+    hashMap = HM.unions hashMaps
+    -- compos = compositions n (sum lambda)
+    -- compos1 = map (filter (/= 0)) compos
+    -- lambda' = toPartitionUnsafe lambda
+    -- coeffs = DM.fromList 
+    --   [
+    --     (
+    --       compo1
+    --     , AlgAdd.sum (map psiGT (kostkaGelfandTsetlinPatterns' lambda' compo1))
+    --     ) | compo1 <- nub compos1
+    --   ]
+    -- zippedCompos = zip compos compos1
+    -- term (compo, compo1) = 
+    --   coeffs DM.! compo1 *^ monomial (filter ((/= 0) . snd) $ zip [1 ..] compo)
+    -- sprays = map term zippedCompos
 
 test :: Bool
 test = 
