@@ -54,6 +54,7 @@ import           Data.List                                   (
                                                             --  , foldl1'
                                                              , uncons
                                                              , (\\)
+                                                             , findIndices
                                                              )
 import           Data.List.Extra                             ( 
                                                                unsnoc
@@ -120,6 +121,8 @@ import           Math.Combinat.Partitions.Integer            (
 import           Math.Combinat.Partitions.Skew              (
                                                                mkSkewPartition
                                                              , skewPartitionElements
+                                                             , dualSkewPartition
+                                                             , SkewPartition (..)
                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.GelfandTsetlin       (
@@ -168,21 +171,54 @@ blambda lambda s = if DM.member s a then num %//% den else unitRatioOfSprays
     -- den = productOfSprays [unitSpray ^-^ q^**^(a DM.! s + 1) ^*^ t^**^(l DM.! s) | s <- pairs]
 
 srange :: Partition -> Partition -> [(Int, Int)]
-srange lambda mu = r \\ c
+srange lambda mu = [(i+1, j+1) | i <- nonEmptyRows, j <- emptyColumns] -- r \\ c
   where
-    imax = length lambda
-    jmax = lambda !! 0
-    elems = skewPartitionElements (mkSkewPartition (toPartitionUnsafe lambda, toPartitionUnsafe mu))
-    is = nub $ map fst elems
-    js = nub $ map snd elems
-    c = [(i, j) | i <- [1 .. imax], j <- js]
-    r = [(i, j) | i <- is, j <- [1 .. jmax]]
+    getSkewPartition (SkewPartition x) = x
+    skewP = mkSkewPartition (toPartitionUnsafe lambda, toPartitionUnsafe mu)
+    skewP' = dualSkewPartition skewP
+    nonEmptyRows = findIndices ((/= 0) . snd) (getSkewPartition skewP)
+    emptyColumns = findIndices ((== 0) . snd) (getSkewPartition skewP')
+
+    -- imax = length lambda
+    -- jmax = lambda !! 0
+    -- elems = skewPartitionElements (mkSkewPartition (toPartitionUnsafe lambda, toPartitionUnsafe mu))
+    -- is = nub $ map fst elems
+    -- js = nub $ map snd elems
+    -- c = [(i, j) | i <- [1 .. imax], j <- js]
+    -- r = [(i, j) | i <- is, j <- [1 .. jmax]]
 
 psiLambdaMu :: (Eq a, AlgField.C a) => (Partition, Partition) -> RatioOfSprays a
 psiLambdaMu (lambda, mu) = AlgRing.product ratios
   where
     ss = srange lambda mu
-    ratio s = blambda mu s AlgField./ blambda lambda s
+    ellLambda = length lambda
+    ellMu = length mu
+    mu'' = fromPartition (dualPartition (toPartitionUnsafe mu))
+    lambda'' = fromPartition (dualPartition (toPartitionUnsafe lambda))
+--    ratio s = blambda mu s AlgField./ blambda lambda s
+    q = lone' 1
+    t = lone' 2
+    num (i, j) =
+      if i <= ellMu && j <= (mu !! (i-1))
+        then 
+          let a = mu !! (i-1) - j
+              l = mu'' !! (j-1) - i
+          in
+          (unitSpray ^-^ q a ^*^ t (l + 1))
+          %//% (unitSpray ^-^ q (a + 1) ^*^ t l)
+        else
+          unitRatioOfSprays
+    den (i, j) =
+      if i <= ellLambda && j <= (lambda !! (i-1))
+        then 
+          let a = lambda !! (i-1) - j
+              l = lambda'' !! (j-1) - i
+          in
+          (unitSpray ^-^ q a ^*^ t (l + 1))
+          %//% (unitSpray ^-^ q (a + 1) ^*^ t l)
+        else
+          unitRatioOfSprays
+    ratio s = num s AlgField./ den s
     ratios = map ratio ss
 
 psiGT' :: (Eq a, AlgField.C a) => GT -> ([Spray a], [Spray a])
