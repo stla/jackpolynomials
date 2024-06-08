@@ -32,6 +32,8 @@ module Math.Algebra.Jack.Internal
   , flaggedSkewTableaux
   , skewTableauWeight
   , _skewKostkaFoulkesPolynomial
+  , macdonaldPolynomialP
+  , macdonaldPolynomialQ
   )
   where
 import           Prelude 
@@ -53,8 +55,6 @@ import           Data.List                                   (
                                                                nub
                                                             --  , foldl1'
                                                              , uncons
-                                                             , (\\)
-                                                             , findIndices
                                                              )
 import           Data.List.Extra                             ( 
                                                                unsnoc
@@ -84,7 +84,7 @@ import           Data.Sequence                               (
                                                              , (><)
                                                              )
 import qualified Data.Sequence                               as S
-import           Data.Tuple.Extra                            ( fst3, both )
+import           Data.Tuple.Extra                            ( fst3 )
 import qualified Data.Vector                                 as V
 import           Math.Algebra.Hspray                         ( 
                                                                RatioOfSprays, (%:%), (%//%), (%/%)
@@ -107,7 +107,6 @@ import           Math.Algebra.Hspray                         (
                                                              )
 import           Math.Combinat.Compositions                  (
                                                                compositions
-                                                             , compositions1
                                                              )
 import           Math.Combinat.Partitions.Integer            (
                                                                fromPartition
@@ -118,12 +117,12 @@ import           Math.Combinat.Partitions.Integer            (
                                                              , toPartitionUnsafe
                                                              , dropTailingZeros
                                                              )
-import           Math.Combinat.Partitions.Skew              (
-                                                               mkSkewPartition
-                                                             , skewPartitionElements
-                                                             , dualSkewPartition
-                                                             , SkewPartition (..)
-                                                             )
+-- import           Math.Combinat.Partitions.Skew               (
+--                                                                mkSkewPartition
+--                                                              , skewPartitionElements
+--                                                              , dualSkewPartition
+--                                                              , SkewPartition (..)
+--                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.GelfandTsetlin       (
                                                                 GT
@@ -138,13 +137,15 @@ type Partition = [Int]
 -- qPochammer q a n = 
 --   AlgRing.product [AlgRing.one AlgAdd.- a AlgRing.* q AlgRing.^ (toInteger i) | i <- [0 .. n-1]]
 
-gtPatternDiagonals' :: GT -> [Partition]
-gtPatternDiagonals' pattern = [] : [diagonal j | j <- [0 .. l]]
+gtPatternDiagonals' :: GT -> [Seq Int]
+gtPatternDiagonals' pattern = S.empty : [diagonal j | j <- [0 .. l]]
   where
+    dropTrailingZeros = S.dropWhileR (== 0)
     l = length pattern - 1
     diagonal j = 
-      dropTailingZeros
-        [pattern !! r !! c | (r, c) <- zip [l-j .. l] [0 .. j]]
+      dropTrailingZeros
+        (S.fromList
+          [pattern !! r !! c | (r, c) <- zip [l-j .. l] [0 .. j]])
 
 -- armLength :: Partition -> Map (Int, Int) Int
 -- armLength lambda = DM.fromList [((i, j), lambda !! (i-1) - j) | (i, j) <- MCP.elements lambda']
@@ -180,7 +181,7 @@ _dualPartition' xs = go 0 (_diffSequence' xs) S.empty where
   finish !j (k :<| ks) = S.replicate k j >< finish (j-1) ks
   finish _ Empty       = S.empty
   _diffSequence' (x :<| ys@(y :<| _)) = (x-y) <| _diffSequence' ys 
-  _diffSequence' (Empty :|> x)        = S.singleton x
+  _diffSequence' (x :<| Empty)        = S.singleton x
   _diffSequence' Empty                = S.empty
 
 -- srange :: Partition -> Partition -> [(Int, Int)]
@@ -239,13 +240,12 @@ psiLambdaMu (lambda, mu) = AlgRing.product (map ratio ss)
   where
     lambda' = _dualPartition' lambda
     mu' = _dualPartition' mu
-    bools = S.zipWith (==) lambda mu >< S.replicate (S.length lambda - S.length mu) False
+    ellMu = S.length mu
+    bools = S.zipWith (==) lambda mu >< S.replicate (S.length lambda - ellMu) False
     nonEmptyRows = S.elemIndicesL False bools
     bools' = S.zipWith (==) lambda' mu' 
     emptyColumns = S.elemIndicesL True bools'
     ss = [(i+1, j+1) | i <- nonEmptyRows, j <- emptyColumns]
-    ellLambda = S.length lambda
-    ellMu = S.length mu
     q = lone' 1
     t = lone' 2
     ratio (i, j) 
@@ -293,7 +293,7 @@ psiGT pattern =
   where
     lambdas = gtPatternDiagonals' pattern
     pairs = zip (drop1 lambdas) lambdas
-    rOS = map (psiLambdaMu . (both S.fromList)) pairs
+    rOS = map psiLambdaMu pairs
 --    rOS = map psiLambdaMu pairs
     -- ell = length lambdas - 1
     -- q = lone 1
@@ -349,15 +349,16 @@ phiLambdaMu (lambda, mu) = AlgRing.product (map ratio ss)
       S.zipWith (==) lambda' mu' 
         >< S.replicate (S.length lambda' - S.length mu') False 
     nonEmptyColumns = S.elemIndicesL False bools'
-    ellLambda = S.length lambda
-    ellMu = S.length mu
     ss = [(i, j+1) | j <- nonEmptyColumns, i <- [1 .. lambda' `S.index` j]] 
     q = lone' 1
     t = lone' 2
+    ellMu = S.length mu
     ratio (i, j) 
       | i <= ellMu && j <= mu_im1 = 
-        ((unitSpray ^-^ q (a + 1) ^*^ t l) ^*^ (unitSpray ^-^ q a' ^*^ t (l' + 1)))
-            %//% ((unitSpray ^-^ q a ^*^ t (l + 1)) ^*^ (unitSpray ^-^ q (a' + 1) ^*^ t l'))
+        ((unitSpray ^-^ q (a + 1) ^*^ t l) 
+            ^*^ (unitSpray ^-^ q a' ^*^ t (l' + 1)))
+              %//% ((unitSpray ^-^ q a ^*^ t (l + 1)) 
+                      ^*^ (unitSpray ^-^ q (a' + 1) ^*^ t l'))
       | j <= lambda_im1 =
           (unitSpray ^-^ q a' ^*^ t (l' + 1))
             %//% (unitSpray ^-^ q (a' + 1) ^*^ t l') 
@@ -377,7 +378,7 @@ phiGT pattern =
   where
     lambdas = gtPatternDiagonals' pattern
     pairs = zip (drop1 lambdas) lambdas
-    rOS = map (phiLambdaMu . (both S.fromList)) pairs
+    rOS = map phiLambdaMu pairs
   -- productOfSprays numFactors %//% productOfSprays denFactors
   -- where
   --   lambdas = gtPatternDiagonals' pattern
@@ -407,16 +408,24 @@ phiGT pattern =
 -- \over (q^{\lambda^k_i - \lambda^k_j + 1} t^{j - i})_{\lambda^k_j - \lambda^{k - 1}_j} 
 -- (q^{\lambda^k_i - \lambda^k_{j + 1}} t^{j - i + 1})_{\lambda^k_{j + 1} -\lambda^{k - 1}_{j + 1}}}.
 
-macdonaldPolynomialP :: (Eq a, AlgField.C a) => Int -> Partition -> ParametricSpray a
+macdonaldPolynomialP :: 
+  (Eq a, AlgField.C a) => Int -> Partition -> ParametricSpray a
 macdonaldPolynomialP n lambda = sumOfSprays sprays
   where
     compos = compositions n (sum lambda)
+    compos1 = map (filter (/= 0)) compos
     lambda' = toPartitionUnsafe lambda
---    lones = [lone' i | i <- [1 .. n]]
-    term compo = 
-      (AlgAdd.sum (map psiGT (kostkaGelfandTsetlinPatterns' lambda' compo))) 
-        *^ monomial (zip [1 ..] compo)  -- (productOfSprays [(lones !! j) (compo !! j) | j <- [0 .. n-1]])
-    sprays = map term compos
+    coeffs = DM.fromList 
+      [
+        (
+          compo1
+        , AlgAdd.sum (map psiGT (kostkaGelfandTsetlinPatterns' lambda' compo1))
+        ) | compo1 <- nub compos1
+      ]
+    zippedCompos = zip compos compos1
+    term (compo, compo1) = 
+      coeffs DM.! compo1 *^ monomial (zip [1 ..] compo)
+    sprays = map term zippedCompos
 
 test :: Bool
 test = 
@@ -425,7 +434,8 @@ test =
   where
     macPoly = macdonaldPolynomialP 3 [2, 1]
 
-macdonaldPolynomialQ :: (Eq a, AlgField.C a) => Int -> Partition -> ParametricSpray a
+macdonaldPolynomialQ :: 
+  (Eq a, AlgField.C a) => Int -> Partition -> ParametricSpray a
 macdonaldPolynomialQ n lambda = sumOfSprays sprays
   where
     compos = compositions n (sum lambda)
