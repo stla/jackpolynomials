@@ -53,6 +53,7 @@ import           Data.List                                   (
                                                                nub
                                                             --  , foldl1'
                                                              , uncons
+                                                             , (\\)
                                                              )
 import           Data.List.Extra                             ( 
                                                                unsnoc
@@ -97,9 +98,11 @@ import           Math.Algebra.Hspray                         (
                                                              , unitSpray
                                                              , isZeroSpray
                                                              , lone, lone'
+                                                             , monomial
                                                              , sumOfSprays
                                                              , productOfSprays
                                                              , FunctionLike (..)
+                                                             , prettyParametricQSpray
                                                              )
 import           Math.Combinat.Compositions                  (
                                                                compositions
@@ -113,6 +116,10 @@ import           Math.Combinat.Partitions.Integer            (
                                                              , partitionWidth
                                                              , toPartitionUnsafe
                                                              , dropTailingZeros
+                                                             )
+import           Math.Combinat.Partitions.Skew              (
+                                                               mkSkewPartition
+                                                             , skewPartitionElements
                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
 import           Math.Combinat.Tableaux.GelfandTsetlin       (
@@ -133,10 +140,127 @@ gtPatternDiagonals' pattern = [diagonal j | j <- [0 .. l]]
   where
     l = length pattern - 1
     diagonal j = 
+      dropTailingZeros
         [pattern !! r !! c | (r, c) <- zip [l-j .. l] [0 .. j]]
+
+armLength :: Partition -> Map (Int, Int) Int
+armLength lambda = DM.fromList [((i, j), lambda !! (i-1) - j) | (i, j) <- MCP.elements lambda']
+  where
+    lambda' = toPartitionUnsafe lambda
+
+legLength :: Partition -> Map (Int, Int) Int
+legLength lambda = DM.fromList [((i, j), lambda'' !! (j-1) - i) | (i, j) <- MCP.elements lambda']
+  where
+    lambda' = toPartitionUnsafe lambda
+    lambda'' = fromPartition (dualPartition lambda')
+
+blambda :: (Eq a, AlgField.C a) => Partition -> (Int, Int) -> RatioOfSprays a
+blambda lambda s = if DM.member s a then num %//% den else unitRatioOfSprays
+  where
+    q = lone 1
+    t = lone 2
+    pairs = MCP.elements (toPartitionUnsafe lambda)
+    a = armLength lambda
+    l = legLength lambda
+    num = unitSpray ^-^ q^**^(a DM.! s) ^*^ t^**^(l DM.! s + 1) 
+    den = unitSpray ^-^ q^**^(a DM.! s + 1) ^*^ t^**^(l DM.! s) 
+    -- num = productOfSprays [unitSpray ^-^ q^**^(a DM.! s) ^*^ t^**^(l DM.! s + 1) | s <- pairs]
+    -- den = productOfSprays [unitSpray ^-^ q^**^(a DM.! s + 1) ^*^ t^**^(l DM.! s) | s <- pairs]
+
+srange :: Partition -> Partition -> [(Int, Int)]
+srange lambda mu = r \\ c
+  where
+    imax = length lambda
+    jmax = lambda !! 0
+    elems = skewPartitionElements (mkSkewPartition (toPartitionUnsafe lambda, toPartitionUnsafe mu))
+    is = nub $ map fst elems
+    js = nub $ map snd elems
+    c = [(i, j) | i <- [1 .. imax], j <- js]
+    r = [(i, j) | i <- is, j <- [1 .. jmax]]
+
+psiLambdaMu :: (Eq a, AlgField.C a) => (Partition, Partition) -> RatioOfSprays a
+psiLambdaMu (lambda, mu) = AlgRing.product ratios
+  where
+    ss = srange lambda mu
+    ratio s = blambda mu s AlgField./ blambda lambda s
+    ratios = map ratio ss
+
+psiGT' :: (Eq a, AlgField.C a) => GT -> ([Spray a], [Spray a])
+psiGT' pattern = 
+  (numFactors, denFactors)
+  where
+    lambdas = gtPatternDiagonals' pattern
+    ell = length lambdas - 1
+    q = lone 1
+    t = lone 2
+    poch = qPochammer q
+    pairs = zip lambdas (drop1 lambdas)
+    (numFactors, denFactors) = unzip [
+        let (lambda1, lambda2) = pairs !! (k-1)
+            l1i = lambda1 !! i
+            l1j = lambda1 !! j
+            l2i = lambda2 !! i
+            l2jp1 = lambda2 !! (j + 1)
+        in
+          (
+            poch (q^**^(l1i - l1j) ^*^ t^**^(j-i+1)) (l2i - l1i) 
+            ^*^ poch (q^**^(l1i - l2jp1 + 1) ^*^ t^**^(j-i)) (l2i - l1i)
+          , poch (q^**^(l1i - l1j + 1) ^*^ t^**^(j-i)) (l2i - l1i) 
+            ^*^ poch (q^**^(l1i - l2jp1) ^*^ t^**^(j-i+1)) (l2i - l1i)
+          )
+        | k <- [1 .. ell], j <- [0 .. k-1], i <- [0 .. j]
+      ]
 
 psiGT :: (Eq a, AlgField.C a) => GT -> RatioOfSprays a
 psiGT pattern = 
+  AlgRing.product rOS
+--  productOfSprays numFactors %//% productOfSprays denFactors
+  where
+    lambdas = gtPatternDiagonals' pattern
+    pairs = zip (drop1 lambdas) lambdas
+    rOS = map psiLambdaMu pairs
+    -- ell = length lambdas - 1
+    -- q = lone 1
+    -- t = lone 2
+    -- poch = qPochammer q
+    -- pairs = zip lambdas (drop1 lambdas)
+    -- (numFactors, denFactors) = unzip [
+    --     let (lambda1, lambda2) = pairs !! (k-1)
+    --         l1i = lambda1 !! i
+    --         l1j = lambda1 !! j
+    --         l2i = lambda2 !! i
+    --         l2jp1 = lambda2 !! (j + 1)
+    --     in
+    --       (
+    --         poch (q^**^(l1i - l1j) ^*^ t^**^(j-i+1)) (l2i - l1i) 
+    --         ^*^ poch (q^**^(l1i - l2jp1 + 1) ^*^ t^**^(j-i)) (l2i - l1i)
+    --       , poch (q^**^(l1i - l1j + 1) ^*^ t^**^(j-i)) (l2i - l1i) 
+    --         ^*^ poch (q^**^(l1i - l2jp1) ^*^ t^**^(j-i+1)) (l2i - l1i)
+    --       )
+    --     | k <- [1 .. ell], j <- [0 .. k-1], i <- [0 .. j]
+    --   ]
+    -- -- numFactors = [
+    -- --     let lambda1 = lambdas !! (k-1)
+    -- --         lambda2 = lambdas !! k
+    -- --     in
+    -- --       poch (q^**^(lambda1 !! i - lambda1 !! j) ^*^ t^**^(j-i+1)) (lambda2 !! i - lambda1 !! i) 
+    -- --       ^*^ poch (q^**^(lambda1 !! i - lambda2 !! (j+1) + 1) ^*^ t^**^(j-i)) (lambda2 !! i - lambda1 !! i)
+    -- --     | k <- [1 .. ell], j <- [0 .. k-1], i <- [0 .. j]
+    -- --   ]
+    -- -- denFactors = [
+    -- --     let lambda1 = lambdas !! (k-1)
+    -- --         lambda2 = lambdas !! k
+    -- --     in
+    -- --     | k <- [1 .. ell], j <- [0 .. k-1], i <- [0 .. j]
+    -- --   ]
+-- \psi_T = \prod_{1 \le i \le j \le k - 1 \le \ell - 1} 
+-- {(q^{\lambda^{k - 1}_i - \lambda^{k - 1}_j} t^{j - i + 1})_{\lambda^k_i - \lambda^{k - 1}_i} 
+--  (q^{\lambda^{k - 1}_i - \lambda^k_{j + 1} + 1} t^{j - i})_{\lambda^k_i - \lambda^{k - 1}_i} 
+-- \over (q^{\lambda^{k - 1}_i - \lambda^{k - 1}_j + 1} t^{j - i})_{\lambda^k_i - \lambda^{k - 1}_i} 
+-- (q^{\lambda^{k - 1}_i - \lambda^k_{j + 1}} t^{j - i + 1})_{\lambda^k_i - \lambda^{k - 1}_i}}.
+
+phiGT :: (Eq a, AlgField.C a) => GT -> RatioOfSprays a
+phiGT pattern = 
   productOfSprays numFactors %//% productOfSprays denFactors
   where
     lambdas = gtPatternDiagonals' pattern
@@ -148,65 +272,41 @@ psiGT pattern =
         let lambda1 = lambdas !! (k-1)
             lambda2 = lambdas !! k
         in
-          poch (q^**^(lambda1 !! i - lambda1 !! j) ^*^ t^**^(j-i+1)) (lambda2 !! i - lambda1 !! i) 
-          ^*^ poch (q^**^(lambda1 !! i - lambda2 !! (j+1) + 1) ^*^ t^**^(j-i)) (lambda2 !! i - lambda1 !! i)
-        | k <- [1 .. ell], j <- [0 .. k-1], i <- [0 .. j]
+          poch (q^**^(lambda2 !! i - lambda2 !! j) ^*^ t^**^(j-i+1)) (lambda2 !! j - lambda1 !! j) 
+          ^*^ poch (q^**^(lambda1 !! i - lambda2 !! (j+1) + 1) ^*^ t^**^(j-i)) (lambda2 !! j - lambda1 !! j)
+        | k <- [1 .. ell], j <- [0 .. k], i <- [0 .. j]
       ]
     denFactors = [
         let lambda1 = lambdas !! (k-1)
             lambda2 = lambdas !! k
         in
-          poch (q^**^(lambda1 !! i - lambda1 !! j + 1) ^*^ t^**^(j-i)) (lambda2 !! i - lambda1 !! i) 
-          ^*^ poch (q^**^(lambda1 !! i - lambda2 !! (j+1)) ^*^ t^**^(j-i+1)) (lambda2 !! i - lambda1 !! i)
-        | k <- [1 .. ell], j <- [0 .. k-1], i <- [0 .. j]
+          poch (q^**^(lambda2 !! i - lambda2 !! j + 1) ^*^ t^**^(j-i)) (lambda2 !! j - lambda1 !! j) 
+          ^*^ poch (q^**^(lambda2 !! i - lambda2 !! j + 1) ^*^ t^**^(j-i)) (lambda2 !! j - lambda1 !! j)
+        | k <- [1 .. ell], j <- [0 .. k], i <- [0 .. j]
       ]
+-- \phi_T = \prod_{1 \le i \le j \le k \le \ell} 
+--{(q^{\lambda^k_i - \lambda^k_j} t^{j - i + 1})_{\lambda^k_j - \lambda^{k - 1}_j} 
+-- (q^{\lambda^k_i - \lambda^k_{j + 1} + 1} t^{j - i})_{\lambda^k_{j + 1} - \lambda^{k - 1}_{j + 1}} 
+-- \over (q^{\lambda^k_i - \lambda^k_j + 1} t^{j - i})_{\lambda^k_j - \lambda^{k - 1}_j} 
+-- (q^{\lambda^k_i - \lambda^k_{j + 1}} t^{j - i + 1})_{\lambda^k_{j + 1} -\lambda^{k - 1}_{j + 1}}}.
 
-psiGT' :: (Eq a, AlgField.C a) => GT -> ([Spray a], [Spray a])
-psiGT' pattern = 
-  (numFactors, denFactors)
-  where
-    lambdas = gtPatternDiagonals' pattern
-    ell = length lambdas - 1
-    q = lone 1
-    t = lone 2
-    poch = qPochammer q
-    numFactors = [
-        let lambda1 = lambdas !! (k-1)
-            lambda2 = lambdas !! k
-        in
-          poch (q^**^(lambda1 !! i - lambda1 !! j) ^*^ t^**^(j-i+1)) (lambda2 !! i - lambda1 !! i) 
-          ^*^ poch (q^**^(lambda1 !! i - lambda2 !! (j+1) + 1) ^*^ t^**^(j-i)) (lambda2 !! i - lambda1 !! i)
-        | k <- [1 .. ell], j <- [0 .. k-2], i <- [0 .. j]
-      ]
-    denFactors = [
-        let lambda1 = lambdas !! (k-1)
-            lambda2 = lambdas !! k
-        in
-          poch (q^**^(lambda1 !! i - lambda1 !! j + 1) ^*^ t^**^(j-i)) (lambda2 !! i - lambda1 !! i) 
-          ^*^ poch (q^**^(lambda1 !! i - lambda2 !! (j+1)) ^*^ t^**^(j-i+1)) (lambda2 !! i - lambda1 !! i)
-        | k <- [1 .. ell], j <- [0 .. k-2], i <- [0 .. j]
-      ]
--- \psi_T = \prod_{1 \le i \le j \le k - 1 \le \ell - 1} 
--- {(q^{\lambda^{k - 1}_i - \lambda^{k - 1}_j} t^{j - i + 1})_{\lambda^k_i - \lambda^{k - 1}_i} 
---  (q^{\lambda^{k - 1}_i - \lambda^k_{j + 1} + 1} t^{j - i})_{\lambda^k_i - \lambda^{k - 1}_i} 
--- \over (q^{\lambda^{k - 1}_i - \lambda^{k - 1}_j + 1} t^{j - i})_{\lambda^k_i - \lambda^{k - 1}_i} 
--- (q^{\lambda^{k - 1}_i - \lambda^k_{j + 1}} t^{j - i + 1})_{\lambda^k_i - \lambda^{k - 1}_i}}.
-
-macdonaldPolynomial :: (Eq a, AlgField.C a) => Int -> Partition -> ParametricSpray a
-macdonaldPolynomial n lambda = sumOfSprays sprays
+macdonaldPolynomialP :: (Eq a, AlgField.C a) => Int -> Partition -> ParametricSpray a
+macdonaldPolynomialP n lambda = sumOfSprays sprays
   where
     compos = compositions n (sum lambda)
     lambda' = toPartitionUnsafe lambda
-    lones = [lone' i | i <- [1 .. n]]
+--    lones = [lone' i | i <- [1 .. n]]
     term compo = 
       (AlgAdd.sum (map psiGT (kostkaGelfandTsetlinPatterns' lambda' compo))) 
-        *^ (productOfSprays [(lones !! j) (compo !! j) | j <- [0 .. n-1]])
+        *^ monomial (zip [1 ..] compo)  -- (productOfSprays [(lones !! j) (compo !! j) | j <- [0 .. n-1]])
     sprays = map term compos
 
-test :: ParametricSpray Rational
-test = HM.map (\rOQ -> substitute [Just 0, Nothing] rOQ) macPoly
+test :: Bool
+test = 
+  prettyParametricQSpray (HM.map (\rOQ -> substitute [Just 0, Nothing] rOQ) macPoly)
+    == "{ [ 1 ] }*X^2.Y + { [ 1 ] }*X^2.Z + { [ 1 ] }*X.Y^2 + { [ -a2^2 - a2 + 2 ] }*X.Y.Z + { [ 1 ] }*X.Z^2 + { [ 1 ] }*Y^2.Z + { [ 1 ] }*Y.Z^2"
   where
-    macPoly = macdonaldPolynomial 3 [2, 1]
+    macPoly = macdonaldPolynomialP 3 [2, 1]
 
 sandwichedPartitions :: Int -> Seq Int -> Seq Int -> [Seq Int]
 sandwichedPartitions weight mu lambda = 
