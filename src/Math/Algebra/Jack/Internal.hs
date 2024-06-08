@@ -146,29 +146,29 @@ gtPatternDiagonals' pattern = [diagonal j | j <- [0 .. l]]
       dropTailingZeros
         [pattern !! r !! c | (r, c) <- zip [l-j .. l] [0 .. j]]
 
-armLength :: Partition -> Map (Int, Int) Int
-armLength lambda = DM.fromList [((i, j), lambda !! (i-1) - j) | (i, j) <- MCP.elements lambda']
-  where
-    lambda' = toPartitionUnsafe lambda
+-- armLength :: Partition -> Map (Int, Int) Int
+-- armLength lambda = DM.fromList [((i, j), lambda !! (i-1) - j) | (i, j) <- MCP.elements lambda']
+--   where
+--     lambda' = toPartitionUnsafe lambda
 
-legLength :: Partition -> Map (Int, Int) Int
-legLength lambda = DM.fromList [((i, j), lambda'' !! (j-1) - i) | (i, j) <- MCP.elements lambda']
-  where
-    lambda' = toPartitionUnsafe lambda
-    lambda'' = fromPartition (dualPartition lambda')
+-- legLength :: Partition -> Map (Int, Int) Int
+-- legLength lambda = DM.fromList [((i, j), lambda'' !! (j-1) - i) | (i, j) <- MCP.elements lambda']
+--   where
+--     lambda' = toPartitionUnsafe lambda
+--     lambda'' = fromPartition (dualPartition lambda')
 
-blambda :: (Eq a, AlgField.C a) => Partition -> (Int, Int) -> RatioOfSprays a
-blambda lambda s = if DM.member s a then num %//% den else unitRatioOfSprays
-  where
-    q = lone 1
-    t = lone 2
-    pairs = MCP.elements (toPartitionUnsafe lambda)
-    a = armLength lambda
-    l = legLength lambda
-    num = unitSpray ^-^ q^**^(a DM.! s) ^*^ t^**^(l DM.! s + 1) 
-    den = unitSpray ^-^ q^**^(a DM.! s + 1) ^*^ t^**^(l DM.! s) 
-    -- num = productOfSprays [unitSpray ^-^ q^**^(a DM.! s) ^*^ t^**^(l DM.! s + 1) | s <- pairs]
-    -- den = productOfSprays [unitSpray ^-^ q^**^(a DM.! s + 1) ^*^ t^**^(l DM.! s) | s <- pairs]
+-- blambda :: (Eq a, AlgField.C a) => Partition -> (Int, Int) -> RatioOfSprays a
+-- blambda lambda s = if DM.member s a then num %//% den else unitRatioOfSprays
+--   where
+--     q = lone 1
+--     t = lone 2
+--     pairs = MCP.elements (toPartitionUnsafe lambda)
+--     a = armLength lambda
+--     l = legLength lambda
+--     num = unitSpray ^-^ q^**^(a DM.! s) ^*^ t^**^(l DM.! s + 1) 
+--     den = unitSpray ^-^ q^**^(a DM.! s + 1) ^*^ t^**^(l DM.! s) 
+--     -- num = productOfSprays [unitSpray ^-^ q^**^(a DM.! s) ^*^ t^**^(l DM.! s + 1) | s <- pairs]
+--     -- den = productOfSprays [unitSpray ^-^ q^**^(a DM.! s + 1) ^*^ t^**^(l DM.! s) | s <- pairs]
 
 _dualPartition' :: Seq Int -> Seq Int
 _dualPartition' Empty = S.empty
@@ -191,14 +191,14 @@ srange' lambda mu = [(i+1, j+1) | i <- nonEmptyRows, j <- emptyColumns] -- r \\ 
     bools' = S.zipWith (==) lambda' mu' -- >< S.replicate (S.length lambda' - S.length mu') False
     emptyColumns = S.elemIndicesL True bools'
 
-srange :: Partition -> Partition -> [(Int, Int)]
-srange lambda mu = [(i+1, j+1) | i <- nonEmptyRows, j <- emptyColumns] -- r \\ c
-  where
-    getSkewPartition (SkewPartition x) = x
-    skewP = mkSkewPartition (toPartitionUnsafe lambda, toPartitionUnsafe mu)
-    skewP' = dualSkewPartition skewP
-    nonEmptyRows = findIndices ((/= 0) . snd) (getSkewPartition skewP)
-    emptyColumns = findIndices ((== 0) . snd) (getSkewPartition skewP')
+-- srange :: Partition -> Partition -> [(Int, Int)]
+-- srange lambda mu = [(i+1, j+1) | i <- nonEmptyRows, j <- emptyColumns] -- r \\ c
+--   where
+--     getSkewPartition (SkewPartition x) = x
+--     skewP = mkSkewPartition (toPartitionUnsafe lambda, toPartitionUnsafe mu)
+--     skewP' = dualSkewPartition skewP
+--     nonEmptyRows = findIndices ((/= 0) . snd) (getSkewPartition skewP)
+--     emptyColumns = findIndices ((== 0) . snd) (getSkewPartition skewP')
 
     -- imax = length lambda
     -- jmax = lambda !! 0
@@ -208,39 +208,39 @@ srange lambda mu = [(i+1, j+1) | i <- nonEmptyRows, j <- emptyColumns] -- r \\ c
     -- c = [(i, j) | i <- [1 .. imax], j <- js]
     -- r = [(i, j) | i <- is, j <- [1 .. jmax]]
 
-psiLambdaMu :: (Eq a, AlgField.C a) => (Partition, Partition) -> RatioOfSprays a
-psiLambdaMu (lambda, mu) = AlgRing.product ratios
-  where
-    ss = srange lambda mu
-    ellLambda = length lambda
-    ellMu = length mu
-    mu'' = fromPartition (dualPartition (toPartitionUnsafe mu))
-    lambda'' = fromPartition (dualPartition (toPartitionUnsafe lambda))
---    ratio s = blambda mu s AlgField./ blambda lambda s
-    q = lone' 1
-    t = lone' 2
-    num (i, j) =
-      if i <= ellMu && j <= (mu !! (i-1))
-        then 
-          let a = mu !! (i-1) - j
-              l = mu'' !! (j-1) - i
-          in
-          (unitSpray ^-^ q a ^*^ t (l + 1))
-          %//% (unitSpray ^-^ q (a + 1) ^*^ t l)
-        else
-          unitRatioOfSprays
-    den (i, j) =
-      if i <= ellLambda && j <= (lambda !! (i-1))
-        then 
-          let a = lambda !! (i-1) - j
-              l = lambda'' !! (j-1) - i
-          in
-          (unitSpray ^-^ q a ^*^ t (l + 1))
-          %//% (unitSpray ^-^ q (a + 1) ^*^ t l)
-        else
-          unitRatioOfSprays
-    ratio s = num s AlgField./ den s
-    ratios = map ratio ss
+-- psiLambdaMu :: (Eq a, AlgField.C a) => (Partition, Partition) -> RatioOfSprays a
+-- psiLambdaMu (lambda, mu) = AlgRing.product ratios
+--   where
+--     ss = srange lambda mu
+--     ellLambda = length lambda
+--     ellMu = length mu
+--     mu'' = fromPartition (dualPartition (toPartitionUnsafe mu))
+--     lambda'' = fromPartition (dualPartition (toPartitionUnsafe lambda))
+-- --    ratio s = blambda mu s AlgField./ blambda lambda s
+--     q = lone' 1
+--     t = lone' 2
+--     num (i, j) =
+--       if i <= ellMu && j <= (mu !! (i-1))
+--         then 
+--           let a = mu !! (i-1) - j
+--               l = mu'' !! (j-1) - i
+--           in
+--           (unitSpray ^-^ q a ^*^ t (l + 1))
+--           %//% (unitSpray ^-^ q (a + 1) ^*^ t l)
+--         else
+--           unitRatioOfSprays
+--     den (i, j) =
+--       if i <= ellLambda && j <= (lambda !! (i-1))
+--         then 
+--           let a = lambda !! (i-1) - j
+--               l = lambda'' !! (j-1) - i
+--           in
+--           (unitSpray ^-^ q a ^*^ t (l + 1))
+--           %//% (unitSpray ^-^ q (a + 1) ^*^ t l)
+--         else
+--           unitRatioOfSprays
+--     ratio s = num s AlgField./ den s
+--     ratios = map ratio ss
 
 psiLambdaMu' :: (Eq a, AlgField.C a) => (Seq Int, Seq Int) -> RatioOfSprays a
 psiLambdaMu' (lambda, mu) = AlgRing.product ratios
@@ -252,27 +252,41 @@ psiLambdaMu' (lambda, mu) = AlgRing.product ratios
     lambda'' = _dualPartition' lambda
     q = lone' 1
     t = lone' 2
-    num (i, j) =
-      if i <= ellMu && j <= (mu `S.index` (i-1))
-        then 
-          let a = mu `S.index` (i-1) - j
-              l = mu'' `S.index` (j-1) - i
-          in
-          (unitSpray ^-^ q a ^*^ t (l + 1))
-          %//% (unitSpray ^-^ q (a + 1) ^*^ t l)
-        else
+    ratio (i, j) 
+      | i <= ellMu && j <= mu `S.index` (i-1) = 
+        ((unitSpray ^-^ q a ^*^ t (l + 1)) ^*^ (unitSpray ^-^ q (a' + 1) ^*^ t l'))
+          %//% ((unitSpray ^-^ q (a + 1) ^*^ t l) ^*^ (unitSpray ^-^ q a' ^*^ t (l' + 1)))
+      | i <= ellLambda && j <= lambda `S.index` (i-1) =
+        (unitSpray ^-^ q (a' + 1) ^*^ t l')
+          %//% (unitSpray ^-^ q a' ^*^ t (l' + 1))
+      | otherwise = 
           unitRatioOfSprays
-    den (i, j) =
-      if i <= ellLambda && j <= (lambda `S.index` (i-1))
-        then 
-          let a = lambda `S.index` (i-1) - j
-              l = lambda'' `S.index` (j-1) - i
-          in
-          (unitSpray ^-^ q a ^*^ t (l + 1))
-          %//% (unitSpray ^-^ q (a + 1) ^*^ t l)
-        else
-          unitRatioOfSprays
-    ratio s = num s AlgField./ den s
+        where
+          a = mu `S.index` (i-1) - j
+          l = mu'' `S.index` (j-1) - i
+          a' = lambda `S.index` (i-1) - j
+          l' = lambda'' `S.index` (j-1) - i
+    -- num (i, j) =
+    --   if i <= ellMu && j <= mu `S.index` (i-1)
+    --     then 
+    --       let a = mu `S.index` (i-1) - j
+    --           l = mu'' `S.index` (j-1) - i
+    --       in
+    --       (unitSpray ^-^ q a ^*^ t (l + 1))
+    --       %//% (unitSpray ^-^ q (a + 1) ^*^ t l)
+    --     else
+    --       unitRatioOfSprays
+    -- den (i, j) =
+    --   if i <= ellLambda && j <= (lambda `S.index` (i-1))
+    --     then 
+    --       let a = lambda `S.index` (i-1) - j
+    --           l = lambda'' `S.index` (j-1) - i
+    --       in
+    --       (unitSpray ^-^ q a ^*^ t (l + 1))
+    --       %//% (unitSpray ^-^ q (a + 1) ^*^ t l)
+    --     else
+    --       unitRatioOfSprays
+    -- ratio s = num s AlgField./ den s
     ratios = map ratio ss
 
 psiGT :: (Eq a, AlgField.C a) => GT -> RatioOfSprays a
