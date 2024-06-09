@@ -114,8 +114,12 @@ polynomial
 
 1.4.4.0
 -------
-* new function `skewKostkaFoulkesPolynomial`, to get a skew Kosta-Foulkes 
+* new function `skewKostkaFoulkesPolynomial`, to get a skew Kostka-Foulkes 
 polynomial
 
 * the efficiency of the function `skewHallLittlewoodPolynomial` has been 
 greatly improved
+
+1.4.5.0
+-------
+* new function `macdonaldPolynomial`, to get a Macdonald polynomial

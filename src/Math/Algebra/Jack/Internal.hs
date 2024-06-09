@@ -374,13 +374,13 @@ phiLambdaMu (lambda, mu) = AlgRing.product (map ratio ss)
           a' = lambda_im1 - j
           l' = lambda' `S.index` (j-1) - i
 
-phiGT :: (Eq a, AlgField.C a) => GT -> RatioOfSprays a
-phiGT pattern = 
-  AlgRing.product rOS
-  where
-    lambdas = gtPatternDiagonals' pattern
-    pairs = zip (drop1 lambdas) lambdas
-    rOS = map phiLambdaMu pairs
+-- phiGT :: (Eq a, AlgField.C a) => GT -> RatioOfSprays a
+-- phiGT pattern = 
+--   AlgRing.product rOS
+--   where
+--     lambdas = gtPatternDiagonals' pattern
+--     pairs = zip (drop1 lambdas) lambdas
+--     rOS = map phiLambdaMu pairs
   -- productOfSprays numFactors %//% productOfSprays denFactors
   -- where
   --   lambdas = gtPatternDiagonals' pattern
@@ -412,8 +412,7 @@ phiGT pattern =
 
 macdonaldPolynomialP :: 
   (Eq a, AlgField.C a) => Int -> Partition -> ParametricSpray a
-macdonaldPolynomialP n lambda = 
-  HM.mapKeys (\expnts -> (Powers expnts (S.length expnts))) hashMap -- sumOfSprays sprays
+macdonaldPolynomialP n lambda = HM.unions hashMaps -- sumOfSprays sprays
   where
     lambda' = toPartitionUnsafe lambda
     mus = filter (\mu -> partitionWidth mu <= n) (dominatedPartitions lambda')
@@ -434,9 +433,10 @@ macdonaldPolynomialP n lambda =
               coeff = coeffs HM.! mu''
               compos = permuteMultiset mu'''
           in
-            HM.fromList [(dropTrailingZeros (S.fromList compo), coeff) | compo <- compos]
+            HM.fromList 
+              [let compo' = dropTrailingZeros (S.fromList compo) in
+                (Powers compo' (S.length compo'), coeff) | compo <- compos]
         ) mus
-    hashMap = HM.unions hashMaps
     -- compos = compositions n (sum lambda)
     -- compos1 = map (filter (/= 0)) compos
     -- lambda' = toPartitionUnsafe lambda
@@ -452,38 +452,60 @@ macdonaldPolynomialP n lambda =
     --   coeffs DM.! compo1 *^ monomial (filter ((/= 0) . snd) $ zip [1 ..] compo)
     -- sprays = map term zippedCompos
 
-test :: Bool
-test = 
-  prettyParametricQSpray (HM.map (\rOQ -> substitute [Just 0, Nothing] rOQ) macPoly)
-    == "{ [ 1 ] }*X^2.Y + { [ 1 ] }*X^2.Z + { [ 1 ] }*X.Y^2 + { [ -a2^2 - a2 + 2 ] }*X.Y.Z + { [ 1 ] }*X.Z^2 + { [ 1 ] }*Y^2.Z + { [ 1 ] }*Y.Z^2"
+-- test :: Bool
+-- test = 
+--   prettyParametricQSpray (HM.map (\rOQ -> substitute [Just 0, Nothing] rOQ) macPoly)
+--     == "{ [ 1 ] }*X^2.Y + { [ 1 ] }*X^2.Z + { [ 1 ] }*X.Y^2 + { [ -a2^2 - a2 + 2 ] }*X.Y.Z + { [ 1 ] }*X.Z^2 + { [ 1 ] }*Y^2.Z + { [ 1 ] }*Y.Z^2"
+--   where
+--     macPoly = macdonaldPolynomialP 3 [2, 1]
+
+phiGT' :: (Eq a, AlgField.C a) => Map (Seq Int, Seq Int) (RatioOfSprays a) -> GT -> RatioOfSprays a
+phiGT' pairsMap pattern = 
+  AlgRing.product rOS
   where
-    macPoly = macdonaldPolynomialP 3 [2, 1]
+    lambdas = gtPatternDiagonals' pattern
+    pairs = zip (drop1 lambdas) lambdas
+    rOS = map ((DM.!) pairsMap) pairs
 
 macdonaldPolynomialQ :: 
   (Eq a, AlgField.C a) => Int -> Partition -> ParametricSpray a
-macdonaldPolynomialQ n lambda = sumOfSprays sprays
+macdonaldPolynomialQ n lambda = HM.unions hashMaps -- sumOfSprays sprays
   where
-    compos = compositions n (sum lambda)
-    compos1 = map (filter (/= 0)) compos
+    pairs lambdas = zip (drop1 lambdas) lambdas
     lambda' = toPartitionUnsafe lambda
-    coeffs = DM.fromList 
+    mus = filter (\mu -> partitionWidth mu <= n) (dominatedPartitions lambda')
+    allPairs = nub $ 
+      concatMap 
+        (concatMap (pairs . gtPatternDiagonals') . (kostkaGelfandTsetlinPatterns lambda')) mus
+    pairsMap = DM.fromList (zip allPairs (map phiLambdaMu allPairs))
+    dropTrailingZeros = S.dropWhileR (== 0)
+    coeffs = HM.fromList 
       [
         (
-          compo1
-        , AlgAdd.sum (map phiGT (kostkaGelfandTsetlinPatterns' lambda' compo1))
-        ) | compo1 <- nub compos1
+          S.fromList (fromPartition mu)
+        , AlgAdd.sum (map (phiGT' pairsMap) (kostkaGelfandTsetlinPatterns lambda' mu))
+        ) | mu <- mus
       ]
-    zippedCompos = zip compos compos1
-    term (compo, compo1) = 
-      coeffs DM.! compo1 *^ monomial (filter ((/= 0) . snd) $ zip [1 ..] compo)
-    sprays = map term zippedCompos
+    hashMaps = 
+      map 
+        (\mu -> 
+          let mu' = fromPartition mu
+              mu'' = S.fromList mu'
+              mu''' = mu' ++ (replicate (n - S.length mu'') 0)
+              coeff = coeffs HM.! mu''
+              compos = permuteMultiset mu'''
+          in
+            HM.fromList 
+              [let compo' = dropTrailingZeros (S.fromList compo) in
+                (Powers compo' (S.length compo'), coeff) | compo <- compos]
+        ) mus
 
-test' :: Bool 
-test' = 
-  prettyParametricQSpray (HM.map (\rOQ -> substitute [Just 0, Nothing] rOQ) macPoly)
-    == "{ [ a2^2 - 2*a2 + 1 ] }*X^2.Y + { [ a2^2 - 2*a2 + 1 ] }*X^2.Z + { [ a2^2 - 2*a2 + 1 ] }*X.Y^2 + { [ -a2^4 + a2^3 + 3*a2^2 - 5*a2 + 2 ] }*X.Y.Z + { [ a2^2 - 2*a2 + 1 ] }*X.Z^2 + { [ a2^2 - 2*a2 + 1 ] }*Y^2.Z + { [ a2^2 - 2*a2 + 1 ] }*Y.Z^2"
-  where
-    macPoly = macdonaldPolynomialQ 3 [2, 1]
+-- test' :: Bool 
+-- test' = 
+--   prettyParametricQSpray (HM.map (\rOQ -> substitute [Just 0, Nothing] rOQ) macPoly)
+--     == "{ [ a2^2 - 2*a2 + 1 ] }*X^2.Y + { [ a2^2 - 2*a2 + 1 ] }*X^2.Z + { [ a2^2 - 2*a2 + 1 ] }*X.Y^2 + { [ -a2^4 + a2^3 + 3*a2^2 - 5*a2 + 2 ] }*X.Y.Z + { [ a2^2 - 2*a2 + 1 ] }*X.Z^2 + { [ a2^2 - 2*a2 + 1 ] }*Y^2.Z + { [ a2^2 - 2*a2 + 1 ] }*Y.Z^2"
+--   where
+--     macPoly = macdonaldPolynomialQ 3 [2, 1]
 
 sandwichedPartitions :: Int -> Seq Int -> Seq Int -> [Seq Int]
 sandwichedPartitions weight mu lambda = 
