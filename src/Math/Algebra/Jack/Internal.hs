@@ -86,7 +86,7 @@ import           Data.Sequence                               (
                                                              , (><)
                                                              )
 import qualified Data.Sequence                               as S
-import           Data.Tuple.Extra                            ( fst3, both )
+import           Data.Tuple.Extra                            ( fst3, both, swap )
 import qualified Data.Vector                                 as V
 import           Math.Algebra.Hspray                         ( 
                                                                RatioOfSprays, (%:%), (%//%), (%/%)
@@ -101,7 +101,6 @@ import           Math.Algebra.Hspray                         (
                                                              , unitSpray
                                                              , isZeroSpray
                                                              , lone, lone'
-                                                             , monomial
                                                              , sumOfSprays
                                                              , productOfSprays
                                                              , FunctionLike (..)
@@ -131,11 +130,13 @@ import           Math.Combinat.Permutations                  ( permuteMultiset )
 import           Math.Combinat.Tableaux.GelfandTsetlin       (
                                                                 GT
                                                               , kostkaGelfandTsetlinPatterns
-                                                              , kostkaGelfandTsetlinPatterns'
                                                              )
 import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
 
 type Partition = [Int]
+
+type PartitionsPair = (Seq Int, Seq Int)
+type PairsMap = Map PartitionsPair ([(Int,Int)], [(Int,Int)]) 
 
 -- qPochammer :: (Eq a, AlgRing.C a) => a -> a -> Int -> a
 -- qPochammer q a n = 
@@ -239,113 +240,176 @@ _dualPartition' xs = go 0 (_diffSequence' xs) S.empty where
 --     ratio s = num s AlgField./ den s
 --     ratios = map ratio ss
 
-psiLambdaMu :: (Eq a, AlgField.C a) => (Seq Int, Seq Int) -> RatioOfSprays a
-psiLambdaMu (lambda, mu) = AlgRing.product (map ratio ss)
+psiLambdaMu :: PartitionsPair -> ([(Int,Int)], [(Int,Int)])
+psiLambdaMu (lambda, mu) = 
+  both concat (unzip (map (swap . (codedRatio (lambda, lambda') (mu, mu'))) ss))
   where
     lambda' = _dualPartition' lambda
     mu' = _dualPartition' mu
-    ellMu = S.length mu
-    bools = S.zipWith (==) lambda mu >< S.replicate (S.length lambda - ellMu) False
+    bools = S.zipWith (==) lambda mu >< S.replicate (S.length lambda - S.length mu) False
     nonEmptyRows = S.elemIndicesL False bools
     bools' = S.zipWith (==) lambda' mu' 
     emptyColumns = S.elemIndicesL True bools'
     ss = [(i+1, j+1) | i <- nonEmptyRows, j <- emptyColumns]
-    q = lone' 1
-    t = lone' 2
-    ratio (i, j) 
-      | i <= ellMu && j <= mu_im1 = 
-        ((unitSpray ^-^ q a ^*^ t (l + 1)) ^*^ (unitSpray ^-^ q (a' + 1) ^*^ t l'))
-          %//% ((unitSpray ^-^ q (a + 1) ^*^ t l) ^*^ (unitSpray ^-^ q a' ^*^ t (l' + 1)))
-      | j <= lambda_im1 =
-        (unitSpray ^-^ q (a' + 1) ^*^ t l')
-          %//% (unitSpray ^-^ q a' ^*^ t (l' + 1))
-      | otherwise = 
-          unitRatioOfSprays
-        where
-          mu_im1 = mu `S.index` (i-1)
-          lambda_im1 = lambda `S.index` (i-1)
-          a = mu_im1 - j
-          l = mu' `S.index` (j-1) - i
-          a' = lambda_im1 - j
-          l' = lambda' `S.index` (j-1) - i
-    -- num (i, j) =
-    --   if i <= ellMu && j <= mu `S.index` (i-1)
-    --     then 
-    --       let a = mu `S.index` (i-1) - j
-    --           l = mu'' `S.index` (j-1) - i
-    --       in
-    --       (unitSpray ^-^ q a ^*^ t (l + 1))
-    --       %//% (unitSpray ^-^ q (a + 1) ^*^ t l)
-    --     else
-    --       unitRatioOfSprays
-    -- den (i, j) =
-    --   if i <= ellLambda && j <= (lambda `S.index` (i-1))
-    --     then 
-    --       let a = lambda `S.index` (i-1) - j
-    --           l = lambda'' `S.index` (j-1) - i
-    --       in
-    --       (unitSpray ^-^ q a ^*^ t (l + 1))
-    --       %//% (unitSpray ^-^ q (a + 1) ^*^ t l)
-    --     else
-    --       unitRatioOfSprays
-    -- ratio s = num s AlgField./ den s
 
-psiGT :: (Eq a, AlgField.C a) => GT -> RatioOfSprays a
-psiGT pattern = 
-  AlgRing.product rOS
---  productOfSprays numFactors %//% productOfSprays denFactors
-  where
-    lambdas = gtPatternDiagonals' pattern
-    pairs = zip (drop1 lambdas) lambdas
-    rOS = map psiLambdaMu pairs
---    rOS = map psiLambdaMu pairs
-    -- ell = length lambdas - 1
-    -- q = lone 1
-    -- t = lone 2
-    -- poch = qPochammer q
-    -- pairs = zip lambdas (drop1 lambdas)
-    -- (numFactors, denFactors) = unzip [
-    --     let (lambda1, lambda2) = pairs !! (k-1)
-    --         l1i = lambda1 !! i
-    --         l1j = lambda1 !! j
-    --         l2i = lambda2 !! i
-    --         l2jp1 = lambda2 !! (j + 1)
-    --     in
-    --       (
-    --         poch (q^**^(l1i - l1j) ^*^ t^**^(j-i+1)) (l2i - l1i) 
-    --         ^*^ poch (q^**^(l1i - l2jp1 + 1) ^*^ t^**^(j-i)) (l2i - l1i)
-    --       , poch (q^**^(l1i - l1j + 1) ^*^ t^**^(j-i)) (l2i - l1i) 
-    --         ^*^ poch (q^**^(l1i - l2jp1) ^*^ t^**^(j-i+1)) (l2i - l1i)
-    --       )
-    --     | k <- [1 .. ell], j <- [0 .. k-1], i <- [0 .. j]
-    --   ]
-    -- -- numFactors = [
-    -- --     let lambda1 = lambdas !! (k-1)
-    -- --         lambda2 = lambdas !! k
-    -- --     in
-    -- --       poch (q^**^(lambda1 !! i - lambda1 !! j) ^*^ t^**^(j-i+1)) (lambda2 !! i - lambda1 !! i) 
-    -- --       ^*^ poch (q^**^(lambda1 !! i - lambda2 !! (j+1) + 1) ^*^ t^**^(j-i)) (lambda2 !! i - lambda1 !! i)
-    -- --     | k <- [1 .. ell], j <- [0 .. k-1], i <- [0 .. j]
-    -- --   ]
-    -- -- denFactors = [
-    -- --     let lambda1 = lambdas !! (k-1)
-    -- --         lambda2 = lambdas !! k
-    -- --     in
-    -- --     | k <- [1 .. ell], j <- [0 .. k-1], i <- [0 .. j]
-    -- --   ]
--- \psi_T = \prod_{1 \le i \le j \le k - 1 \le \ell - 1} 
--- {(q^{\lambda^{k - 1}_i - \lambda^{k - 1}_j} t^{j - i + 1})_{\lambda^k_i - \lambda^{k - 1}_i} 
---  (q^{\lambda^{k - 1}_i - \lambda^k_{j + 1} + 1} t^{j - i})_{\lambda^k_i - \lambda^{k - 1}_i} 
--- \over (q^{\lambda^{k - 1}_i - \lambda^{k - 1}_j + 1} t^{j - i})_{\lambda^k_i - \lambda^{k - 1}_i} 
--- (q^{\lambda^{k - 1}_i - \lambda^k_{j + 1}} t^{j - i + 1})_{\lambda^k_i - \lambda^{k - 1}_i}}.
+-- psiLambdaMu :: (Eq a, AlgField.C a) => (Seq Int, Seq Int) -> RatioOfSprays a
+-- psiLambdaMu (lambda, mu) = AlgRing.product (map ratio ss)
+--   where
+--     lambda' = _dualPartition' lambda
+--     mu' = _dualPartition' mu
+--     ellMu = S.length mu
+--     bools = S.zipWith (==) lambda mu >< S.replicate (S.length lambda - ellMu) False
+--     nonEmptyRows = S.elemIndicesL False bools
+--     bools' = S.zipWith (==) lambda' mu' 
+--     emptyColumns = S.elemIndicesL True bools'
+--     ss = [(i+1, j+1) | i <- nonEmptyRows, j <- emptyColumns]
+--     q = lone' 1
+--     t = lone' 2
+--     ratio (i, j) 
+--       | i <= ellMu && j <= mu_im1 = 
+--         ((unitSpray ^-^ q a ^*^ t (l + 1)) ^*^ (unitSpray ^-^ q (a' + 1) ^*^ t l'))
+--           %//% ((unitSpray ^-^ q (a + 1) ^*^ t l) ^*^ (unitSpray ^-^ q a' ^*^ t (l' + 1)))
+--       | j <= lambda_im1 =
+--         (unitSpray ^-^ q (a' + 1) ^*^ t l')
+--           %//% (unitSpray ^-^ q a' ^*^ t (l' + 1))
+--       | otherwise = 
+--           unitRatioOfSprays
+--         where
+--           mu_im1 = mu `S.index` (i-1)
+--           lambda_im1 = lambda `S.index` (i-1)
+--           a = mu_im1 - j
+--           l = mu' `S.index` (j-1) - i
+--           a' = lambda_im1 - j
+--           l' = lambda' `S.index` (j-1) - i
+--     -- num (i, j) =
+--     --   if i <= ellMu && j <= mu `S.index` (i-1)
+--     --     then 
+--     --       let a = mu `S.index` (i-1) - j
+--     --           l = mu'' `S.index` (j-1) - i
+--     --       in
+--     --       (unitSpray ^-^ q a ^*^ t (l + 1))
+--     --       %//% (unitSpray ^-^ q (a + 1) ^*^ t l)
+--     --     else
+--     --       unitRatioOfSprays
+--     -- den (i, j) =
+--     --   if i <= ellLambda && j <= (lambda `S.index` (i-1))
+--     --     then 
+--     --       let a = lambda `S.index` (i-1) - j
+--     --           l = lambda'' `S.index` (j-1) - i
+--     --       in
+--     --       (unitSpray ^-^ q a ^*^ t (l + 1))
+--     --       %//% (unitSpray ^-^ q (a + 1) ^*^ t l)
+--     --     else
+--     --       unitRatioOfSprays
+--     -- ratio s = num s AlgField./ den s
+
+-- psiGT :: (Eq a, AlgField.C a) => GT -> RatioOfSprays a
+-- psiGT pattern = 
+--   AlgRing.product rOS
+-- --  productOfSprays numFactors %//% productOfSprays denFactors
+--   where
+--     lambdas = gtPatternDiagonals' pattern
+--     pairs = zip (drop1 lambdas) lambdas
+--     rOS = map psiLambdaMu pairs
+-- --    rOS = map psiLambdaMu pairs
+--     -- ell = length lambdas - 1
+--     -- q = lone 1
+--     -- t = lone 2
+--     -- poch = qPochammer q
+--     -- pairs = zip lambdas (drop1 lambdas)
+--     -- (numFactors, denFactors) = unzip [
+--     --     let (lambda1, lambda2) = pairs !! (k-1)
+--     --         l1i = lambda1 !! i
+--     --         l1j = lambda1 !! j
+--     --         l2i = lambda2 !! i
+--     --         l2jp1 = lambda2 !! (j + 1)
+--     --     in
+--     --       (
+--     --         poch (q^**^(l1i - l1j) ^*^ t^**^(j-i+1)) (l2i - l1i) 
+--     --         ^*^ poch (q^**^(l1i - l2jp1 + 1) ^*^ t^**^(j-i)) (l2i - l1i)
+--     --       , poch (q^**^(l1i - l1j + 1) ^*^ t^**^(j-i)) (l2i - l1i) 
+--     --         ^*^ poch (q^**^(l1i - l2jp1) ^*^ t^**^(j-i+1)) (l2i - l1i)
+--     --       )
+--     --     | k <- [1 .. ell], j <- [0 .. k-1], i <- [0 .. j]
+--     --   ]
+--     -- -- numFactors = [
+--     -- --     let lambda1 = lambdas !! (k-1)
+--     -- --         lambda2 = lambdas !! k
+--     -- --     in
+--     -- --       poch (q^**^(lambda1 !! i - lambda1 !! j) ^*^ t^**^(j-i+1)) (lambda2 !! i - lambda1 !! i) 
+--     -- --       ^*^ poch (q^**^(lambda1 !! i - lambda2 !! (j+1) + 1) ^*^ t^**^(j-i)) (lambda2 !! i - lambda1 !! i)
+--     -- --     | k <- [1 .. ell], j <- [0 .. k-1], i <- [0 .. j]
+--     -- --   ]
+--     -- -- denFactors = [
+--     -- --     let lambda1 = lambdas !! (k-1)
+--     -- --         lambda2 = lambdas !! k
+--     -- --     in
+--     -- --     | k <- [1 .. ell], j <- [0 .. k-1], i <- [0 .. j]
+--     -- --   ]
+-- -- \psi_T = \prod_{1 \le i \le j \le k - 1 \le \ell - 1} 
+-- -- {(q^{\lambda^{k - 1}_i - \lambda^{k - 1}_j} t^{j - i + 1})_{\lambda^k_i - \lambda^{k - 1}_i} 
+-- --  (q^{\lambda^{k - 1}_i - \lambda^k_{j + 1} + 1} t^{j - i})_{\lambda^k_i - \lambda^{k - 1}_i} 
+-- -- \over (q^{\lambda^{k - 1}_i - \lambda^{k - 1}_j + 1} t^{j - i})_{\lambda^k_i - \lambda^{k - 1}_i} 
+-- -- (q^{\lambda^{k - 1}_i - \lambda^k_{j + 1}} t^{j - i + 1})_{\lambda^k_i - \lambda^{k - 1}_i}}.
 
 -- phiLambdaMu' :: (Eq a, AlgField.C a) => (Seq Int, Seq Int) -> RatioOfSprays a
 -- phiLambdaMu' (lambda, mu) = bb AlgRing.* psiLambdaMu' (lambda, mu)
 --   where
 --     bb = (blambda (DF.toList lambda)) AlgField./ (blambda (DF.toList mu))
 
-phiLambdaMu :: (Eq a, AlgField.C a) => (Seq Int, Seq Int) -> RatioOfSprays a
-phiLambdaMu (lambda, mu) = AlgRing.product (map ratio ss)
+-- phiLambdaMu :: (Eq a, AlgField.C a) => (Seq Int, Seq Int) -> RatioOfSprays a
+-- phiLambdaMu (lambda, mu) = AlgRing.product (map ratio ss)
+--   where
+--     lambda' = _dualPartition' lambda
+--     mu' = _dualPartition' mu
+--     bools' = 
+--       S.zipWith (==) lambda' mu' 
+--         >< S.replicate (S.length lambda' - S.length mu') False 
+--     nonEmptyColumns = S.elemIndicesL False bools'
+--     ss = [(i, j+1) | j <- nonEmptyColumns, i <- [1 .. lambda' `S.index` j]] 
+--     q = lone' 1
+--     t = lone' 2
+--     ellMu = S.length mu
+--     ratio (i, j) 
+--       | i <= ellMu && j <= mu_im1 = 
+--         ((unitSpray ^-^ q (a + 1) ^*^ t l) 
+--             ^*^ (unitSpray ^-^ q a' ^*^ t (l' + 1)))
+--               %//% ((unitSpray ^-^ q a ^*^ t (l + 1)) 
+--                       ^*^ (unitSpray ^-^ q (a' + 1) ^*^ t l'))
+--       | j <= lambda_im1 =
+--           (unitSpray ^-^ q a' ^*^ t (l' + 1))
+--             %//% (unitSpray ^-^ q (a' + 1) ^*^ t l') 
+--       | otherwise = 
+--           unitRatioOfSprays
+--         where
+--           mu_im1 = mu `S.index` (i-1)
+--           a = mu_im1 - j
+--           l = mu' `S.index` (j-1) - i
+--           lambda_im1 = lambda `S.index` (i-1)
+--           a' = lambda_im1 - j
+--           l' = lambda' `S.index` (j-1) - i
+
+codedRatio :: 
+  PartitionsPair -> PartitionsPair -> (Int, Int) -> ([(Int,Int)], [(Int,Int)])
+codedRatio (lambda, lambda') (mu, mu') (i, j)
+  | i <= ellMu && j <= mu_im1 = 
+      ([(a+1, l), (a', l'+1)], [(a,l+1), (a'+1, l)])
+  | j <= lambda_im1 =
+      ([(a', l'+1)], [(a'+1, l')])
+  | otherwise = 
+      ([], [])
+    where
+      ellMu = S.length mu
+      mu_im1 = mu `S.index` (i-1)
+      a = mu_im1 - j
+      l = mu' `S.index` (j-1) - i
+      lambda_im1 = lambda `S.index` (i-1)
+      a' = lambda_im1 - j
+      l' = lambda' `S.index` (j-1) - i
+
+phiLambdaMu :: PartitionsPair -> ([(Int,Int)], [(Int,Int)])
+phiLambdaMu (lambda, mu) = 
+  both concat (unzip (map (codedRatio (lambda, lambda') (mu, mu')) ss))
   where
     lambda' = _dualPartition' lambda
     mu' = _dualPartition' mu
@@ -354,74 +418,42 @@ phiLambdaMu (lambda, mu) = AlgRing.product (map ratio ss)
         >< S.replicate (S.length lambda' - S.length mu') False 
     nonEmptyColumns = S.elemIndicesL False bools'
     ss = [(i, j+1) | j <- nonEmptyColumns, i <- [1 .. lambda' `S.index` j]] 
-    q = lone' 1
-    t = lone' 2
-    ellMu = S.length mu
-    ratio (i, j) 
-      | i <= ellMu && j <= mu_im1 = 
-        ((unitSpray ^-^ q (a + 1) ^*^ t l) 
-            ^*^ (unitSpray ^-^ q a' ^*^ t (l' + 1)))
-              %//% ((unitSpray ^-^ q a ^*^ t (l + 1)) 
-                      ^*^ (unitSpray ^-^ q (a' + 1) ^*^ t l'))
-      | j <= lambda_im1 =
-          (unitSpray ^-^ q a' ^*^ t (l' + 1))
-            %//% (unitSpray ^-^ q (a' + 1) ^*^ t l') 
-      | otherwise = 
-          unitRatioOfSprays
-        where
-          mu_im1 = mu `S.index` (i-1)
-          a = mu_im1 - j
-          l = mu' `S.index` (j-1) - i
-          lambda_im1 = lambda `S.index` (i-1)
-          a' = lambda_im1 - j
-          l' = lambda' `S.index` (j-1) - i
+    -- ellMu = S.length mu
+    -- ratio (i, j) 
+    --   | i <= ellMu && j <= mu_im1 = 
+    --       ([(a+1, l), (a', l'+1)], [(a,l+1), (a'+1, l)])
+    --   | j <= lambda_im1 =
+    --       ([(a', l'+1)], [(a'+1, l')])
+    --   | otherwise = 
+    --       ([], [])
+    --     where
+    --       mu_im1 = mu `S.index` (i-1)
+    --       a = mu_im1 - j
+    --       l = mu' `S.index` (j-1) - i
+    --       lambda_im1 = lambda `S.index` (i-1)
+    --       a' = lambda_im1 - j
+    --       l' = lambda' `S.index` (j-1) - i
 
-phiLambdaMu' :: (Seq Int, Seq Int) -> ([(Int,Int)], [(Int,Int)])
-phiLambdaMu' (lambda, mu) = both concat (unzip (map ratio ss))
-  where
-    lambda' = _dualPartition' lambda
-    mu' = _dualPartition' mu
-    bools' = 
-      S.zipWith (==) lambda' mu' 
-        >< S.replicate (S.length lambda' - S.length mu') False 
-    nonEmptyColumns = S.elemIndicesL False bools'
-    ss = [(i, j+1) | j <- nonEmptyColumns, i <- [1 .. lambda' `S.index` j]] 
-    ellMu = S.length mu
-    ratio (i, j) 
-      | i <= ellMu && j <= mu_im1 = 
-          ([(a+1, l), (a', l'+1)], [(a,l+1), (a'+1, l)])
-      | j <= lambda_im1 =
-          ([(a', l'+1)], [(a'+1, l')])
-      | otherwise = 
-          ([], [])
-        where
-          mu_im1 = mu `S.index` (i-1)
-          a = mu_im1 - j
-          l = mu' `S.index` (j-1) - i
-          lambda_im1 = lambda `S.index` (i-1)
-          a' = lambda_im1 - j
-          l' = lambda' `S.index` (j-1) - i
+-- phiGT''' :: (Eq a, AlgField.C a) => GT -> RatioOfSprays a
+-- phiGT''' pattern = num %//% den
+--   where
+--     lambdas = gtPatternDiagonals' pattern
+--     pairs = zip (drop1 lambdas) lambdas
+--     (num_als, den_als) = both concat (unzip (map phiLambdaMu' pairs))
+--     num_als' = num_als \\ den_als
+--     den_als' = den_als \\ num_als
+--     num_assocs = DM.assocs (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty num_als')
+--     den_assocs = DM.assocs (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty den_als')
+--     q = lone' 1
+--     t = lone' 2
+--     poly ((a, l), c) = (unitSpray ^-^ q a ^*^ t l) ^**^ c
+--     num = productOfSprays (map poly num_assocs)
+--     den = productOfSprays (map poly den_assocs)
 
-phiGT''' :: (Eq a, AlgField.C a) => GT -> RatioOfSprays a
-phiGT''' pattern = num %//% den
-  where
-    lambdas = gtPatternDiagonals' pattern
-    pairs = zip (drop1 lambdas) lambdas
-    (num_als, den_als) = both concat (unzip (map phiLambdaMu' pairs))
-    num_als' = num_als \\ den_als
-    den_als' = den_als \\ num_als
-    num_assocs = DM.assocs (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty num_als')
-    den_assocs = DM.assocs (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty den_als')
-    q = lone' 1
-    t = lone' 2
-    poly ((a, l), c) = (unitSpray ^-^ q a ^*^ t l) ^**^ c
-    num = productOfSprays (map poly num_assocs)
-    den = productOfSprays (map poly den_assocs)
-
-phiGT'''' :: 
+phiGT :: 
   (Eq a, AlgField.C a) => 
-  Map (Seq Int, Seq Int) (([(Int,Int)], [(Int,Int)])) -> [(Seq Int, Seq Int)] -> RatioOfSprays a
-phiGT'''' pairsMap pairs = num %//% den
+  PairsMap -> [PartitionsPair] -> RatioOfSprays a
+phiGT pairsMap pairs = num %//% den
   where
     (num_als, den_als) = both concat (unzip (map ((DM.!) pairsMap) pairs))
     num_als' = num_als \\ den_als
@@ -434,9 +466,14 @@ phiGT'''' pairsMap pairs = num %//% den
     num = productOfSprays (map poly num_assocs)
     den = productOfSprays (map poly den_assocs)
 
-macdonaldPolynomialQ' :: 
-  (Eq a, AlgField.C a) => Int -> Partition -> ParametricSpray a
-macdonaldPolynomialQ' n lambda = HM.unions hashMaps -- sumOfSprays sprays
+_macdonaldPolynomial :: 
+  (Eq a, AlgField.C a) 
+  => (PartitionsPair -> ([(Int,Int)], [(Int,Int)]))
+  -> (PairsMap -> [PartitionsPair] -> RatioOfSprays a)
+  -> Int 
+  -> Partition 
+  -> ParametricSpray a
+_macdonaldPolynomial f g n lambda = HM.unions hashMaps
   where
     lambda' = toPartitionUnsafe lambda
     mus = filter (\mu -> partitionWidth mu <= n) (dominatedPartitions lambda')
@@ -447,26 +484,16 @@ macdonaldPolynomialQ' n lambda = HM.unions hashMaps -- sumOfSprays sprays
           . (kostkaGelfandTsetlinPatterns lambda')
       ) mus
     allPairs = nub $ concat (concat listsOfPairs)
-    pairsMap = DM.fromList (zip allPairs (map phiLambdaMu' allPairs))
+    pairsMap = DM.fromList (zip allPairs (map f allPairs))
     coeffs = HM.fromList 
       (zipWith 
         (\mu listOfPairs -> 
           (
             S.fromList (fromPartition mu)
-          , AlgAdd.sum (map (phiGT'''' pairsMap) listOfPairs)
+          , AlgAdd.sum (map (g pairsMap) listOfPairs)
           )
         ) mus listsOfPairs
       )
-    -- allPairs = nub $
-    --   concatMap 
-    --     (concatMap (pairing . gtPatternDiagonals') . (kostkaGelfandTsetlinPatterns lambda')) mus
-    -- coeffs = HM.fromList 
-    --   [
-    --     (
-    --       S.fromList (fromPartition mu)
-    --     , AlgAdd.sum (map phiGT''' (kostkaGelfandTsetlinPatterns lambda' mu))
-    --     ) | mu <- mus
-    --   ]
     dropTrailingZeros = S.dropWhileR (== 0)
     hashMaps = 
       map 
@@ -482,12 +509,6 @@ macdonaldPolynomialQ' n lambda = HM.unions hashMaps -- sumOfSprays sprays
                 (Powers compo' (S.length compo'), coeff) | compo <- compos]
         ) mus
 
-test' :: Bool 
-test' = 
-  prettyParametricQSpray (HM.map (\rOQ -> substitute [Just 0, Nothing] rOQ) macPoly)
-    == "{ [ a2^2 - 2*a2 + 1 ] }*X^2.Y + { [ a2^2 - 2*a2 + 1 ] }*X^2.Z + { [ a2^2 - 2*a2 + 1 ] }*X.Y^2 + { [ -a2^4 + a2^3 + 3*a2^2 - 5*a2 + 2 ] }*X.Y.Z + { [ a2^2 - 2*a2 + 1 ] }*X.Z^2 + { [ a2^2 - 2*a2 + 1 ] }*Y^2.Z + { [ a2^2 - 2*a2 + 1 ] }*Y.Z^2"
-  where
-    macPoly = macdonaldPolynomialQ' 3 [2, 1]
 
 -- phiGT :: (Eq a, AlgField.C a) => GT -> RatioOfSprays a
 -- phiGT pattern = 
@@ -525,140 +546,182 @@ test' =
 -- \over (q^{\lambda^k_i - \lambda^k_j + 1} t^{j - i})_{\lambda^k_j - \lambda^{k - 1}_j} 
 -- (q^{\lambda^k_i - \lambda^k_{j + 1}} t^{j - i + 1})_{\lambda^k_{j + 1} -\lambda^{k - 1}_{j + 1}}}.
 
+-- macdonaldPolynomialP :: 
+--   (Eq a, AlgField.C a) => Int -> Partition -> ParametricSpray a
+-- macdonaldPolynomialP n lambda = HM.unions hashMaps -- sumOfSprays sprays
+--   where
+--     lambda' = toPartitionUnsafe lambda
+--     mus = filter (\mu -> partitionWidth mu <= n) (dominatedPartitions lambda')
+--     dropTrailingZeros = S.dropWhileR (== 0)
+--     coeffs = HM.fromList 
+--       [
+--         (
+--           S.fromList (fromPartition mu)
+--         , AlgAdd.sum (map psiGT (kostkaGelfandTsetlinPatterns lambda' mu))
+--         ) | mu <- mus
+--       ]
+--     hashMaps = 
+--       map 
+--         (\mu -> 
+--           let mu' = fromPartition mu
+--               mu'' = S.fromList mu'
+--               mu''' = mu' ++ (replicate (n - S.length mu'') 0)
+--               coeff = coeffs HM.! mu''
+--               compos = permuteMultiset mu'''
+--           in
+--             HM.fromList 
+--               [let compo' = dropTrailingZeros (S.fromList compo) in
+--                 (Powers compo' (S.length compo'), coeff) | compo <- compos]
+--         ) mus
+--     -- compos = compositions n (sum lambda)
+--     -- compos1 = map (filter (/= 0)) compos
+--     -- lambda' = toPartitionUnsafe lambda
+--     -- coeffs = DM.fromList 
+--     --   [
+--     --     (
+--     --       compo1
+--     --     , AlgAdd.sum (map psiGT (kostkaGelfandTsetlinPatterns' lambda' compo1))
+--     --     ) | compo1 <- nub compos1
+--     --   ]
+--     -- zippedCompos = zip compos compos1
+--     -- term (compo, compo1) = 
+--     --   coeffs DM.! compo1 *^ monomial (filter ((/= 0) . snd) $ zip [1 ..] compo)
+--     -- sprays = map term zippedCompos
+
+test :: Bool
+test = 
+  prettyParametricQSpray (HM.map (\rOQ -> substitute [Just 0, Nothing] rOQ) macPoly)
+    == "{ [ 1 ] }*X^2.Y + { [ 1 ] }*X^2.Z + { [ 1 ] }*X.Y^2 + { [ -a2^2 - a2 + 2 ] }*X.Y.Z + { [ 1 ] }*X.Z^2 + { [ 1 ] }*Y^2.Z + { [ 1 ] }*Y.Z^2"
+  where
+    macPoly = macdonaldPolynomialP 3 [2, 1]
+
 macdonaldPolynomialP :: 
   (Eq a, AlgField.C a) => Int -> Partition -> ParametricSpray a
-macdonaldPolynomialP n lambda = HM.unions hashMaps -- sumOfSprays sprays
-  where
-    lambda' = toPartitionUnsafe lambda
-    mus = filter (\mu -> partitionWidth mu <= n) (dominatedPartitions lambda')
-    dropTrailingZeros = S.dropWhileR (== 0)
-    coeffs = HM.fromList 
-      [
-        (
-          S.fromList (fromPartition mu)
-        , AlgAdd.sum (map psiGT (kostkaGelfandTsetlinPatterns lambda' mu))
-        ) | mu <- mus
-      ]
-    hashMaps = 
-      map 
-        (\mu -> 
-          let mu' = fromPartition mu
-              mu'' = S.fromList mu'
-              mu''' = mu' ++ (replicate (n - S.length mu'') 0)
-              coeff = coeffs HM.! mu''
-              compos = permuteMultiset mu'''
-          in
-            HM.fromList 
-              [let compo' = dropTrailingZeros (S.fromList compo) in
-                (Powers compo' (S.length compo'), coeff) | compo <- compos]
-        ) mus
-    -- compos = compositions n (sum lambda)
-    -- compos1 = map (filter (/= 0)) compos
-    -- lambda' = toPartitionUnsafe lambda
-    -- coeffs = DM.fromList 
-    --   [
-    --     (
-    --       compo1
-    --     , AlgAdd.sum (map psiGT (kostkaGelfandTsetlinPatterns' lambda' compo1))
-    --     ) | compo1 <- nub compos1
-    --   ]
-    -- zippedCompos = zip compos compos1
-    -- term (compo, compo1) = 
-    --   coeffs DM.! compo1 *^ monomial (filter ((/= 0) . snd) $ zip [1 ..] compo)
-    -- sprays = map term zippedCompos
-
--- test :: Bool
--- test = 
---   prettyParametricQSpray (HM.map (\rOQ -> substitute [Just 0, Nothing] rOQ) macPoly)
---     == "{ [ 1 ] }*X^2.Y + { [ 1 ] }*X^2.Z + { [ 1 ] }*X.Y^2 + { [ -a2^2 - a2 + 2 ] }*X.Y.Z + { [ 1 ] }*X.Z^2 + { [ 1 ] }*Y^2.Z + { [ 1 ] }*Y.Z^2"
---   where
---     macPoly = macdonaldPolynomialP 3 [2, 1]
-
-phiGT' :: (Eq a, AlgField.C a) => Map (Seq Int, Seq Int) (RatioOfSprays a) -> GT -> RatioOfSprays a
-phiGT' pairsMap pattern = 
-  AlgRing.product rOS
-  where
-    lambdas = gtPatternDiagonals' pattern
-    pairs = zip (drop1 lambdas) lambdas
-    rOS = map ((DM.!) pairsMap) pairs
-
-phiGT'' :: 
-  (Eq a, AlgField.C a) => 
-  Map (Seq Int, Seq Int) (RatioOfSprays a) -> [(Seq Int, Seq Int)] -> RatioOfSprays a
-phiGT'' pairsMap pairs = 
-  AlgRing.product rOS
-  where
-    rOS = map ((DM.!) pairsMap) pairs
-
-tt :: Int -> Partition -> [[[(Seq Int, Seq Int)]]]
-tt n lambda = listsOfPairs
-  where
-    lambda' = toPartitionUnsafe lambda
-    mus = filter (\mu -> partitionWidth mu <= n) (dominatedPartitions lambda')
-    pairs lambdas = zip (drop1 lambdas) lambdas
-    listsOfPairs = 
-      map (
-        map (pairs . gtPatternDiagonals') 
-          . (kostkaGelfandTsetlinPatterns lambda')
-      ) mus
-
+macdonaldPolynomialP = _macdonaldPolynomial psiLambdaMu phiGT
 
 macdonaldPolynomialQ :: 
   (Eq a, AlgField.C a) => Int -> Partition -> ParametricSpray a
-macdonaldPolynomialQ n lambda = HM.unions hashMaps -- sumOfSprays sprays
-  where
-    lambda' = toPartitionUnsafe lambda
-    mus = filter (\mu -> partitionWidth mu <= n) (dominatedPartitions lambda')
-    pairing lambdas = zip (drop1 lambdas) lambdas
-    listsOfPairs = 
-      map (
-        map (pairing . gtPatternDiagonals') 
-          . (kostkaGelfandTsetlinPatterns lambda')
-      ) mus
-    -- allPairs = map (\mu -> map (pairs . gtPatternDiagonals') (kostkaGelfandTsetlinPatterns lambda' mu)) mus
---      map (\mu -> map (pairs . gtPatternDiagonals') (kostkaGelfandTsetlinPatterns lambda' mu)) mus
-    -- allPairs =
-    --   map 
-    --     (concatMap (pairs . gtPatternDiagonals') . (kostkaGelfandTsetlinPatterns lambda')) mus
-    -- allPairs =
-    --   concatMap 
-    --     (concatMap (pairs . gtPatternDiagonals') . (kostkaGelfandTsetlinPatterns lambda')) mus
-    allPairs = nub $ concat (concat listsOfPairs)
-    pairsMap = DM.fromList (zip allPairs (map phiLambdaMu allPairs))
-    coeffs = HM.fromList 
-      (zipWith 
-        (\mu listOfPairs -> 
-          (
-            S.fromList (fromPartition mu)
-          , AlgAdd.sum (map (phiGT'' pairsMap) listOfPairs)
-          )
-        ) mus listsOfPairs
-      )
-    -- allPairs = nub $ 
-    --   concatMap 
-    --     (concatMap (pairs . gtPatternDiagonals') . (kostkaGelfandTsetlinPatterns lambda')) mus
-    -- pairsMap = DM.fromList (zip allPairs (map phiLambdaMu allPairs))
-    -- coeffs = HM.fromList 
-    --   [
-    --     (
-    --       S.fromList (fromPartition mu)
-    --     , AlgAdd.sum (map (phiGT' pairsMap) (kostkaGelfandTsetlinPatterns lambda' mu))
-    --     ) | mu <- mus
-    --   ]
-    dropTrailingZeros = S.dropWhileR (== 0)
-    hashMaps = 
-      map 
-        (\mu -> 
-          let mu' = fromPartition mu
-              mu'' = S.fromList mu'
-              mu''' = mu' ++ (replicate (n - S.length mu'') 0)
-              coeff = coeffs HM.! mu''
-              compos = permuteMultiset mu'''
-          in
-            HM.fromList 
-              [let compo' = dropTrailingZeros (S.fromList compo) in
-                (Powers compo' (S.length compo'), coeff) | compo <- compos]
-        ) mus
+macdonaldPolynomialQ = _macdonaldPolynomial phiLambdaMu phiGT
+-- macdonaldPolynomialQ n lambda = HM.unions hashMaps
+--   where
+--     lambda' = toPartitionUnsafe lambda
+--     mus = filter (\mu -> partitionWidth mu <= n) (dominatedPartitions lambda')
+--     pairing lambdas = zip (drop1 lambdas) lambdas
+--     listsOfPairs = 
+--       map (
+--         map (pairing . gtPatternDiagonals') 
+--           . (kostkaGelfandTsetlinPatterns lambda')
+--       ) mus
+--     allPairs = nub $ concat (concat listsOfPairs)
+--     pairsMap = DM.fromList (zip allPairs (map phiLambdaMu allPairs))
+--     coeffs = HM.fromList 
+--       (zipWith 
+--         (\mu listOfPairs -> 
+--           (
+--             S.fromList (fromPartition mu)
+--           , AlgAdd.sum (map (phiGT pairsMap) listOfPairs)
+--           )
+--         ) mus listsOfPairs
+--       )
+--     dropTrailingZeros = S.dropWhileR (== 0)
+--     hashMaps = 
+--       map 
+--         (\mu -> 
+--           let mu' = fromPartition mu
+--               mu'' = S.fromList mu'
+--               mu''' = mu' ++ (replicate (n - S.length mu'') 0)
+--               coeff = coeffs HM.! mu''
+--               compos = permuteMultiset mu'''
+--           in
+--             HM.fromList 
+--               [let compo' = dropTrailingZeros (S.fromList compo) in
+--                 (Powers compo' (S.length compo'), coeff) | compo <- compos]
+--         ) mus
+
+-- phiGT' :: (Eq a, AlgField.C a) => Map (Seq Int, Seq Int) (RatioOfSprays a) -> GT -> RatioOfSprays a
+-- phiGT' pairsMap pattern = 
+--   AlgRing.product rOS
+--   where
+--     lambdas = gtPatternDiagonals' pattern
+--     pairs = zip (drop1 lambdas) lambdas
+--     rOS = map ((DM.!) pairsMap) pairs
+
+-- phiGT'' :: 
+--   (Eq a, AlgField.C a) => 
+--   Map (Seq Int, Seq Int) (RatioOfSprays a) -> [(Seq Int, Seq Int)] -> RatioOfSprays a
+-- phiGT'' pairsMap pairs = 
+--   AlgRing.product rOS
+--   where
+--     rOS = map ((DM.!) pairsMap) pairs
+
+-- tt :: Int -> Partition -> [[[(Seq Int, Seq Int)]]]
+-- tt n lambda = listsOfPairs
+--   where
+--     lambda' = toPartitionUnsafe lambda
+--     mus = filter (\mu -> partitionWidth mu <= n) (dominatedPartitions lambda')
+--     pairs lambdas = zip (drop1 lambdas) lambdas
+--     listsOfPairs = 
+--       map (
+--         map (pairs . gtPatternDiagonals') 
+--           . (kostkaGelfandTsetlinPatterns lambda')
+--       ) mus
+
+-- macdonaldPolynomialQ :: 
+--   (Eq a, AlgField.C a) => Int -> Partition -> ParametricSpray a
+-- macdonaldPolynomialQ n lambda = HM.unions hashMaps -- sumOfSprays sprays
+--   where
+--     lambda' = toPartitionUnsafe lambda
+--     mus = filter (\mu -> partitionWidth mu <= n) (dominatedPartitions lambda')
+--     pairing lambdas = zip (drop1 lambdas) lambdas
+--     listsOfPairs = 
+--       map (
+--         map (pairing . gtPatternDiagonals') 
+--           . (kostkaGelfandTsetlinPatterns lambda')
+--       ) mus
+--     -- allPairs = map (\mu -> map (pairs . gtPatternDiagonals') (kostkaGelfandTsetlinPatterns lambda' mu)) mus
+-- --      map (\mu -> map (pairs . gtPatternDiagonals') (kostkaGelfandTsetlinPatterns lambda' mu)) mus
+--     -- allPairs =
+--     --   map 
+--     --     (concatMap (pairs . gtPatternDiagonals') . (kostkaGelfandTsetlinPatterns lambda')) mus
+--     -- allPairs =
+--     --   concatMap 
+--     --     (concatMap (pairs . gtPatternDiagonals') . (kostkaGelfandTsetlinPatterns lambda')) mus
+--     allPairs = nub $ concat (concat listsOfPairs)
+--     pairsMap = DM.fromList (zip allPairs (map phiLambdaMu allPairs))
+--     coeffs = HM.fromList 
+--       (zipWith 
+--         (\mu listOfPairs -> 
+--           (
+--             S.fromList (fromPartition mu)
+--           , AlgAdd.sum (map (phiGT'' pairsMap) listOfPairs)
+--           )
+--         ) mus listsOfPairs
+--       )
+--     -- allPairs = nub $ 
+--     --   concatMap 
+--     --     (concatMap (pairs . gtPatternDiagonals') . (kostkaGelfandTsetlinPatterns lambda')) mus
+--     -- pairsMap = DM.fromList (zip allPairs (map phiLambdaMu allPairs))
+--     -- coeffs = HM.fromList 
+--     --   [
+--     --     (
+--     --       S.fromList (fromPartition mu)
+--     --     , AlgAdd.sum (map (phiGT' pairsMap) (kostkaGelfandTsetlinPatterns lambda' mu))
+--     --     ) | mu <- mus
+--     --   ]
+--     dropTrailingZeros = S.dropWhileR (== 0)
+--     hashMaps = 
+--       map 
+--         (\mu -> 
+--           let mu' = fromPartition mu
+--               mu'' = S.fromList mu'
+--               mu''' = mu' ++ (replicate (n - S.length mu'') 0)
+--               coeff = coeffs HM.! mu''
+--               compos = permuteMultiset mu'''
+--           in
+--             HM.fromList 
+--               [let compo' = dropTrailingZeros (S.fromList compo) in
+--                 (Powers compo' (S.length compo'), coeff) | compo <- compos]
+--         ) mus
 
 -- test' :: Bool 
 -- test' = 
