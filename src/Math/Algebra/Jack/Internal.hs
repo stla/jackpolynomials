@@ -418,6 +418,22 @@ phiGT''' pattern = num %//% den
     num = productOfSprays (map poly num_assocs)
     den = productOfSprays (map poly den_assocs)
 
+phiGT'''' :: 
+  (Eq a, AlgField.C a) => 
+  Map (Seq Int, Seq Int) (([(Int,Int)], [(Int,Int)])) -> [(Seq Int, Seq Int)] -> RatioOfSprays a
+phiGT'''' pairsMap pairs = num %//% den
+  where
+    (num_als, den_als) = both concat (unzip (map ((DM.!) pairsMap) pairs))
+    num_als' = num_als \\ den_als
+    den_als' = den_als \\ num_als
+    num_assocs = DM.assocs (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty num_als')
+    den_assocs = DM.assocs (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty den_als')
+    q = lone' 1
+    t = lone' 2
+    poly ((a, l), c) = (unitSpray ^-^ q a ^*^ t l) ^**^ c
+    num = productOfSprays (map poly num_assocs)
+    den = productOfSprays (map poly den_assocs)
+
 macdonaldPolynomialQ' :: 
   (Eq a, AlgField.C a) => Int -> Partition -> ParametricSpray a
 macdonaldPolynomialQ' n lambda = HM.unions hashMaps -- sumOfSprays sprays
@@ -425,16 +441,32 @@ macdonaldPolynomialQ' n lambda = HM.unions hashMaps -- sumOfSprays sprays
     lambda' = toPartitionUnsafe lambda
     mus = filter (\mu -> partitionWidth mu <= n) (dominatedPartitions lambda')
     pairing lambdas = zip (drop1 lambdas) lambdas
-    allPairs = nub $
-      concatMap 
-        (concatMap (pairing . gtPatternDiagonals') . (kostkaGelfandTsetlinPatterns lambda')) mus
+    listsOfPairs = 
+      map (
+        map (pairing . gtPatternDiagonals') 
+          . (kostkaGelfandTsetlinPatterns lambda')
+      ) mus
+    allPairs = nub $ concat (concat listsOfPairs)
+    pairsMap = DM.fromList (zip allPairs (map phiLambdaMu' allPairs))
     coeffs = HM.fromList 
-      [
-        (
-          S.fromList (fromPartition mu)
-        , AlgAdd.sum (map phiGT''' (kostkaGelfandTsetlinPatterns lambda' mu))
-        ) | mu <- mus
-      ]
+      (zipWith 
+        (\mu listOfPairs -> 
+          (
+            S.fromList (fromPartition mu)
+          , AlgAdd.sum (map (phiGT'''' pairsMap) listOfPairs)
+          )
+        ) mus listsOfPairs
+      )
+    -- allPairs = nub $
+    --   concatMap 
+    --     (concatMap (pairing . gtPatternDiagonals') . (kostkaGelfandTsetlinPatterns lambda')) mus
+    -- coeffs = HM.fromList 
+    --   [
+    --     (
+    --       S.fromList (fromPartition mu)
+    --     , AlgAdd.sum (map phiGT''' (kostkaGelfandTsetlinPatterns lambda' mu))
+    --     ) | mu <- mus
+    --   ]
     dropTrailingZeros = S.dropWhileR (== 0)
     hashMaps = 
       map 
