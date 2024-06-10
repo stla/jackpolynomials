@@ -104,7 +104,7 @@ import           Math.Algebra.Hspray                         (
                                                              , sumOfSprays
                                                              , productOfSprays
                                                              , FunctionLike (..)
-                                                             , prettyParametricQSpray
+                                                            --  , prettyParametricQSpray
                                                              )
 import           Math.Combinat.Compositions                  (
                                                                compositions
@@ -239,6 +239,24 @@ _dualPartition' xs = go 0 (_diffSequence' xs) S.empty where
 --           unitRatioOfSprays
 --     ratio s = num s AlgField./ den s
 --     ratios = map ratio ss
+
+codedRatio :: 
+  PartitionsPair -> PartitionsPair -> (Int, Int) -> ([(Int,Int)], [(Int,Int)])
+codedRatio (lambda, lambda') (mu, mu') (i, j)
+  | i <= ellMu && j <= mu_im1 = 
+      ([(a+1, l), (a', l'+1)], [(a, l+1), (a'+1, l)])
+  | j <= lambda_im1 =
+      ([(a', l'+1)], [(a'+1, l')])
+  | otherwise = 
+      ([], [])
+    where
+      ellMu = S.length mu
+      mu_im1 = mu `S.index` (i-1)
+      a = mu_im1 - j
+      l = mu' `S.index` (j-1) - i
+      lambda_im1 = lambda `S.index` (i-1)
+      a' = lambda_im1 - j
+      l' = lambda' `S.index` (j-1) - i
 
 psiLambdaMu :: PartitionsPair -> ([(Int,Int)], [(Int,Int)])
 psiLambdaMu (lambda, mu) = 
@@ -389,24 +407,6 @@ psiLambdaMu (lambda, mu) =
 --           a' = lambda_im1 - j
 --           l' = lambda' `S.index` (j-1) - i
 
-codedRatio :: 
-  PartitionsPair -> PartitionsPair -> (Int, Int) -> ([(Int,Int)], [(Int,Int)])
-codedRatio (lambda, lambda') (mu, mu') (i, j)
-  | i <= ellMu && j <= mu_im1 = 
-      ([(a+1, l), (a', l'+1)], [(a,l+1), (a'+1, l)])
-  | j <= lambda_im1 =
-      ([(a', l'+1)], [(a'+1, l')])
-  | otherwise = 
-      ([], [])
-    where
-      ellMu = S.length mu
-      mu_im1 = mu `S.index` (i-1)
-      a = mu_im1 - j
-      l = mu' `S.index` (j-1) - i
-      lambda_im1 = lambda `S.index` (i-1)
-      a' = lambda_im1 - j
-      l' = lambda' `S.index` (j-1) - i
-
 phiLambdaMu :: PartitionsPair -> ([(Int,Int)], [(Int,Int)])
 phiLambdaMu (lambda, mu) = 
   both concat (unzip (map (codedRatio (lambda, lambda') (mu, mu')) ss))
@@ -450,30 +450,31 @@ phiLambdaMu (lambda, mu) =
 --     num = productOfSprays (map poly num_assocs)
 --     den = productOfSprays (map poly den_assocs)
 
-phiGT :: 
+makeRatioOfSprays :: 
   (Eq a, AlgField.C a) => 
   PairsMap -> [PartitionsPair] -> RatioOfSprays a
-phiGT pairsMap pairs = num %//% den
+makeRatioOfSprays pairsMap pairs = num %//% den
   where
     (num_als, den_als) = both concat (unzip (map ((DM.!) pairsMap) pairs))
-    num_als' = num_als \\ den_als
-    den_als' = den_als \\ num_als
-    num_assocs = DM.assocs (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty num_als')
-    den_assocs = DM.assocs (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty den_als')
+    als = (num_als \\ den_als, den_als \\ num_als)
+    assocs = 
+      both (DM.assocs . (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty)) als
+    -- num_assocs = DM.assocs (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty num_als')
+    -- den_assocs = DM.assocs (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty den_als')
     q = lone' 1
     t = lone' 2
     poly ((a, l), c) = (unitSpray ^-^ q a ^*^ t l) ^**^ c
-    num = productOfSprays (map poly num_assocs)
-    den = productOfSprays (map poly den_assocs)
+    (num, den) = both (productOfSprays . (map poly)) assocs
+    -- num = productOfSprays (map poly num_assocs)
+    -- den = productOfSprays (map poly den_assocs)
 
 _macdonaldPolynomial :: 
   (Eq a, AlgField.C a) 
   => (PartitionsPair -> ([(Int,Int)], [(Int,Int)]))
-  -> (PairsMap -> [PartitionsPair] -> RatioOfSprays a)
   -> Int 
   -> Partition 
   -> ParametricSpray a
-_macdonaldPolynomial f g n lambda = HM.unions hashMaps
+_macdonaldPolynomial f n lambda = HM.unions hashMaps
   where
     lambda' = toPartitionUnsafe lambda
     mus = filter (\mu -> partitionWidth mu <= n) (dominatedPartitions lambda')
@@ -490,7 +491,7 @@ _macdonaldPolynomial f g n lambda = HM.unions hashMaps
         (\mu listOfPairs -> 
           (
             S.fromList (fromPartition mu)
-          , AlgAdd.sum (map (g pairsMap) listOfPairs)
+          , AlgAdd.sum (map (makeRatioOfSprays pairsMap) listOfPairs)
           )
         ) mus listsOfPairs
       )
@@ -588,20 +589,20 @@ _macdonaldPolynomial f g n lambda = HM.unions hashMaps
 --     --   coeffs DM.! compo1 *^ monomial (filter ((/= 0) . snd) $ zip [1 ..] compo)
 --     -- sprays = map term zippedCompos
 
-test :: Bool
-test = 
-  prettyParametricQSpray (HM.map (\rOQ -> substitute [Just 0, Nothing] rOQ) macPoly)
-    == "{ [ 1 ] }*X^2.Y + { [ 1 ] }*X^2.Z + { [ 1 ] }*X.Y^2 + { [ -a2^2 - a2 + 2 ] }*X.Y.Z + { [ 1 ] }*X.Z^2 + { [ 1 ] }*Y^2.Z + { [ 1 ] }*Y.Z^2"
-  where
-    macPoly = macdonaldPolynomialP 3 [2, 1]
+-- test :: Bool
+-- test = 
+--   prettyParametricQSpray (HM.map (\rOQ -> substitute [Just 0, Nothing] rOQ) macPoly)
+--     == "{ [ 1 ] }*X^2.Y + { [ 1 ] }*X^2.Z + { [ 1 ] }*X.Y^2 + { [ -a2^2 - a2 + 2 ] }*X.Y.Z + { [ 1 ] }*X.Z^2 + { [ 1 ] }*Y^2.Z + { [ 1 ] }*Y.Z^2"
+--   where
+--     macPoly = macdonaldPolynomialP 3 [2, 1]
 
 macdonaldPolynomialP :: 
   (Eq a, AlgField.C a) => Int -> Partition -> ParametricSpray a
-macdonaldPolynomialP = _macdonaldPolynomial psiLambdaMu phiGT
+macdonaldPolynomialP = _macdonaldPolynomial psiLambdaMu 
 
 macdonaldPolynomialQ :: 
   (Eq a, AlgField.C a) => Int -> Partition -> ParametricSpray a
-macdonaldPolynomialQ = _macdonaldPolynomial phiLambdaMu phiGT
+macdonaldPolynomialQ = _macdonaldPolynomial phiLambdaMu 
 -- macdonaldPolynomialQ n lambda = HM.unions hashMaps
 --   where
 --     lambda' = toPartitionUnsafe lambda
