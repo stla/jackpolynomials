@@ -72,6 +72,8 @@ module Math.Algebra.SymmetricPolynomials
   -- * Macdonald polynomials
   , macdonaldPolynomial
   , macdonaldPolynomial'
+  , skewMacdonaldPolynomial
+  , skewMacdonaldPolynomial'
   -- * Flagged Schur polynomials
   , flaggedSchurPol
   , flaggedSchurPol'
@@ -188,6 +190,8 @@ import           Math.Algebra.Jack.Internal       (
                                                   , skewTableauWeight
                                                   , macdonaldPolynomialP
                                                   , macdonaldPolynomialQ
+                                                  , skewMacdonaldPolynomialP
+                                                  , skewMacdonaldPolynomialQ
                                                   )
 import           Math.Algebra.JackPol             ( 
                                                     schurPol
@@ -1135,6 +1139,38 @@ macdonaldPolynomial' ::
   -> Char       -- ^ which Macdonald polynomial, @'P'@ or @'Q'@
   -> ParametricQSpray
 macdonaldPolynomial' = macdonaldPolynomial
+
+-- | Skew Macdonald polynomial of a given skew partition. This is a multivariate 
+-- symmetric polynomial with two parameters.
+skewMacdonaldPolynomial :: (Eq a, AlgField.C a)
+  => Int       -- ^ number of variables
+  -> Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
+  -> Char      -- ^ which skew Macdonald polynomial, @'P'@ or @'Q'@
+  -> ParametricSpray a
+skewMacdonaldPolynomial n lambda mu which 
+  | n < 0 = 
+      error "skewMacdonaldPolynomial: negative number of variables."
+  | not (isSkewPartition lambda mu) = 
+      error "skewMacdonaldPolynomial: invalid skew partition."
+  | not (which `elem` ['P', 'Q']) =
+      error "skewMacdonaldPolynomial: the character must be 'P' or 'Q'."
+  | n == 0 = 
+      if lambda == mu then unitSpray else zeroSpray
+  | otherwise = 
+      if which == 'P' 
+        then skewMacdonaldPolynomialP n lambda mu
+        else skewMacdonaldPolynomialQ n lambda mu
+
+-- | Skew Macdonald polynomial of a given skew partition. This is a multivariate 
+-- symmetric polynomial with two parameters.
+skewMacdonaldPolynomial' :: 
+     Int       -- ^ number of variables
+  -> Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
+  -> Char      -- ^ which skew Macdonald polynomial, @'P'@ or @'Q'@
+  -> ParametricQSpray
+skewMacdonaldPolynomial' = skewMacdonaldPolynomial
 
 -- | Flagged Schur polynomial. A flagged Schur polynomial is not symmetric 
 -- in general.
