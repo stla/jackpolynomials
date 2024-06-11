@@ -760,7 +760,8 @@ _skewMacdonaldPolynomial f n lambda mu = HM.unions hashMaps
       ) nus
     allPairs = nub $ concat (concat listsOfPairs)
     pairsMap = DM.fromList (zip allPairs (map f allPairs))
-    coeffs = HM.filter (/= zeroRatioOfSprays) $ HM.fromList 
+    coeffs = -- HM.filter (/= zeroRatioOfSprays) $ 
+      HM.fromList 
       (zipWith 
         (\nu listOfPairs -> 
           (
@@ -1041,6 +1042,8 @@ isIncreasing s =
 
 _paths :: Int -> Seq Int -> Seq Int -> [[Seq Int]]
 _paths n lambda mu = 
+  -- TODO: use same technique as macdonaldPolynomial: take only the compositions
+  -- which are partitions and use permuteMultiset
   concatMap 
     (skewGelfandTsetlinPatterns (DF.toList lambda) (DF.toList mu))
       (compositions n (DF.sum lambda - DF.sum mu))
