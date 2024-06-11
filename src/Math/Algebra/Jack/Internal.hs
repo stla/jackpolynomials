@@ -34,6 +34,8 @@ module Math.Algebra.Jack.Internal
   , _skewKostkaFoulkesPolynomial
   , macdonaldPolynomialP
   , macdonaldPolynomialQ
+  , skewMacdonaldPolynomialP
+  , skewMacdonaldPolynomialQ
   )
   where
 import           Prelude 
@@ -105,7 +107,7 @@ import           Math.Algebra.Hspray                         (
                                                              , sumOfSprays
                                                              , productOfSprays
                                                              , FunctionLike (..)
-                                                              , prettyParametricQSpray
+                                                              -- , prettyParametricQSpray
                                                              )
 import           Math.Combinat.Compositions                  (
                                                                compositions
@@ -119,7 +121,6 @@ import           Math.Combinat.Partitions.Integer            (
                                                              , partitionWidth
                                                              , toPartitionUnsafe
                                                              , dropTailingZeros
-                                                             , subPartitions
                                                              )
 -- import           Math.Combinat.Partitions.Skew               (
 --                                                                mkSkewPartition
@@ -742,11 +743,14 @@ _skewMacdonaldPolynomial ::
   -> ParametricSpray a
 _skewMacdonaldPolynomial f n lambda mu = HM.unions hashMaps
   where
-    lastSubPartition w [] = []
+    -- assumes w <= sum(k:ks)
+    lastSubPartition _ [] = []
     lastSubPartition w (k:ks) =  
       if w <= k then [w] else k : lastSubPartition (w - k) ks
     nus = 
-      dropEnd 1 (dominatedPartitions (toPartitionUnsafe (lastSubPartition (sum lambda - sum mu) lambda)))
+      filter ((<= n) . partitionWidth) $ dropEnd 1 
+        (dominatedPartitions 
+          (toPartitionUnsafe (lastSubPartition (sum lambda - sum mu) lambda)))
     pairing lambdas = zip (drop1 lambdas) lambdas
     listsOfPairs = 
       map (

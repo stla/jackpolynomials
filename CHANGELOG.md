@@ -123,3 +123,5 @@ greatly improved
 1.4.5.0
 -------
 * new function `macdonaldPolynomial`, to get a Macdonald polynomial
+
+* new function `skewMacdonaldPolynomial`, to get a skew Macdonald polynomial
