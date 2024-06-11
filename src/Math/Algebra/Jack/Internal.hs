@@ -267,11 +267,18 @@ psiLambdaMu (lambda, mu) =
   where
     lambda' = _dualPartition' lambda
     mu' = _dualPartition' mu
-    bools = S.zipWith (==) lambda mu >< S.replicate (S.length lambda - S.length mu) False
-    nonEmptyRows = S.elemIndicesL False bools
+    ellLambda = S.length lambda
+    ellMu = S.length mu
+    -- bools = S.zipWith (==) lambda mu >< S.replicate (S.length lambda - S.length mu) False
+    -- nonEmptyRows = S.elemIndicesL False bools
+    emptyRows = S.zipWith (==) lambda mu
     bools' = S.zipWith (==) lambda' mu' 
     emptyColumns = S.elemIndicesL True bools'
-    ss = [(i+1, j+1) | i <- nonEmptyRows, j <- emptyColumns]
+    ss = [
+          (i+1, j+1) 
+          | i <- [0 .. ellLambda - 1], i >= ellMu || not (emptyRows `S.index` i), -- not (i `S.elem` emptyRows), 
+            j <- emptyColumns, j < lambda `S.index` i
+        ]
 
 -- psiLambdaMu :: (Eq a, AlgField.C a) => (Seq Int, Seq Int) -> RatioOfSprays a
 -- psiLambdaMu (lambda, mu) = AlgRing.product (map ratio ss)
