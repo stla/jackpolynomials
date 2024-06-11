@@ -247,7 +247,7 @@ codedRatio ::
   PartitionsPair -> PartitionsPair -> (Int, Int) -> ([(Int,Int)], [(Int,Int)])
 codedRatio (lambda, lambda') (mu, mu') (i, j)
   | i <= ellMu && j <= mu_im1 = 
-      ([(a+1, l), (a', l'+1)], [(a, l+1), (a'+1, l)])
+      ([(a+1, l), (a', l'+1)], [(a, l+1), (a'+1, l')])
   | j <= lambda_im1 =
       ([(a', l'+1)], [(a'+1, l')])
   | otherwise = 
