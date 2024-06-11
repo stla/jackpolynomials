@@ -104,7 +104,7 @@ import           Math.Algebra.Hspray                         (
                                                              , sumOfSprays
                                                              , productOfSprays
                                                              , FunctionLike (..)
-                                                            --  , prettyParametricQSpray
+                                                              , prettyParametricQSpray
                                                              )
 import           Math.Combinat.Compositions                  (
                                                                compositions
@@ -113,6 +113,7 @@ import           Math.Combinat.Partitions.Integer            (
                                                                fromPartition
                                                              , dualPartition
                                                              , partitions
+                                                             , partitions'
                                                              , dominates
                                                              , dominatedPartitions
                                                              , partitionWidth
@@ -730,6 +731,82 @@ macdonaldPolynomialQ = _macdonaldPolynomial phiLambdaMu
 --     == "{ [ a2^2 - 2*a2 + 1 ] }*X^2.Y + { [ a2^2 - 2*a2 + 1 ] }*X^2.Z + { [ a2^2 - 2*a2 + 1 ] }*X.Y^2 + { [ -a2^4 + a2^3 + 3*a2^2 - 5*a2 + 2 ] }*X.Y.Z + { [ a2^2 - 2*a2 + 1 ] }*X.Z^2 + { [ a2^2 - 2*a2 + 1 ] }*Y^2.Z + { [ a2^2 - 2*a2 + 1 ] }*Y.Z^2"
 --   where
 --     macPoly = macdonaldPolynomialQ 3 [2, 1]
+
+_skewMacdonaldPolynomial :: 
+  (Eq a, AlgField.C a) 
+  => (PartitionsPair -> ([(Int,Int)], [(Int,Int)]))
+  -> Int 
+  -> Partition 
+  -> Partition
+  -> ParametricSpray a
+_skewMacdonaldPolynomial f n lambda mu = HM.unions hashMaps
+  where
+    nus = partitions' (lambda !! 0, n) (sum lambda - sum mu)
+    pairing lambdas = zip (drop1 lambdas) lambdas
+    listsOfPairs = 
+      map (
+        map pairing 
+          . (skewGelfandTsetlinPatterns lambda mu)
+          . fromPartition
+      ) nus
+    allPairs = nub $ concat (concat listsOfPairs)
+    pairsMap = DM.fromList (zip allPairs (map f allPairs))
+    coeffs = HM.filter (/= zeroRatioOfSprays) $ HM.fromList 
+      (zipWith 
+        (\nu listOfPairs -> 
+          (
+            S.fromList (fromPartition nu)
+          , AlgAdd.sum (map (makeRatioOfSprays pairsMap) listOfPairs)
+          )
+        ) nus listsOfPairs
+      )
+    dropTrailingZeros = S.dropWhileR (== 0)
+    hashMaps = 
+      map 
+        (\nu'' -> 
+--          let nu' = fromPartition nu
+--              nu'' = S.fromList nu'
+--              nu''' = nu' ++ (replicate (n - S.length nu'') 0)
+          let nu''' = DF.toList nu'' ++ (replicate (n - S.length nu'') 0)
+              coeff = coeffs HM.! nu''
+              compos = permuteMultiset nu'''
+          in
+            HM.fromList 
+              [let compo' = dropTrailingZeros (S.fromList compo) in
+                (Powers compo' (S.length compo'), coeff) | compo <- compos]
+        ) (HM.keys coeffs)
+
+xxx :: Int -> Partition -> Partition -> (RatioOfSprays Rational, RatioOfSprays Rational)
+xxx n lambda mu = (roq1, roq2)
+  where
+    nus = partitions' (lambda !! 0, n) (sum lambda - sum mu)
+    pairing lambdas = zip (drop1 lambdas) lambdas
+    listsOfPairs = 
+      map (
+        map pairing 
+          . (skewGelfandTsetlinPatterns lambda mu)
+          . fromPartition
+      ) nus
+    allPairs = nub $ concat (concat listsOfPairs)
+    pairsMap = DM.fromList (zip allPairs (map psiLambdaMu allPairs))
+    roq1 = makeRatioOfSprays pairsMap (listsOfPairs !! 0 !! 0)
+    roq2 = makeRatioOfSprays pairsMap (listsOfPairs !! 0 !! 1)
+
+skewMacdonaldPolynomialP :: 
+  (Eq a, AlgField.C a) => Int -> Partition -> Partition -> ParametricSpray a
+skewMacdonaldPolynomialP = _skewMacdonaldPolynomial psiLambdaMu 
+
+skewMacdonaldPolynomialQ :: 
+  (Eq a, AlgField.C a) => Int -> Partition -> Partition -> ParametricSpray a
+skewMacdonaldPolynomialQ = _skewMacdonaldPolynomial phiLambdaMu 
+
+test :: String
+test = 
+  prettyParametricQSpray (HM.map (\rOQ -> substitute [Just 0, Nothing] rOQ) macPoly)
+--    == "{ [ 1 ] }*X^2.Y + { [ 1 ] }*X^2.Z + { [ 1 ] }*X.Y^2 + { [ -a2^2 - a2 + 2 ] }*X.Y.Z + { [ 1 ] }*X.Z^2 + { [ 1 ] }*Y^2.Z + { [ 1 ] }*Y.Z^2"
+  where
+    macPoly = skewMacdonaldPolynomialP 3 [3, 2] [1, 1]
+
 
 sandwichedPartitions :: Int -> Seq Int -> Seq Int -> [Seq Int]
 sandwichedPartitions weight mu lambda = 
