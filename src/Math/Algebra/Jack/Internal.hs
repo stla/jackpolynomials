@@ -1053,7 +1053,7 @@ _paths n lambda mu =
       (compositions n (DF.sum lambda - DF.sum mu))
 
 
-_paths' :: Int -> Seq Int -> Seq Int -> [(Partition, [[Seq Int]])]
+_paths' :: Int -> Seq Int -> Seq Int -> [(Partition, [[(Seq Int, Seq Int)]])]
 _paths' n lambda mu =
   filter ((not . null) . snd) (map 
     (\nu -> let nu' = fromPartition nu 
@@ -1061,14 +1061,12 @@ _paths' n lambda mu =
             in
       (
         nu''
-      , skewGelfandTsetlinPatterns lambda' (DF.toList mu) nu''
+      , map pairing (skewGelfandTsetlinPatterns lambda' (DF.toList mu) nu'')
       )
     ) 
     nus)
-  -- concatMap 
-  --   ((skewGelfandTsetlinPatterns lambda' (DF.toList mu)) . fromPartition)
-  --     nus
   where
+    pairing lambdas = zip (drop1 lambdas) lambdas
     lambda' = DF.toList lambda
     -- assumes w <= sum(k:ks)
     lastSubPartition _ [] = []
@@ -1113,23 +1111,28 @@ phi_lambda_mu lambda mu = if S.null lambda
 skewHallLittlewoodP' :: forall a. (Eq a, AlgRing.C a) 
   => Int -> Seq Int -> Seq Int -> SimpleParametricSpray a
 skewHallLittlewoodP' n lambda mu = 
-  sumOfSprays 
-    (concatMap sprays paths)
-      -- (\(p, nus) -> 
-      --   concat $ replicate (fromInteger $ countPermuteMultiset (p ++ replicate (n - length p) 0))
-      --     [productOfSprays (sprays path) | path <- nus]) paths)
+  sumOfSprays (concatMap sprays paths)
   where
     paths = _paths' n lambda mu
+    allPairs = nub (concat (concat (snd (unzip paths))))
+    psis = 
+      HM.fromList 
+        (map (\pair -> (pair, uncurry psi_lambda_mu pair)) allPairs)
     lones = [lone' i | i <- [1 .. n]]
-    -- compos p = 
-    --   map (S.fromList . dropTailingZeros) (permuteMultiset (DF.toList p ++ (replicate (n - length p) 0)))
-    sprays (nu, patterns) =
+    sprays (nu, listsOfPairs) =
       [
         productOfSprays $ 
-          map (\(next_nu_i, nu_i, lone_i, k) -> psi_lambda_mu next_nu_i nu_i *^ lone_i k) 
-              (zip4 (drop 1 pattern) pattern lones compo)
-        | pattern <- patterns, compo <- permuteMultiset (nu ++ replicate (n - length nu) 0)
+          map (\(pair, lone_i, k) -> psis HM.! pair *^ lone_i k) 
+              (zip3 listOfPairs lones compo)
+        | listOfPairs <- listsOfPairs, compo <- permuteMultiset nu
       ]
+    -- sprays (nu, patterns) =
+    --   [
+    --     productOfSprays $ 
+    --       map (\(next_nu_i, nu_i, lone_i, k) -> psi_lambda_mu next_nu_i nu_i *^ lone_i k) 
+    --           (zip4 (drop 1 pattern) pattern lones compo)
+    --     | pattern <- patterns, compo <- permuteMultiset (nu ++ replicate (n - length nu) 0)
+    --   ]
 
 skewHallLittlewoodP :: forall a. (Eq a, AlgRing.C a) 
   => Int -> Seq Int -> Seq Int -> SimpleParametricSpray a
