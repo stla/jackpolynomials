@@ -1045,16 +1045,16 @@ isIncreasing :: [Int] -> Bool
 isIncreasing s = 
   and (zipWith (<=) s (drop1 s))
 
-_paths :: Int -> Seq Int -> Seq Int -> [[Seq Int]]
-_paths n lambda mu = 
-  -- TODO: use same technique as macdonaldPolynomial: take only the compositions
-  -- which are partitions and use permuteMultiset
-  concatMap 
-    (skewGelfandTsetlinPatterns (DF.toList lambda) (DF.toList mu))
-      (compositions n (DF.sum lambda - DF.sum mu))
+-- _paths :: Int -> Seq Int -> Seq Int -> [[Seq Int]]
+-- _paths n lambda mu = 
+--   -- TODO: use same technique as macdonaldPolynomial: take only the compositions
+--   -- which are partitions and use permuteMultiset
+--   concatMap 
+--     (skewGelfandTsetlinPatterns (DF.toList lambda) (DF.toList mu))
+--       (compositions n (DF.sum lambda - DF.sum mu))
 
-_paths' :: Int -> Seq Int -> Seq Int -> [(Partition, [[(Seq Int, Seq Int)]])]
-_paths' n lambda mu =
+_paths :: Int -> Seq Int -> Seq Int -> [(Partition, [[(Seq Int, Seq Int)]])]
+_paths n lambda mu =
   filter ((not . null) . snd) (map 
     (\nu -> let nu' = fromPartition nu 
                 nu'' = nu' ++ replicate (n - length nu') 0
@@ -1103,16 +1103,17 @@ phi_lambda_mu lambda mu = if S.null lambda
     t = lone' 1
     sprays = map (\(m, _) -> AlgRing.one +> AlgAdd.negate (t m)) pairs
 
-skewHallLittlewoodP :: forall a. (Eq a, AlgRing.C a) 
-  => Int -> Seq Int -> Seq Int -> SimpleParametricSpray a
-skewHallLittlewoodP n lambda mu = 
+_skewHallLittlewood :: forall a. (Eq a, AlgRing.C a) 
+  => (Seq Int -> Seq Int -> Spray a) -> Int -> Seq Int -> Seq Int 
+      -> SimpleParametricSpray a
+_skewHallLittlewood f n lambda mu = 
   sumOfSprays (concatMap sprays paths)
   where
-    paths = _paths' n lambda mu
+    paths = _paths n lambda mu
     allPairs = nub (concat (concat (snd (unzip paths))))
     psis = 
       HM.fromList 
-        (map (\pair -> (pair, uncurry psi_lambda_mu pair)) allPairs)
+        (map (\pair -> (pair, uncurry f pair)) allPairs)
     dropTrailingZeros = S.dropWhileR (== 0)
     sprays (nu, listsOfPairs) =
       let  
@@ -1140,16 +1141,24 @@ skewHallLittlewoodP n lambda mu =
 --       [psi_lambda_mu next_nu_i nu_i *^ lone_i (DF.sum next_nu_i - DF.sum nu_i)
 --         | (next_nu_i, nu_i, lone_i) <- zip3 (drop 1 nu) nu lones]
 
+-- skewHallLittlewoodQ :: forall a. (Eq a, AlgRing.C a) 
+--   => Int -> Seq Int -> Seq Int -> SimpleParametricSpray a
+-- skewHallLittlewoodQ n lambda mu = 
+--   sumOfSprays [productOfSprays $ sprays path | path <- paths]
+--   where
+--     paths = _paths n lambda mu
+--     lones = [lone' i | i <- [1 .. n]]
+--     sprays nu = 
+--       [phi_lambda_mu next_nu_i nu_i *^ lone_i (DF.sum next_nu_i - DF.sum nu_i)
+--         | (next_nu_i, nu_i, lone_i) <- zip3 (drop1 nu) nu lones]
+
+skewHallLittlewoodP :: forall a. (Eq a, AlgRing.C a) 
+  => Int -> Seq Int -> Seq Int -> SimpleParametricSpray a
+skewHallLittlewoodP = _skewHallLittlewood psi_lambda_mu
+
 skewHallLittlewoodQ :: forall a. (Eq a, AlgRing.C a) 
   => Int -> Seq Int -> Seq Int -> SimpleParametricSpray a
-skewHallLittlewoodQ n lambda mu = 
-  sumOfSprays [productOfSprays $ sprays path | path <- paths]
-  where
-    paths = _paths n lambda mu
-    lones = [lone' i | i <- [1 .. n]]
-    sprays nu = 
-      [phi_lambda_mu next_nu_i nu_i *^ lone_i (DF.sum next_nu_i - DF.sum nu_i)
-        | (next_nu_i, nu_i, lone_i) <- zip3 (drop1 nu) nu lones]
+skewHallLittlewoodQ = _skewHallLittlewood phi_lambda_mu
 
 charge :: Seq Int -> Int
 charge w = if l == 0 || n == 1 then 0 else DF.sum indices' + charge w'
