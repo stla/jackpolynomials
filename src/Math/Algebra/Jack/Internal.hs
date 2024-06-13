@@ -107,9 +107,6 @@ import           Math.Algebra.Hspray                         (
                                                              , FunctionLike (..)
                                                               -- , prettyParametricQSpray
                                                              )
-import           Math.Combinat.Compositions                  (
-                                                               compositions
-                                                             )
 import           Math.Combinat.Partitions.Integer            (
                                                                fromPartition
                                                              , dualPartition
