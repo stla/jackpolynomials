@@ -58,7 +58,6 @@ import           Data.List                                   (
                                                              , foldl'
                                                             --  , foldl1'
                                                              , uncons
-                                                             , zip4
                                                              )
 import           Data.List.Extra                             ( 
                                                                unsnoc
@@ -128,7 +127,7 @@ import           Math.Combinat.Partitions.Integer            (
 --                                                              , SkewPartition (..)
 --                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
-import           Math.Combinat.Permutations                  ( permuteMultiset, countPermuteMultiset )
+import           Math.Combinat.Permutations                  ( permuteMultiset )
 import           Math.Combinat.Tableaux.GelfandTsetlin       (
                                                                 GT
                                                               , kostkaGelfandTsetlinPatterns
@@ -745,6 +744,12 @@ macdonaldPolynomialQ = _macdonaldPolynomial phiLambdaMu
 --   where
 --     macPoly = macdonaldPolynomialQ 3 [2, 1]
 
+lastSubPartition :: Int -> Partition -> Partition
+-- assumes w <= sum(k:ks)
+lastSubPartition _ [] = []
+lastSubPartition w (k:ks) =  
+  if w <= k then [w] else k : lastSubPartition (w - k) ks
+
 _skewMacdonaldPolynomial :: 
   (Eq a, AlgField.C a) 
   => (PartitionsPair -> ([(Int,Int)], [(Int,Int)]))
@@ -754,10 +759,6 @@ _skewMacdonaldPolynomial ::
   -> ParametricSpray a
 _skewMacdonaldPolynomial f n lambda mu = HM.unions hashMaps
   where
-    -- assumes w <= sum(k:ks)
-    lastSubPartition _ [] = []
-    lastSubPartition w (k:ks) =  
-      if w <= k then [w] else k : lastSubPartition (w - k) ks
     nus = 
       filter ((<= n) . partitionWidth) $ 
         dominatedPartitions 
@@ -1052,7 +1053,6 @@ _paths n lambda mu =
     (skewGelfandTsetlinPatterns (DF.toList lambda) (DF.toList mu))
       (compositions n (DF.sum lambda - DF.sum mu))
 
-
 _paths' :: Int -> Seq Int -> Seq Int -> [(Partition, [[(Seq Int, Seq Int)]])]
 _paths' n lambda mu =
   filter ((not . null) . snd) (map 
@@ -1068,15 +1068,10 @@ _paths' n lambda mu =
   where
     pairing lambdas = zip (drop1 lambdas) lambdas
     lambda' = DF.toList lambda
-    -- assumes w <= sum(k:ks)
-    lastSubPartition _ [] = []
-    lastSubPartition w (k:ks) =  
-      if w <= k then [w] else k : lastSubPartition (w - k) ks
     nus = 
       filter ((<= n) . partitionWidth) $ 
         dominatedPartitions 
           (toPartitionUnsafe (lastSubPartition (DF.sum lambda - DF.sum mu) lambda'))
-
 
 psi_lambda_mu :: forall a. (Eq a, AlgRing.C a) 
   => Seq Int -> Seq Int -> Spray a
@@ -1108,9 +1103,9 @@ phi_lambda_mu lambda mu = if S.null lambda
     t = lone' 1
     sprays = map (\(m, _) -> AlgRing.one +> AlgAdd.negate (t m)) pairs
 
-skewHallLittlewoodP' :: forall a. (Eq a, AlgRing.C a) 
+skewHallLittlewoodP :: forall a. (Eq a, AlgRing.C a) 
   => Int -> Seq Int -> Seq Int -> SimpleParametricSpray a
-skewHallLittlewoodP' n lambda mu = 
+skewHallLittlewoodP n lambda mu = 
   sumOfSprays (concatMap sprays paths)
   where
     paths = _paths' n lambda mu
@@ -1118,32 +1113,32 @@ skewHallLittlewoodP' n lambda mu =
     psis = 
       HM.fromList 
         (map (\pair -> (pair, uncurry psi_lambda_mu pair)) allPairs)
-    lones = [lone' i | i <- [1 .. n]]
+    dropTrailingZeros = S.dropWhileR (== 0)
     sprays (nu, listsOfPairs) =
-      [
-        productOfSprays $ 
-          map (\(pair, lone_i, k) -> psis HM.! pair *^ lone_i k) 
-              (zip3 listOfPairs lones compo)
-        | listOfPairs <- listsOfPairs, compo <- permuteMultiset nu
-      ]
-    -- sprays (nu, patterns) =
-    --   [
-    --     productOfSprays $ 
-    --       map (\(next_nu_i, nu_i, lone_i, k) -> psi_lambda_mu next_nu_i nu_i *^ lone_i k) 
-    --           (zip4 (drop 1 pattern) pattern lones compo)
-    --     | pattern <- patterns, compo <- permuteMultiset (nu ++ replicate (n - length nu) 0)
-    --   ]
+      let  
+        sprays' = 
+          [productOfSprays [psis HM.! pair | pair <- pairs] 
+            | pairs <- listsOfPairs]
+        listOfPowers = 
+          [Powers expnts (S.length expnts) | 
+            compo <- permuteMultiset nu, 
+            let expnts = dropTrailingZeros (S.fromList compo)]
+        in
+        [
+          HM.singleton powers spray
+          | spray <- sprays', powers <- listOfPowers
+        ]
 
-skewHallLittlewoodP :: forall a. (Eq a, AlgRing.C a) 
-  => Int -> Seq Int -> Seq Int -> SimpleParametricSpray a
-skewHallLittlewoodP n lambda mu = 
-  sumOfSprays [productOfSprays $ sprays path | path <- paths]
-  where
-    paths = _paths n lambda mu
-    lones = [lone' i | i <- [1 .. n]]
-    sprays nu = 
-      [psi_lambda_mu next_nu_i nu_i *^ lone_i (DF.sum next_nu_i - DF.sum nu_i)
-        | (next_nu_i, nu_i, lone_i) <- zip3 (drop 1 nu) nu lones]
+-- skewHallLittlewoodP :: forall a. (Eq a, AlgRing.C a) 
+--   => Int -> Seq Int -> Seq Int -> SimpleParametricSpray a
+-- skewHallLittlewoodP n lambda mu = 
+--   sumOfSprays [productOfSprays $ sprays path | path <- paths]
+--   where
+--     paths = _paths n lambda mu
+--     lones = [lone' i | i <- [1 .. n]]
+--     sprays nu = 
+--       [psi_lambda_mu next_nu_i nu_i *^ lone_i (DF.sum next_nu_i - DF.sum nu_i)
+--         | (next_nu_i, nu_i, lone_i) <- zip3 (drop 1 nu) nu lones]
 
 skewHallLittlewoodQ :: forall a. (Eq a, AlgRing.C a) 
   => Int -> Seq Int -> Seq Int -> SimpleParametricSpray a
