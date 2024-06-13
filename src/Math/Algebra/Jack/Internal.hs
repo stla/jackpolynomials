@@ -58,6 +58,7 @@ import           Data.List                                   (
                                                              , foldl'
                                                             --  , foldl1'
                                                              , uncons
+                                                             , zip4
                                                              )
 import           Data.List.Extra                             ( 
                                                                unsnoc
@@ -127,7 +128,7 @@ import           Math.Combinat.Partitions.Integer            (
 --                                                              , SkewPartition (..)
 --                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
-import           Math.Combinat.Permutations                  ( permuteMultiset )
+import           Math.Combinat.Permutations                  ( permuteMultiset, countPermuteMultiset )
 import           Math.Combinat.Tableaux.GelfandTsetlin       (
                                                                 GT
                                                               , kostkaGelfandTsetlinPatterns
@@ -1051,6 +1052,34 @@ _paths n lambda mu =
     (skewGelfandTsetlinPatterns (DF.toList lambda) (DF.toList mu))
       (compositions n (DF.sum lambda - DF.sum mu))
 
+
+_paths' :: Int -> Seq Int -> Seq Int -> [(Partition, [[Seq Int]])]
+_paths' n lambda mu =
+  filter ((not . null) . snd) (map 
+    (\nu -> let nu' = fromPartition nu 
+                nu'' = nu' ++ replicate (n - length nu') 0
+            in
+      (
+        nu''
+      , skewGelfandTsetlinPatterns lambda' (DF.toList mu) nu''
+      )
+    ) 
+    nus)
+  -- concatMap 
+  --   ((skewGelfandTsetlinPatterns lambda' (DF.toList mu)) . fromPartition)
+  --     nus
+  where
+    lambda' = DF.toList lambda
+    -- assumes w <= sum(k:ks)
+    lastSubPartition _ [] = []
+    lastSubPartition w (k:ks) =  
+      if w <= k then [w] else k : lastSubPartition (w - k) ks
+    nus = 
+      filter ((<= n) . partitionWidth) $ 
+        dominatedPartitions 
+          (toPartitionUnsafe (lastSubPartition (DF.sum lambda - DF.sum mu) lambda'))
+
+
 psi_lambda_mu :: forall a. (Eq a, AlgRing.C a) 
   => Seq Int -> Seq Int -> Spray a
 psi_lambda_mu lambda mu = if S.null lambda
@@ -1080,6 +1109,27 @@ phi_lambda_mu lambda mu = if S.null lambda
     pairs = filter (\(l, m) -> l == m) (map pair range)
     t = lone' 1
     sprays = map (\(m, _) -> AlgRing.one +> AlgAdd.negate (t m)) pairs
+
+skewHallLittlewoodP' :: forall a. (Eq a, AlgRing.C a) 
+  => Int -> Seq Int -> Seq Int -> SimpleParametricSpray a
+skewHallLittlewoodP' n lambda mu = 
+  sumOfSprays 
+    (concatMap sprays paths)
+      -- (\(p, nus) -> 
+      --   concat $ replicate (fromInteger $ countPermuteMultiset (p ++ replicate (n - length p) 0))
+      --     [productOfSprays (sprays path) | path <- nus]) paths)
+  where
+    paths = _paths' n lambda mu
+    lones = [lone' i | i <- [1 .. n]]
+    -- compos p = 
+    --   map (S.fromList . dropTailingZeros) (permuteMultiset (DF.toList p ++ (replicate (n - length p) 0)))
+    sprays (nu, patterns) =
+      [
+        productOfSprays $ 
+          map (\(next_nu_i, nu_i, lone_i, k) -> psi_lambda_mu next_nu_i nu_i *^ lone_i k) 
+              (zip4 (drop 1 pattern) pattern lones compo)
+        | pattern <- patterns, compo <- permuteMultiset (nu ++ replicate (n - length nu) 0)
+      ]
 
 skewHallLittlewoodP :: forall a. (Eq a, AlgRing.C a) 
   => Int -> Seq Int -> Seq Int -> SimpleParametricSpray a
