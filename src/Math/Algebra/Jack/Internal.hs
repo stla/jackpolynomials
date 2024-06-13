@@ -62,7 +62,6 @@ import           Data.List                                   (
 import           Data.List.Extra                             ( 
                                                                unsnoc
                                                              , drop1
-                                                             , dropEnd
                                                              )
 import           Data.List.Index                             ( iconcatMap )
 import           Data.Map.Strict                             ( Map )
@@ -759,35 +758,28 @@ _skewMacdonaldPolynomial f n lambda mu = HM.unions hashMaps
     lastSubPartition w (k:ks) =  
       if w <= k then [w] else k : lastSubPartition (w - k) ks
     nus = 
-      filter ((<= n) . partitionWidth) $ dropEnd 1 
-        (dominatedPartitions 
-          (toPartitionUnsafe (lastSubPartition (sum lambda - sum mu) lambda)))
+      filter ((<= n) . partitionWidth) $ 
+        dominatedPartitions 
+          (toPartitionUnsafe (lastSubPartition (sum lambda - sum mu) lambda))
     pairing lambdas = zip (drop1 lambdas) lambdas
-    listsOfPairs = 
-      map (
-        map pairing 
-          . (skewGelfandTsetlinPatterns lambda mu)
-          . fromPartition
-      ) nus
+    mapOfPatterns = HM.filter (not . null) 
+      (HM.fromList (map (\nu -> 
+        let nu' = fromPartition nu in
+          (
+            S.fromList nu'
+          , skewGelfandTsetlinPatterns lambda mu nu'
+          )        
+        ) nus))
+    mapOfPairs = HM.map (map pairing) mapOfPatterns
+    listsOfPairs = HM.elems mapOfPairs
     allPairs = nub $ concat (concat listsOfPairs)
     pairsMap = DM.fromList (zip allPairs (map f allPairs))
-    coeffs = -- HM.filter (/= zeroRatioOfSprays) $ 
-      HM.fromList 
-      (zipWith 
-        (\nu listOfPairs -> 
-          (
-            S.fromList (fromPartition nu)
-          , AlgAdd.sum (map (makeRatioOfSprays pairsMap) listOfPairs)
-          )
-        ) nus listsOfPairs
-      )
+    coeffs = 
+      HM.map (AlgAdd.sum . (map (makeRatioOfSprays pairsMap))) mapOfPairs
     dropTrailingZeros = S.dropWhileR (== 0)
     hashMaps = 
       map 
         (\nu'' -> 
---          let nu' = fromPartition nu
---              nu'' = S.fromList nu'
---              nu''' = nu' ++ (replicate (n - S.length nu'') 0)
           let nu''' = DF.toList nu'' ++ (replicate (n - S.length nu'') 0)
               coeff = coeffs HM.! nu''
               compos = permuteMultiset nu'''

@@ -783,11 +783,28 @@ main = defaultMain $ testGroup
       (hlPolyP, hlPolyQ)
       (asSimpleParametricSpray hlPolyP', asSimpleParametricSpray hlPolyQ')
 
-  , testCase "Skew Macdonald polynomial at q=0 is skew Hall-Littlewood" $ do
+  , testCase "Skew Macdonald polynomial at q=0 is skew Hall-Littlewood - 1" $ do
     let
       n = 3
       lambda = [3, 2]
       mu = [1, 1]
+      shlPolyP = skewHallLittlewoodPolynomial' n lambda mu 'P'
+      shlPolyQ = skewHallLittlewoodPolynomial' n lambda mu 'Q'
+      smacPolyP = skewMacdonaldPolynomial' n lambda mu 'P'
+      smacPolyQ = skewMacdonaldPolynomial' n lambda mu 'Q'
+      shlPolyP' = 
+        HM.map ((swapVariables (1, 2)) . (substitute [Just 0, Nothing])) smacPolyP
+      shlPolyQ' = 
+        HM.map ((swapVariables (1, 2)) . (substitute [Just 0, Nothing])) smacPolyQ
+    assertEqual "" 
+      (shlPolyP, shlPolyQ)
+      (asSimpleParametricSpray shlPolyP', asSimpleParametricSpray shlPolyQ')
+
+  , testCase "Skew Macdonald polynomial at q=0 is skew Hall-Littlewood - 2" $ do
+    let
+      n = 4
+      lambda = [3, 2]
+      mu = [1]
       shlPolyP = skewHallLittlewoodPolynomial' n lambda mu 'P'
       shlPolyQ = skewHallLittlewoodPolynomial' n lambda mu 'Q'
       smacPolyP = skewMacdonaldPolynomial' n lambda mu 'P'
