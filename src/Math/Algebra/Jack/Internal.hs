@@ -58,7 +58,6 @@ import           Data.List                                   (
                                                              , foldl'
                                                             --  , foldl1'
                                                              , uncons
-                                                             , (\\)
                                                              )
 import           Data.List.Extra                             ( 
                                                                unsnoc
@@ -465,18 +464,23 @@ makeRatioOfSprays ::
   PairsMap -> [PartitionsPair] -> RatioOfSprays a
 makeRatioOfSprays pairsMap pairs = num %//% den
   where
-    (num_als, den_als) = both concat (unzip (map ((DM.!) pairsMap) pairs))
-    als = (num_als \\ den_als, den_als \\ num_als)
-    assocs = 
-      both (DM.assocs . (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty)) als
-    -- num_assocs = DM.assocs (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty num_als')
-    -- den_assocs = DM.assocs (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty den_als')
+    als = both concat (unzip (map ((DM.!) pairsMap) pairs))
+    (num_map, den_map) =
+      both (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty) als
+    f k1 k2 = if k1 > k2 then Just (k1 - k2) else Nothing
+    assocs = both DM.assocs
+      (
+        DM.differenceWith f num_map den_map
+      , DM.differenceWith f den_map num_map
+      )
+    -- (num_als, den_als) = both concat (unzip (map ((DM.!) pairsMap) pairs))
+    -- als = (num_als \\ den_als, den_als \\ num_als)
+    -- assocs = 
+    --   both (DM.assocs . (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty)) als
     q = lone' 1
     t = lone' 2
     poly ((a, l), c) = (unitSpray ^-^ q a ^*^ t l) ^**^ c
     (num, den) = both (productOfSprays . (map poly)) assocs
-    -- num = productOfSprays (map poly num_assocs)
-    -- den = productOfSprays (map poly den_assocs)
 
 _macdonaldPolynomial :: 
   (Eq a, AlgField.C a) 
