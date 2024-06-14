@@ -124,12 +124,30 @@ import           Math.Combinat.Partitions.Integer            (
 --                                                              , SkewPartition (..)
 --                                                              )
 import qualified Math.Combinat.Partitions.Integer            as MCP
+-- import Math.Combinat.Partitions.Skew
+-- import Math.Combinat.Partitions.Skew.Ribbon
+-- import Data.Tree
 import           Math.Combinat.Permutations                  ( permuteMultiset )
 import           Math.Combinat.Tableaux.GelfandTsetlin       (
                                                                 GT
                                                               , kostkaGelfandTsetlinPatterns
                                                              )
 import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
+
+-- f :: [Int] -> Tree MCP.Partition
+-- f rho = unfoldTree (\p -> (p, map (fst . fromSkewPartition  . rbShape) $ outerRibbonsOfLength p (rho !! (partitionWidth p)))) (toPartitionUnsafe [])
+
+-- h lambda rho=foldr (\x zs -> filter (\mu -> MCP.isSubPartitionOf mu (toPartitionUnsafe lambda)) [ribbon | z <- zs, ribbon <- map (fst . fromSkewPartition  . rbShape) $ outerRibbonsOfLength z x]) [toPartitionUnsafe []] rho
+-- h' lambda rho=foldr (\x zs ->  [z++[ribbon] | z <- zs, ribbon <- map (fst . fromSkewPartition  . rbShape) $ outerRibbonsOfLength (last z) x]) [[toPartitionUnsafe []]] rho
+-- -- g :: [Int] -> Tree MCP.Partition
+-- -- g rho = (Tree (rootLabel (f (rho!!0))) (subForest (f (rho!!1))))
+
+-- pths :: Int -> Tree a -> [[a]]
+-- pths n tr = go n [] tr
+--   where
+--     go i ps tree 
+--       | i == 0 = [[rootLabel tree]]
+--       | otherwise =  map (\subtree -> concat $ go (i-1) [pth ++ [rootLabel subtree] | subtree <- subForest tree, pth <- ps] subtree) (subForest tree) 
 
 type Partition = [Int]
 
