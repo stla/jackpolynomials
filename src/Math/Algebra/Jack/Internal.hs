@@ -187,7 +187,6 @@ sequenceOfPartitions' lambda rho =
     n = sum lambda
     lambda' = lambda ++ replicate (n - length lambda) 0
     lambdas r mu = [flambda p q r mu | (p, q) <- pairs r mu ++ pairs' r mu]
-    -- filter (\lbda -> MCP.isSubPartitionOf (MCP.mkPartition lbda) lambda') 
     flambda p q r mu = 
       concat [
               [mu!!(i-1) | i <- [1 .. p-1]]
@@ -203,6 +202,47 @@ sequenceOfPartitions' lambda rho =
                     && mu!!(q-1) <= lambda'!!(p-1)
                     && and [mu!!(i-1) + 1 <= lambda'!!i | i <- [p .. q-1]]
                     && and [mu!!(i-1) <= lambda'!!(i-1)| i <- [q+1 .. n]]
+
+sequenceOfPartitions'' :: Seq Int -> Seq Int -> [Seq (Seq Int)]
+sequenceOfPartitions'' lambda rho = 
+   foldr 
+     (\r zs -> 
+      [z |> (lbda >< S.replicate (n - S.length lbda) 0) 
+        | z <- zs, lbda <- lambdas r (z `S.index` (S.length z - 1))]) 
+          [S.singleton (S.replicate n 0)] rho
+   where
+    n = DF.sum lambda
+    lambda' = lambda >< S.replicate (n - S.length lambda) 0
+    lambdas r mu = [flambda p q r mu | (p, q) <- pairs r mu ++ pairs' r mu]
+    flambda p q r mu = 
+      mconcat $
+        map (S.fromList) 
+                [
+                  [mu `S.index` (i-1) | i <- [1 .. p-1]]
+                , [mu `S.index` (q-1) + p - q + r]
+                , [mu `S.index` (i-1) + 1 | i <- [p .. q-1]]
+                , [mu `S.index` (i-1) | i <- [q+1 .. n]]
+                ]
+    pairs r mu = [(1, q) | q <- [1 .. n], ok q r mu]
+    ok q r mu = 
+      let mu_qm1 = mu `S.index` (q-1) in
+        mu_qm1 - q + r > mu `S.index` 0 - 1 
+          && mu_qm1 <= lambda' `S.index` 0
+    pairs' r mu = 
+      [(p, q) | p <- [2 .. n], q <- [p .. n], ok' p q r mu]
+    ok' p q r mu = 
+       let mu_qm1 = mu `S.index` (q-1) in 
+        mu_qm1 - q + r > mu `S.index` (p-1) - p 
+          && mu `S.index` (p-2) - p + 1 > mu_qm1 - q + r
+          && and (S.zipWith (<=) (S.take (p-1) mu) lambda')
+          && mu_qm1 <= lambda' `S.index` (p-1)
+          && and [mu `S.index` (i-1) + 1 <= lambda' `S.index` i | i <- [p .. q-1]]
+          && and [mu `S.index` (i-1) <= lambda' `S.index` (i-1)| i <- [q+1 .. n]]
+
+ribbonHeight :: Seq Int -> Seq Int -> Int
+ribbonHeight lambda mu = 
+  DF.sum (S.zipWith (\k n -> fromEnum (k /= n)) lambda mu) + S.length lambda - S.length mu
+
 
 -- pths :: Int -> Tree a -> [[a]]
 -- pths n tr = go n [] tr
