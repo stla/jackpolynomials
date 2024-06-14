@@ -743,6 +743,7 @@ macdonaldPolynomialQ = _macdonaldPolynomial phiLambdaMu
 
 lastSubPartition :: Int -> Partition -> Partition
 -- assumes w <= sum(k:ks)
+lastSubPartition 0 _  = []
 lastSubPartition _ [] = []
 lastSubPartition w (k:ks) =  
   if w <= k then [w] else k : lastSubPartition (w - k) ks
