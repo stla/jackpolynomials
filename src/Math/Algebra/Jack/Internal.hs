@@ -180,6 +180,29 @@ sequenceOfPartitions lambda rho =
     pairs' r mu = filter (\(p, q) -> ok' p q r mu) [(p, q) | p <- [2 .. n], q <- [2 .. n], p <= q]
     ok' p q r mu = mu!!(q-1) - q + r > mu!!(p-1) - p && mu!!(p-2) - p + 1 > mu!!(q-1) - q + r
 
+sequenceOfPartitions' :: Partition -> Partition -> [[Partition]]
+sequenceOfPartitions' lambda rho = 
+   foldr (\r zs ->  [z++[lbda ++ replicate (n-length lbda) 0] | z <- zs, lbda <- lambdas r (last z)]) [[replicate n 0]] rho
+   where
+    n = sum lambda
+    lambda' = lambda ++ replicate (n - length lambda) 0
+    lambdas r mu = [flambda p q r mu | (p, q) <- pairs r mu ++ pairs' r mu]
+    -- filter (\lbda -> MCP.isSubPartitionOf (MCP.mkPartition lbda) lambda') 
+    flambda p q r mu = 
+      concat [
+              [mu!!(i-1) | i <- [1 .. p-1]]
+            , [mu!!(q-1) + p - q + r]
+            , [mu!!(i-1) + 1 | i <- [p .. q-1]]
+            , [mu!!(i-1) | i <- [q+1 .. n]]
+            ]
+    pairs r mu = map (\q -> (1, q)) (filter (\q -> ok q r mu) [1 .. n])
+    ok q r mu = mu!!(q-1) - q + r > mu!!0 - 1 && mu!!(q-1) <= lambda'!!0
+    pairs' r mu = filter (\(p, q) -> ok' p q r mu) [(p, q) | p <- [2 .. n], q <- [2 .. n], p <= q]
+    ok' p q r mu = mu!!(q-1) - q + r > mu!!(p-1) - p && mu!!(p-2) - p + 1 > mu!!(q-1) - q + r
+                    && and (zipWith (<=) (take (p-1) mu) lambda')
+                    && mu!!(q-1) <= lambda'!!(p-1)
+                    && and [mu!!(i-1) + 1 <= lambda'!!i | i <- [p .. q-1]]
+                    && and [mu!!(i-1) <= lambda'!!(i-1)| i <- [q+1 .. n]]
 
 -- pths :: Int -> Tree a -> [[a]]
 -- pths n tr = go n [] tr
