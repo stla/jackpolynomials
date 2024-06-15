@@ -11,6 +11,7 @@ import Data.Ratio                               ( (%) )
 import Math.Algebra.Hspray                      ( FunctionLike (..)
                                                 , Spray, QSpray
                                                 , SimpleParametricSpray
+                                                , SimpleParametricQSpray
                                                 , asSimpleParametricSpray
                                                 , lone, qlone 
                                                 , zeroSpray
@@ -70,6 +71,7 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , flaggedSkewSchurPol'
                                                 , factorialSchurPol'
                                                 , skewFactorialSchurPol'
+                                                , tSchurPolynomial'
                                                 )
 import Math.Combinat.Partitions.Integer         ( 
                                                   toPartition
@@ -114,7 +116,19 @@ main = defaultMain $ testGroup
   "Tests"
 
   [ 
-  testCase "Factorial Schur polynomial with y=[0 .. ] is Schur polynomial" $ do
+  testCase "t-Schur polynomial" $ do
+    let 
+      tSchurPoly = tSchurPolynomial' 2 [2, 1]
+      t = qlone 1
+      x = lone 1 :: SimpleParametricQSpray
+      y = lone 2 :: SimpleParametricQSpray
+      expected = 
+        (unitSpray ^-^ t) *^
+          ((unitSpray ^-^ t)^**^2 *^ (x^**^2 ^*^ y ^+^ x ^*^ y^**^2)
+            ^-^ t *^ (x^**^3 ^+^ y^**^3))
+    assertEqual "" tSchurPoly expected
+
+  , testCase "Factorial Schur polynomial with y=[0 .. ] is Schur polynomial" $ do
     let 
       n = 4
       lambda = [3, 3, 2, 2]

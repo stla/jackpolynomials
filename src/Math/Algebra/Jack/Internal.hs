@@ -308,9 +308,9 @@ chi_lambda_rho lambda rho =
     nevens =
       sum $ map 
         (
-          \sequence -> 
+          \sq -> 
             (fromEnum . even . DF.sum) $
-              S.zipWith ribbonHeight (S.drop 1 sequence |> lambda) sequence
+              S.zipWith ribbonHeight (S.drop 1 sq |> lambda) sq
         )
           sequences
 

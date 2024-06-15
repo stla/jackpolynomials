@@ -69,6 +69,9 @@ module Math.Algebra.SymmetricPolynomials
   , transitionsSchurToHallLittlewood
   , skewHallLittlewoodPolynomial
   , skewHallLittlewoodPolynomial'
+  -- * t-Schur polynomials
+  , tSchurPolynomial
+  , tSchurPolynomial'
   -- * Macdonald polynomials
   , macdonaldPolynomial
   , macdonaldPolynomial'
@@ -84,7 +87,6 @@ module Math.Algebra.SymmetricPolynomials
   , factorialSchurPol'
   , skewFactorialSchurPol
   , skewFactorialSchurPol'
-  , tSchurPolynomial'
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -145,7 +147,6 @@ import           Math.Algebra.Hspray              (
                                                   , lone
                                                   , qlone
                                                   , lone'
-                                                  , qlone'
                                                   , fromList
                                                   , getCoefficient
                                                   , getConstantTerm
@@ -392,7 +393,7 @@ psPolynomial n lambda
 --  | llambda > n               = zeroSpray
   | otherwise                 = productOfSprays sprays
     where
-      llambda = length lambda
+--      llambda = length lambda
       sprays = [HM.fromList $ [f i k | i <- [1 .. n]] | k <- lambda]
       f j k = (Powers expts j, AlgRing.one)
         where
@@ -1110,27 +1111,49 @@ skewHallLittlewoodPolynomial' ::
   -> SimpleParametricQSpray
 skewHallLittlewoodPolynomial' = skewHallLittlewoodPolynomial
 
-tSchurPolynomial' ::
-     Int
+_tSchurPolynomial ::
+  (Eq a, AlgField.C a)
+  => (Integer -> Integer -> a)
+  -> Int
   -> Partition
-  -> SimpleParametricQSpray
-tSchurPolynomial' n lambda = sumOfSprays sprays
+  -> SimpleParametricSpray a
+_tSchurPolynomial f n lambda = sumOfSprays sprays
   where
-    rhos = partitions (sum lambda)
-    t = qlone' 1
-    spray r = unitSpray ^-^ t r
+    w = sum lambda
+    rhos = partitions w
+    t = lone' 1
+    mapOfSprays = IM.fromList (map (\r -> (r, unitSpray ^-^ t r)) [1 .. w])
     tPowerSumPol rho = 
-      HM.map (flip (*^) (productOfSprays (map spray rho))) (psPolynomial n rho)
+      HM.map 
+        (flip (*^) (productOfSprays (map ((IM.!) mapOfSprays) rho))) 
+          (psPolynomial n rho)
     lambda' = S.fromList lambda
     chi_lambda_rhos = 
       [(rho', chi_lambda_rho lambda' (S.fromList rho')) 
         | rho <- rhos, let rho' = fromPartition rho]
     sprays = 
       [
-        (toInteger c % toInteger (zlambda rho))
+        (f (toInteger c) (toInteger (zlambda rho)))
          AlgMod.*> tPowerSumPol rho
       | (rho, c) <- chi_lambda_rhos, c /= 0
       ]
+
+-- ^ t-Schur polynomial.
+tSchurPolynomial ::
+  (Eq a, AlgField.C a)
+  => Int
+  -> Partition
+  -> SimpleParametricSpray a
+tSchurPolynomial = 
+  _tSchurPolynomial 
+    (\i j -> AlgRing.fromInteger i AlgField./ AlgRing.fromInteger j)
+
+-- ^ t-Schur polynomial.
+tSchurPolynomial' ::
+     Int
+  -> Partition
+  -> SimpleParametricQSpray
+tSchurPolynomial' =  _tSchurPolynomial (%)
 
 -- | Macdonald polynomial. This is a symmetric multivariate polynomial 
 -- depending on two parameters usually denoted by @q@ and @t@.
