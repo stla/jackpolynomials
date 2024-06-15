@@ -207,9 +207,12 @@ sequenceOfPartitions'' :: Seq Int -> Seq Int -> [Seq (Seq Int)]
 sequenceOfPartitions'' lambda rho = 
    foldr 
      (\r zs -> 
-      [z |> (lbda >< S.replicate (n - S.length lbda) 0) 
-        | z <- zs, lbda <- lambdas r (z `S.index` (S.length z - 1))]) 
-          [S.singleton (S.replicate n 0)] rho
+      [z |> lbda -- (lbda >< S.replicate (n - S.length lbda) 0) 
+        | z <- zs
+        , lbda <- lambdas r (z `S.index` (S.length z - 1))
+        , and (S.zipWith (<=) lbda lambda')
+      ]) 
+        [S.singleton (S.replicate n 0)] rho
    where
     n = DF.sum lambda
     lambda' = lambda >< S.replicate (n - S.length lambda) 0
@@ -234,10 +237,10 @@ sequenceOfPartitions'' lambda rho =
        let mu_qm1 = mu `S.index` (q-1) in 
         mu_qm1 - q + r > mu `S.index` (p-1) - p 
           && mu `S.index` (p-2) - p + 1 > mu_qm1 - q + r
-          && and (S.zipWith (<=) (S.take (p-1) mu) lambda')
+--          && and (S.zipWith (<=) (S.take (p-1) mu) lambda')
           && mu_qm1 <= lambda' `S.index` (p-1)
           && and [mu `S.index` (i-1) + 1 <= lambda' `S.index` i | i <- [p .. q-1]]
-          && and [mu `S.index` (i-1) <= lambda' `S.index` (i-1)| i <- [q+1 .. n]]
+--          && and [mu `S.index` (i-1) <= lambda' `S.index` (i-1)| i <- [q+1 .. n]]
 
 ribbonHeight :: Seq Int -> Seq Int -> Int
 ribbonHeight lambda mu = 
