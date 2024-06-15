@@ -72,6 +72,7 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , factorialSchurPol'
                                                 , skewFactorialSchurPol'
                                                 , tSchurPolynomial'
+                                                , tSkewSchurPolynomial'
                                                 )
 import Math.Combinat.Partitions.Integer         ( 
                                                   toPartition
@@ -126,6 +127,19 @@ main = defaultMain $ testGroup
         (unitSpray ^-^ t) *^
           ((unitSpray ^-^ t)^**^2 *^ (x^**^2 ^*^ y ^+^ x ^*^ y^**^2)
             ^-^ t *^ (x^**^3 ^+^ y^**^3))
+    assertEqual "" tSchurPoly expected
+
+  , testCase "Skew t-Schur polynomial - branching rule" $ do
+    let 
+      lambda = [2, 2]
+      tSchurPoly = tSchurPolynomial' 4 lambda
+      ys = [lone 3, lone 4]
+      expected = sumOfSprays
+        [
+          tSkewSchurPolynomial' 2 lambda mu 
+            ^*^ changeVariables (tSchurPolynomial' 2 mu) ys 
+          | mu <- [[], [1], [2], [1,1], [2,1], [2,2]]
+        ]
     assertEqual "" tSchurPoly expected
 
   , testCase "Factorial Schur polynomial with y=[0 .. ] is Schur polynomial" $ do

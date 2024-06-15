@@ -36,7 +36,6 @@ module Math.Algebra.Jack.Internal
   , macdonaldPolynomialQ
   , skewMacdonaldPolynomialP
   , skewMacdonaldPolynomialQ
-  , chi_lambda_rho
   , chi_lambda_mu_rho
   )
   where
@@ -259,7 +258,7 @@ import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
 -- --          && and [mu `S.index` (i-1) <= lambda' `S.index` (i-1)| i <- [q+1 .. n]]
 
 sequencesOfRibbons :: Seq Int -> Seq Int -> Seq Int -> [Seq (Seq Int)]
-sequencesOfRibbons lambda nu rho = 
+sequencesOfRibbons lambda mu rho = 
    foldr 
      (\r zs -> 
       [z |> lbda 
@@ -267,68 +266,65 @@ sequencesOfRibbons lambda nu rho =
         , lbda <- lambdas r (z `S.index` (S.length z - 1))
         , and (S.zipWith (<=) lbda lambda)
       ]) 
-        [S.singleton (nu >< (S.replicate (n - S.length nu) 0))] 
+        [S.singleton (mu >< (S.replicate (n - S.length mu) 0))] 
           rho
    where
     n = S.length lambda 
-    lambdas r mu = [flambda p q r mu | (p, q) <- pairs r mu ++ pairs' r mu]
-    flambda p q r mu = 
-      (S.take (p-1) mu |> 
-        mu `S.index` (q-1) + p - q + r) ><
-          fmap (+1) (S.take (q-p) (S.drop (p-1) mu)) ><
-            S.drop q mu
-    pairs r mu = [(1, q) | q <- [1 .. n], ok q r mu]
-    ok q r mu = 
-      let mu_qm1 = mu `S.index` (q-1) in
-        mu_qm1 - q + r > mu `S.index` 0 - 1 
-          && mu_qm1 <= lambda `S.index` 0
-    pairs' r mu = 
-      [(p, q) | p <- [2 .. n], q <- [p .. n], ok' p q r mu]
-    ok' p q r mu = 
-       let mu_qm1 = mu `S.index` (q-1) in 
-        mu_qm1 - q + r > mu `S.index` (p-1) - p 
-          && mu `S.index` (p-2) - p + 1 > mu_qm1 - q + r
-          && mu_qm1 <= lambda `S.index` (p-1)
+    lambdas r nu = [flambda p q r nu | (p, q) <- pairs r nu ++ pairs' r nu]
+    flambda p q r nu = 
+      (S.take (p-1) nu |> 
+        nu `S.index` (q-1) + p - q + r) ><
+          fmap (+1) (S.take (q-p) (S.drop (p-1) nu)) ><
+            S.drop q nu
+    pairs r nu = [(1, q) | q <- [1 .. n], ok q r nu]
+    ok q r nu = 
+      let nu_qm1 = nu `S.index` (q-1) in
+        nu_qm1 - q + r > nu `S.index` 0 - 1 
+          && nu_qm1 <= lambda `S.index` 0
+    pairs' r nu = 
+      [(p, q) | p <- [2 .. n], q <- [p .. n], ok' p q r nu]
+    ok' p q r nu = 
+       let nu_qm1 = nu `S.index` (q-1) in 
+        nu_qm1 - q + r > nu `S.index` (p-1) - p 
+          && nu `S.index` (p-2) - p >= nu_qm1 - q + r
+          && nu_qm1 <= lambda `S.index` (p-1)
           && all (uncurry (<)) 
-                  (S.zip (S.take (q-p) (S.drop (p-1) mu)) (S.drop p lambda))
+                  (S.zip (S.take (q-p) (S.drop (p-1) nu)) (S.drop p lambda))
 
-chi_lambda_rho :: Seq Int -> Seq Int -> Int
-chi_lambda_rho lambda rho = 
-  if S.null rho then 1 else 2 * nevens - length sequences
-  where
-    ribbonHeight :: Seq Int -> Seq Int -> Int
-    ribbonHeight kappa mu = 
-      DF.sum 
-        (S.zipWith (\k n -> fromEnum (k /= n)) kappa mu) 
-          - 1
-      -- kappa and mu have same length so don't need to add S.length kappa - S.length mu 
-    sequences = 
-      sequencesOfRibbons lambda (S.empty) rho -- (S.take (S.length rho - 1) rho)
-      -- we drop the last element of rho because the last element of a sequence 
-      -- necessarily is lambda, that we will append below
-    nevens =
-      sum $ map 
-        (
-          \sq -> 
-            (fromEnum . even . DF.sum) $
-              S.zipWith ribbonHeight (S.drop 1 sq) sq
-        )
-          sequences
+-- chi_lambda_rho :: Seq Int -> Seq Int -> Int
+-- chi_lambda_rho lambda rho = 
+--   if S.null rho then 1 else 2 * nevens - length sequences
+--   where
+--     ribbonHeight :: Seq Int -> Seq Int -> Int
+--     ribbonHeight kappa mu = 
+--       DF.sum 
+--         (S.zipWith (\k n -> fromEnum (k /= n)) kappa mu) 
+--           - 1
+--       -- kappa and mu have same length so don't need to add S.length kappa - S.length mu 
+--     sequences = 
+--       sequencesOfRibbons lambda (S.empty) rho -- (S.take (S.length rho - 1) rho)
+--       -- we drop the last element of rho because the last element of a sequence 
+--       -- necessarily is lambda, that we will append below
+--     nevens =
+--       sum $ map 
+--         (
+--           \sq -> 
+--             (fromEnum . even . DF.sum) $
+--               S.zipWith ribbonHeight (S.drop 1 sq) sq
+--         )
+--           sequences
 
 chi_lambda_mu_rho :: Seq Int -> Seq Int -> Seq Int -> Int
 chi_lambda_mu_rho lambda mu rho = 
   if S.null rho then 1 else 2 * nevens - length sequences
   where
     ribbonHeight :: Seq Int -> Seq Int -> Int
-    ribbonHeight kappa mu = 
+    ribbonHeight kappa nu = 
       DF.sum 
-        (S.zipWith (\k n -> fromEnum (k /= n)) kappa mu) 
+        (S.zipWith (\k n -> fromEnum (k /= n)) kappa nu) 
           - 1
       -- kappa and mu have same length so don't need to add S.length kappa - S.length mu 
-    sequences = 
-      sequencesOfRibbons lambda mu rho -- (S.take (S.length rho - 1) rho)
-      -- we drop the last element of rho because the last element of a sequence 
-      -- necessarily is lambda, that we will append below
+    sequences = sequencesOfRibbons lambda mu rho 
     nevens =
       sum $ map 
         (
