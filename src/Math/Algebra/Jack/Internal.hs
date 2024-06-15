@@ -36,6 +36,7 @@ module Math.Algebra.Jack.Internal
   , macdonaldPolynomialQ
   , skewMacdonaldPolynomialP
   , skewMacdonaldPolynomialQ
+  , chi_lambda_rho
   )
   where
 import           Prelude 

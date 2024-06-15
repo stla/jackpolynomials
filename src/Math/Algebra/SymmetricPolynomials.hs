@@ -84,6 +84,7 @@ module Math.Algebra.SymmetricPolynomials
   , factorialSchurPol'
   , skewFactorialSchurPol
   , skewFactorialSchurPol'
+  , tSchurPolynomial'
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -144,6 +145,7 @@ import           Math.Algebra.Hspray              (
                                                   , lone
                                                   , qlone
                                                   , lone'
+                                                  , qlone'
                                                   , fromList
                                                   , getCoefficient
                                                   , getConstantTerm
@@ -192,6 +194,7 @@ import           Math.Algebra.Jack.Internal       (
                                                   , macdonaldPolynomialQ
                                                   , skewMacdonaldPolynomialP
                                                   , skewMacdonaldPolynomialQ
+                                                  , chi_lambda_rho
                                                   )
 import           Math.Algebra.JackPol             ( 
                                                     schurPol
@@ -386,7 +389,7 @@ psPolynomial n lambda
       error "psPolynomial: invalid partition."
   | null lambda               = unitSpray
 --  | any (> n) lambda          = zeroSpray
-  | llambda > n               = zeroSpray
+--  | llambda > n               = zeroSpray
   | otherwise                 = productOfSprays sprays
     where
       llambda = length lambda
@@ -1106,6 +1109,28 @@ skewHallLittlewoodPolynomial' ::
   -> Char      -- ^ which skew Hall-Littlewood polynomial, @'P'@ or @'Q'@
   -> SimpleParametricQSpray
 skewHallLittlewoodPolynomial' = skewHallLittlewoodPolynomial
+
+tSchurPolynomial' ::
+     Int
+  -> Partition
+  -> SimpleParametricQSpray
+tSchurPolynomial' n lambda = sumOfSprays sprays
+  where
+    rhos = partitions (sum lambda)
+    t = qlone' 1
+    spray r = unitSpray ^-^ t r
+    tPowerSumPol rho = 
+      HM.map (flip (*^) (productOfSprays (map spray rho))) (psPolynomial n rho)
+    lambda' = S.fromList lambda
+    chi_lambda_rhos = 
+      [(rho', chi_lambda_rho lambda' (S.fromList rho')) 
+        | rho <- rhos, let rho' = fromPartition rho]
+    sprays = 
+      [
+        (toInteger c % toInteger (zlambda rho))
+         AlgMod.*> tPowerSumPol rho
+      | (rho, c) <- chi_lambda_rhos, c /= 0
+      ]
 
 -- | Macdonald polynomial. This is a symmetric multivariate polynomial 
 -- depending on two parameters usually denoted by @q@ and @t@.
