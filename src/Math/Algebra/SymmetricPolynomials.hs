@@ -89,6 +89,7 @@ module Math.Algebra.SymmetricPolynomials
   , factorialSchurPol'
   , skewFactorialSchurPol
   , skewFactorialSchurPol'
+  , macdonaldPolynomialJ
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -171,6 +172,7 @@ import           Math.Algebra.Hspray              (
                                                   , sumOfSprays
                                                   , constantSpray
                                                   , allExponents
+                                                  , asRatioOfSprays
                                                   )
 import           Math.Algebra.Jack.Internal       ( 
                                                     Partition
@@ -198,6 +200,7 @@ import           Math.Algebra.Jack.Internal       (
                                                   , skewMacdonaldPolynomialP
                                                   , skewMacdonaldPolynomialQ
                                                   , chi_lambda_mu_rho
+                                                  , clambda
                                                   )
 import           Math.Algebra.JackPol             ( 
                                                     schurPol
@@ -221,6 +224,9 @@ import           Math.Combinat.Tableaux.Skew      (
                                                   , semiStandardSkewTableaux 
                                                   )
 
+macdonaldPolynomialJ :: Int -> Partition -> ParametricQSpray
+macdonaldPolynomialJ n lambda = 
+  asRatioOfSprays (clambda lambda) *^ macdonaldPolynomial' n lambda 'P'
 
 -- | monomial symmetric polynomial
 msPolynomialUnsafe :: (AlgRing.C a, Eq a) 
