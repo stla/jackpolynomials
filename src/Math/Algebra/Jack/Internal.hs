@@ -263,13 +263,12 @@ sequencesOfRibbons lambda rho =
       [z |> lbda 
         | z <- zs
         , lbda <- lambdas r (z `S.index` (S.length z - 1))
-        , and (S.zipWith (<=) lbda lambda')
+        , and (S.zipWith (<=) lbda lambda)
       ]) 
         [S.singleton (S.replicate n 0)] 
           rho
    where
-    n = DF.sum lambda
-    lambda' = lambda >< S.replicate (n - S.length lambda) 0
+    n = S.length lambda 
     lambdas r mu = [flambda p q r mu | (p, q) <- pairs r mu ++ pairs' r mu]
     flambda p q r mu = 
       (S.take (p-1) mu |> 
@@ -280,35 +279,37 @@ sequencesOfRibbons lambda rho =
     ok q r mu = 
       let mu_qm1 = mu `S.index` (q-1) in
         mu_qm1 - q + r > mu `S.index` 0 - 1 
-          && mu_qm1 <= lambda' `S.index` 0
+          && mu_qm1 <= lambda `S.index` 0
     pairs' r mu = 
       [(p, q) | p <- [2 .. n], q <- [p .. n], ok' p q r mu]
     ok' p q r mu = 
        let mu_qm1 = mu `S.index` (q-1) in 
         mu_qm1 - q + r > mu `S.index` (p-1) - p 
           && mu `S.index` (p-2) - p + 1 > mu_qm1 - q + r
-          && mu_qm1 <= lambda' `S.index` (p-1)
+          && mu_qm1 <= lambda `S.index` (p-1)
           && all (uncurry (<)) 
                   (S.zip (S.take (q-p) (S.drop (p-1) mu)) (S.drop p lambda))
-
-ribbonHeight :: Seq Int -> Seq Int -> Int
-ribbonHeight lambda mu = 
-  DF.sum 
-    (S.zipWith (\k n -> fromEnum (k /= n)) lambda mu) 
-      + S.length lambda - S.length mu - 1
 
 chi_lambda_rho :: Seq Int -> Seq Int -> Int
 chi_lambda_rho lambda rho = 
   2 * nevens - length sequences
   where
-    sequences = sequencesOfRibbons lambda rho
+    ribbonHeight :: Seq Int -> Seq Int -> Int
+    ribbonHeight kappa mu = 
+      DF.sum 
+        (S.zipWith (\k n -> fromEnum (k /= n)) kappa mu) 
+          - 1
+      -- kappa and mu have same length so don't need to add S.length kappa - S.length mu 
+    sequences = 
+      sequencesOfRibbons lambda (S.take (S.length rho - 1) rho)
+      -- we drop the last element of rho because the last element of a sequence 
+      -- necessarily is lambda, that we will append below
     nevens =
       sum $ map 
         (
           \sequence -> 
-            fromEnum $
-              even $
-                DF.sum (S.zipWith ribbonHeight (S.drop 1 sequence) sequence)
+            (fromEnum . even . DF.sum) $
+              S.zipWith ribbonHeight (S.drop 1 sequence |> lambda) sequence
         )
           sequences
 
