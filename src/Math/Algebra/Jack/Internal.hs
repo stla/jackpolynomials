@@ -37,6 +37,7 @@ module Math.Algebra.Jack.Internal
   , skewMacdonaldPolynomialP
   , skewMacdonaldPolynomialQ
   , chi_lambda_rho
+  , chi_lambda_mu_rho
   )
   where
 import           Prelude 
@@ -257,8 +258,8 @@ import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
 -- --          && and [mu `S.index` (i-1) < lambda' `S.index` i | i <- [p .. q-1]]
 -- --          && and [mu `S.index` (i-1) <= lambda' `S.index` (i-1)| i <- [q+1 .. n]]
 
-sequencesOfRibbons :: Seq Int -> Seq Int -> [Seq (Seq Int)]
-sequencesOfRibbons lambda rho = 
+sequencesOfRibbons :: Seq Int -> Seq Int -> Seq Int -> [Seq (Seq Int)]
+sequencesOfRibbons lambda nu rho = 
    foldr 
      (\r zs -> 
       [z |> lbda 
@@ -266,7 +267,7 @@ sequencesOfRibbons lambda rho =
         , lbda <- lambdas r (z `S.index` (S.length z - 1))
         , and (S.zipWith (<=) lbda lambda)
       ]) 
-        [S.singleton (S.replicate n 0)] 
+        [S.singleton (nu >< (S.replicate (n - S.length nu) 0))] 
           rho
    where
     n = S.length lambda 
@@ -293,7 +294,7 @@ sequencesOfRibbons lambda rho =
 
 chi_lambda_rho :: Seq Int -> Seq Int -> Int
 chi_lambda_rho lambda rho = 
-  2 * nevens - length sequences
+  if S.null rho then 1 else 2 * nevens - length sequences
   where
     ribbonHeight :: Seq Int -> Seq Int -> Int
     ribbonHeight kappa mu = 
@@ -302,7 +303,7 @@ chi_lambda_rho lambda rho =
           - 1
       -- kappa and mu have same length so don't need to add S.length kappa - S.length mu 
     sequences = 
-      sequencesOfRibbons lambda (S.take (S.length rho - 1) rho)
+      sequencesOfRibbons lambda (S.empty) rho -- (S.take (S.length rho - 1) rho)
       -- we drop the last element of rho because the last element of a sequence 
       -- necessarily is lambda, that we will append below
     nevens =
@@ -310,10 +311,32 @@ chi_lambda_rho lambda rho =
         (
           \sq -> 
             (fromEnum . even . DF.sum) $
-              S.zipWith ribbonHeight (S.drop 1 sq |> lambda) sq
+              S.zipWith ribbonHeight (S.drop 1 sq) sq
         )
           sequences
 
+chi_lambda_mu_rho :: Seq Int -> Seq Int -> Seq Int -> Int
+chi_lambda_mu_rho lambda mu rho = 
+  if S.null rho then 1 else 2 * nevens - length sequences
+  where
+    ribbonHeight :: Seq Int -> Seq Int -> Int
+    ribbonHeight kappa mu = 
+      DF.sum 
+        (S.zipWith (\k n -> fromEnum (k /= n)) kappa mu) 
+          - 1
+      -- kappa and mu have same length so don't need to add S.length kappa - S.length mu 
+    sequences = 
+      sequencesOfRibbons lambda mu rho -- (S.take (S.length rho - 1) rho)
+      -- we drop the last element of rho because the last element of a sequence 
+      -- necessarily is lambda, that we will append below
+    nevens =
+      sum $ map 
+        (
+          \sq -> 
+            (fromEnum . even . DF.sum) $
+              S.zipWith ribbonHeight (S.drop 1 sq) sq
+        )
+          sequences
 
 -- pths :: Int -> Tree a -> [[a]]
 -- pths n tr = go n [] tr

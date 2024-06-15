@@ -72,6 +72,8 @@ module Math.Algebra.SymmetricPolynomials
   -- * t-Schur polynomials
   , tSchurPolynomial
   , tSchurPolynomial'
+  , tSkewSchurPolynomial
+  , test
   -- * Macdonald polynomials
   , macdonaldPolynomial
   , macdonaldPolynomial'
@@ -196,6 +198,7 @@ import           Math.Algebra.Jack.Internal       (
                                                   , skewMacdonaldPolynomialP
                                                   , skewMacdonaldPolynomialQ
                                                   , chi_lambda_rho
+                                                  , chi_lambda_mu_rho
                                                   )
 import           Math.Algebra.JackPol             ( 
                                                     schurPol
@@ -1155,6 +1158,54 @@ tSchurPolynomial' ::
   -> SimpleParametricQSpray
 tSchurPolynomial' =  _tSchurPolynomial (%)
 
+_tSkewSchurPolynomial ::
+  (Eq a, AlgField.C a)
+  => (Integer -> Integer -> a)
+  -> Int
+  -> Partition
+  -> Partition
+  -> SimpleParametricSpray a
+_tSkewSchurPolynomial f n lambda mu = sumOfSprays sprays
+  where
+    w = sum lambda - sum mu
+    rhos = partitions w
+    t = lone' 1
+    mapOfSprays = IM.fromList (map (\r -> (r, unitSpray ^-^ t r)) [1 .. w])
+    tPowerSumPol rho = 
+      HM.map 
+        (flip (*^) (productOfSprays (map ((IM.!) mapOfSprays) rho))) 
+          (psPolynomial n rho)
+    lambda' = S.fromList lambda
+    mu' = S.fromList mu
+    chi_lambda_rhos = 
+      [(rho', chi_lambda_mu_rho lambda' mu' (S.fromList rho')) 
+        | rho <- rhos, let rho' = fromPartition rho]
+    sprays = 
+      [
+        (f (toInteger c) (toInteger (zlambda rho)))
+         AlgMod.*> tPowerSumPol rho
+      | (rho, c) <- chi_lambda_rhos, c /= 0
+      ]
+
+-- ^ t-Schur polynomial.
+tSkewSchurPolynomial ::
+  (Eq a, AlgField.C a)
+  => Int
+  -> Partition
+  -> Partition
+  -> SimpleParametricSpray a
+tSkewSchurPolynomial = 
+  _tSkewSchurPolynomial 
+    (\i j -> AlgRing.fromInteger i AlgField./ AlgRing.fromInteger j)
+
+test :: [SimpleParametricQSpray]
+test = [ssp, ssp']
+  where
+    ssp = tSchurPolynomial' 3 [2, 1]
+    y = lone 3
+    ssp' = sumOfSprays
+      [tSkewSchurPolynomial 2 [2, 1] mu 
+        ^*^ (changeVariables (tSchurPolynomial' 1 mu) [y]) | mu <- [[], [1], [2], [1,1], [2,1]]]
 -- | Macdonald polynomial. This is a symmetric multivariate polynomial 
 -- depending on two parameters usually denoted by @q@ and @t@.
 --
