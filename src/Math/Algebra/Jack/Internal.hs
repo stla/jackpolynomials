@@ -405,21 +405,29 @@ clambdamu lambda mu = num %//% den
     --   S.zipWith (\(m, i) -> (m, i) <| S.zip (S.take m mu') (S.fromList [1 .. m])) (S.zip mu (S.fromList [1 .. S.length mu]))
     --    map (\(m,i,m',j)->(m-j, m' -i)) [(m,i,m',j) | (m,i) <- zip (DF.toList mu) [1..], (m',j) <- zip (take m $DF.toList mu')[1..]]
 --    als_mu =  map (\(m,i) -> zip [m-1, m-2 .. 0] (DF.toList $ fmap (subtract i) (S.take m mu'))) (zip (DF.toList mu) [1..S.length mu])
-    pairs_mu =
-      [(i, j) | i <- [1 .. S.length mu], j <- [1 .. mu `S.index` (i-1)]]
-    pairs_lambda = 
-      pairs_mu ++ 
-        [(i, j) | i <- [1 .. S.length mu], j <- [mu `S.index` (i-1) + 1 .. lambda `S.index` (i-1)]] ++
-        [(i, j) | i <- [S.length mu + 1 .. S.length lambda], j <- [1 .. lambda `S.index` (i-1)]]
+    -- pairs_mu =
+    --   [(i, j) | i <- [1 .. S.length mu], j <- [1 .. mu `S.index` (i-1)]]
+    -- pairs_lambda = 
+    --   pairs_mu ++ 
+    --     [(i, j) | i <- [1 .. S.length mu], j <- [mu `S.index` (i-1) + 1 .. lambda `S.index` (i-1)]] ++
+    --     [(i, j) | i <- [S.length mu + 1 .. S.length lambda], j <- [1 .. lambda `S.index` (i-1)]]
     rg = S.fromList [1 .. max (S.length lambda) (lambda `S.index` 0)]
     als_lambda = 
-       mconcat 
-         (DF.toList $ fmap (\(m, i) -> fmap (\(m', j) -> (m - j, m'- i)) (S.zip lambda' (S.take m rg))) 
-           (S.zip lambda rg))
+       mconcat $ DF.toList $
+         fmap 
+          (
+            \(m, i) -> 
+              fmap (\(m', j) -> (m - j, m'- i)) (S.zip lambda' (S.take m rg))
+          ) 
+           (S.zip lambda rg)
     als_mu = 
-       mconcat 
-         (DF.toList $ fmap (\(m, i) -> fmap (\(m', j) -> (m - j, m'- i)) (S.zip mu' (S.take m rg))) 
-           (S.zip mu rg))
+       mconcat $ DF.toList $
+         fmap 
+          (
+            \(m, i) -> 
+              fmap (\(m', j) -> (m - j, m'- i)) (S.zip mu' (S.take m rg))
+          ) 
+           (S.zip mu rg)
 --      map (\(m,i) -> zip [m-1, m-2 .. 0] (DF.toList $ fmap (subtract i) (S.take m mu'))) (zip (DF.toList mu) [1..S.length mu])
     als = 
       (
