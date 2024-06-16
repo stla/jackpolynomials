@@ -38,6 +38,7 @@ module Math.Algebra.Jack.Internal
   , skewMacdonaldPolynomialQ
   , chi_lambda_mu_rho
   , clambda
+  , clambdamu
   )
   where
 import           Prelude 
@@ -393,6 +394,34 @@ clambda lambda =
     a (i, j) = lambda `S.index` (i-1) - j
     l (i, j) = lambda' `S.index` (j-1) - i
  
+clambdamu :: (Eq a, AlgRing.C a) => Seq Int -> Seq Int -> RatioOfSprays a
+clambdamu lambda mu = num %//% den
+  where
+    lambda' = _dualPartition lambda
+    mu' = _dualPartition' mu 
+    pairs_mu =
+      [(i, j) | i <- [1 .. S.length mu], j <- [1 .. mu `S.index` (i-1)]]
+    pairs_lambda = 
+      pairs_mu ++ 
+        [(i, j) | i <- [1 .. S.length mu], j <- [mu `S.index` (i-1) + 1 .. lambda `S.index` (i-1)]] ++
+        [(i, j) | i <- [S.length mu + 1 .. S.length lambda], j <- [1 .. lambda `S.index` (i-1)]]
+    als = 
+      (
+        [(mu `S.index` (i-1) - j, mu' `S.index` (j-1) - i) | (i, j) <- pairs_mu]
+      , [(lambda `S.index` (i-1) - j, lambda' `S.index` (j-1) - i) | (i, j) <- pairs_lambda] 
+      )
+    (num_map, den_map) =
+      both (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty) als
+    f k1 k2 = if k1 > k2 then Just (k1 - k2) else Nothing
+    assocs = both DM.assocs
+      (
+        DM.differenceWith f num_map den_map
+      , DM.differenceWith f den_map num_map
+      )
+    q = lone' 1
+    t = lone' 2
+    poly ((a, l), c) = (unitSpray ^-^ q a ^*^ t (l+1)) ^**^ c
+    (num, den) = both (productOfSprays . (map poly)) assocs
 
 -- blambda :: (Eq a, AlgField.C a) => Partition -> (Int, Int) -> RatioOfSprays a
 -- blambda lambda s = if DM.member s a then num %//% den else unitRatioOfSprays

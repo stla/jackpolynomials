@@ -74,6 +74,7 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , tSchurPolynomial'
                                                 , tSkewSchurPolynomial'
                                                 , macdonaldJpolynomial'
+                                                , skewMacdonaldJpolynomial'
                                                 )
 import Math.Combinat.Partitions.Integer         ( 
                                                   toPartition
@@ -154,6 +155,33 @@ main = defaultMain $ testGroup
       tSchurPolys = map ((HM.map (flip changeVariables [t])) . (tSchurPolynomial' n)) mus
       expected = sumOfSprays (zipWith (*^) qtKFpolys tSchurPolys)
     assertEqual "" macJpoly expected
+
+  , testCase "Skew Macdonald J-polynomial at q=0" $ do
+    let
+      n = 3
+      lambda = [3, 2]
+      mu = [2, 1]
+      skewHLpoly = skewHallLittlewoodPolynomial' n lambda mu 'Q'
+      expected = asSimpleParametricSpray $
+        HM.map ((swapVariables (1, 2)) . (substitute [Just 0, Nothing]))
+          skewMacdonaldJpolynomial' n lambda mu
+    assertEqual "" skewHLpoly expected
+
+  , testCase "Macdonald polynomial branching rule" $ do
+    let
+      nx = 2
+      ny = 2
+      lambda = [2, 2]
+      ys = [lone 3, lone 4]
+      macJpoly = macdonaldJpolynomial' (nx + ny) lambda
+      expected = asSimpleParametricSpray $
+        sumOfSprays 
+          [
+            skewMacdonaldJpolynomial' nx lambda mu 
+              ^*^ HM.map asRatioOfSprays 
+                    (changeVariables (macdonaldJpolynomial' ny mu) ys) 
+          | mu <- [[], [1], [2], [1,1], [2,1], [2,2]]
+          ]
 
   , testCase "Factorial Schur polynomial with y=[0 .. ] is Schur polynomial" $ do
     let 
