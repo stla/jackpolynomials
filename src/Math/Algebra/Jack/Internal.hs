@@ -59,7 +59,7 @@ import qualified Data.HashMap.Strict                         as HM
 import           Data.List                                   ( 
                                                                nub
                                                              , foldl'
-                                                            --  , foldl1'
+                                                             , foldl1'
                                                              , uncons
                                                              )
 import           Data.List.Extra                             ( 
@@ -90,6 +90,7 @@ import           Data.Sequence                               (
                                                              , (><)
                                                              )
 import qualified Data.Sequence                               as S
+import qualified Data.Set                                    as DS
 import           Data.Tuple.Extra                            ( fst3, both, swap )
 import qualified Data.Vector                                 as V
 import           Math.Algebra.Hspray                         ( 
@@ -413,21 +414,19 @@ clambdamu lambda mu = num %//% den
     --     [(i, j) | i <- [S.length mu + 1 .. S.length lambda], j <- [1 .. lambda `S.index` (i-1)]]
     rg = S.fromList [1 .. max (S.length lambda) (lambda `S.index` 0)]
     als_lambda = 
-       mconcat $ DF.toList $
-         fmap 
+       foldl' 
           (
-            \(m, i) -> 
-              fmap (\(m', j) -> (m - j, m'- i)) (S.zip lambda' (S.take m rg))
+            \sq (m, i) -> 
+              sq >< fmap (\(m', j) -> (m - j, m'- i)) (S.zip lambda' (S.take m rg))
           ) 
-           (S.zip lambda rg)
+           S.empty (S.zip lambda rg)
     als_mu = 
-       mconcat $ DF.toList $
-         fmap 
+       foldl'
           (
-            \(m, i) -> 
-              fmap (\(m', j) -> (m - j, m'- i)) (S.zip mu' (S.take m rg))
+            \sq (m, i) -> 
+              sq >< fmap (\(m', j) -> (m - j, m'- i)) (S.zip mu' (S.take m rg))
           ) 
-           (S.zip mu rg)
+           S.empty (S.zip mu rg)
 --      map (\(m,i) -> zip [m-1, m-2 .. 0] (DF.toList $ fmap (subtract i) (S.take m mu'))) (zip (DF.toList mu) [1..S.length mu])
     als = 
       (
@@ -436,16 +435,21 @@ clambdamu lambda mu = num %//% den
       -- , [(mu `S.index` (i-1) - j, mu' `S.index` (j-1) - i) | (i, j) <- pairs_mu]
       )
     (num_map, den_map) =
-      both (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty) als
+      both (foldl' (\i al -> DM.insertWith (+) al 1 i) DM.empty) als
     f k1 k2 = if k1 > k2 then Just (k1 - k2) else Nothing
     assocs = both DM.assocs
       (
         DM.differenceWith f num_map den_map
       , DM.differenceWith f den_map num_map
       )
-    q = lone' 1
-    t = lone' 2
-    poly ((a, l), c) = (unitSpray ^-^ q a ^*^ t (l+1)) ^**^ c
+    -- q = lone' 1
+    -- t = lone' 2
+    poly ((a, l), c) = 
+      (HM.fromList 
+        [
+          (Powers S.empty 0, AlgRing.one)
+        , (Powers (S.fromList [a, l+1]) 2, AlgAdd.negate AlgRing.one)
+        ]) ^**^ c -- (unitSpray ^-^ q a ^*^ t (l+1)) ^**^ c
     (num, den) = both (productOfSprays . (map poly)) assocs
 
 -- blambda :: (Eq a, AlgField.C a) => Partition -> (Int, Int) -> RatioOfSprays a
@@ -747,7 +751,8 @@ makeRatioOfSprays ::
   PairsMap -> [PartitionsPair] -> RatioOfSprays a
 makeRatioOfSprays pairsMap pairs = num %//% den
   where
-    als = both concat (unzip (map ((DM.!) pairsMap) pairs))
+--    als = both concat (unzip (map ((DM.!) pairsMap) pairs))
+    als = both concat (unzip (DM.elems $ DM.restrictKeys pairsMap (DS.fromList pairs)))
     (num_map, den_map) =
       both (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty) als
     f k1 k2 = if k1 > k2 then Just (k1 - k2) else Nothing

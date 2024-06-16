@@ -1169,7 +1169,13 @@ tSchurPolynomial' ::
      Int        -- ^ number of variables
   -> Partition  -- ^ integer partition
   -> SimpleParametricQSpray
-tSchurPolynomial' n lambda = tSkewSchurPolynomial' n lambda []
+tSchurPolynomial' n lambda 
+  | n < 0 = 
+      error "tSchurPolynomial': negative number of variables."
+  | not (_isPartition lambda) =
+      error "tSchurPolynomial': invalid partition."
+  | otherwise =
+      tSkewSchurPolynomial' n lambda []
 
 -- | Skew t-Schur polynomial of a given skew partition. This is a multivariate 
 -- symmetric polynomial whose coefficients are polynomial in one parameter.
