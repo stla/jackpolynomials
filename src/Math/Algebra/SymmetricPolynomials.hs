@@ -1184,9 +1184,10 @@ tSkewSchurPolynomial n lambda mu
       error "tSkewSchurPolynomial: negative number of variables."
   | not (isSkewPartition lambda mu) = 
       error "tSkewSchurPolynomial: invalid skew partition."
-  _tSkewSchurPolynomial 
-    (\i j -> AlgRing.fromInteger i AlgField./ AlgRing.fromInteger j)
-      n lambda mu
+  | otherwise =
+      _tSkewSchurPolynomial 
+        (\i j -> AlgRing.fromInteger i AlgField./ AlgRing.fromInteger j)
+          n lambda mu
 
 -- | Skew t-Schur polynomial of a given skew partition. This is a multivariate 
 -- symmetric polynomial whose coefficients are polynomial in one parameter.
@@ -1303,8 +1304,9 @@ skewMacdonaldJpolynomial n lambda mu
       error "skewMacdonaldJpolynomial: invalid skew partition."
   | n == 0 = 
       if lambda == mu then unitSpray else zeroSpray
-    clambdamu (S.fromList lambda) (S.fromList mu)  
-      *^ skewMacdonaldPolynomial n lambda mu 'P'
+  | otherwise = 
+      clambdamu (S.fromList lambda) (S.fromList mu)  
+        *^ skewMacdonaldPolynomial n lambda mu 'P'
 
 -- | Skew Macdonald J-polynomial. This is a multivariate 
 -- symmetric polynomial whose coefficients depend on two parameters.
