@@ -73,6 +73,7 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , skewFactorialSchurPol'
                                                 , tSchurPolynomial'
                                                 , tSkewSchurPolynomial'
+                                                , macdonaldJpolynomial'
                                                 )
 import Math.Combinat.Partitions.Integer         ( 
                                                   toPartition
@@ -141,6 +142,18 @@ main = defaultMain $ testGroup
           | mu <- [[], [1], [2], [1,1], [2,1], [2,2]]
         ]
     assertEqual "" tSchurPoly expected
+
+  , testCase "Macdonald J-polynomial" $ do
+    let
+      n = 3
+      macJpoly = macdonaldJpolynomial' n [2, 1]
+      q = qlone 1
+      t = qlone 2
+      mus = [[3], [2, 1], [1, 1, 1]]
+      qtKFpolys = [t, unitSpray ^+^ q ^*^ t, q]
+      tSchurPolys = map ((HM.map (flip changeVariables [t])) . (tSchurPolynomial' n)) mus
+      expected = sumOfSprays (zipWith (*^) qtKFpolys tSchurPolys)
+    assertEqual "" macJpoly expected
 
   , testCase "Factorial Schur polynomial with y=[0 .. ] is Schur polynomial" $ do
     let 

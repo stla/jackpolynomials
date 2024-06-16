@@ -361,26 +361,38 @@ gtPatternDiagonals' pattern = S.empty : [diagonal j | j <- [0 .. l]]
         (S.fromList
           [pattern !! r !! c | (r, c) <- zip [l-j .. l] [0 .. j]])
 
-armLength :: Partition -> Map (Int, Int) Int
-armLength lambda = DM.fromList [((i, j), lambda !! (i-1) - j) | (i, j) <- MCP.elements lambda']
-  where
-    lambda' = toPartitionUnsafe lambda
+-- armLength :: Partition -> Map (Int, Int) Int
+-- armLength lambda = DM.fromList [((i, j), lambda !! (i-1) - j) | (i, j) <- MCP.elements lambda']
+--   where
+--     lambda' = toPartitionUnsafe lambda
 
-legLength :: Partition -> Map (Int, Int) Int
-legLength lambda = DM.fromList [((i, j), lambda'' !! (j-1) - i) | (i, j) <- MCP.elements lambda']
-  where
-    lambda' = toPartitionUnsafe lambda
-    lambda'' = fromPartition (dualPartition lambda')
+-- legLength :: Partition -> Map (Int, Int) Int
+-- legLength lambda = DM.fromList [((i, j), lambda'' !! (j-1) - i) | (i, j) <- MCP.elements lambda']
+--   where
+--     lambda' = toPartitionUnsafe lambda
+--     lambda'' = fromPartition (dualPartition lambda')
 
-clambda :: (Eq a, AlgField.C a) => Partition -> Spray a
+-- clambda :: (Eq a, AlgField.C a) => Partition -> Spray a
+-- clambda lambda = 
+--   productOfSprays [unitSpray ^-^ q^**^(a DM.! s) ^*^ t^**^(l DM.! s + 1) | s <- pairs]
+--   where
+--     q = lone 1
+--     t = lone 2
+--     pairs = MCP.elements (toPartitionUnsafe lambda)
+--     a = armLength lambda
+--     l = legLength lambda
+
+clambda :: (Eq a, AlgRing.C a) => Seq Int -> Spray a
 clambda lambda = 
-  productOfSprays [unitSpray ^-^ q^**^(a DM.! s) ^*^ t^**^(l DM.! s + 1) | s <- pairs]
+  productOfSprays [unitSpray ^-^ q (a s) ^*^ t (l s + 1) | s <- pairs]
   where
-    q = lone 1
-    t = lone 2
-    pairs = MCP.elements (toPartitionUnsafe lambda)
-    a = armLength lambda
-    l = legLength lambda
+    q = lone' 1
+    t = lone' 2
+    pairs = [(i, j) | i <- [1 .. S.length lambda], j <- [1 .. lambda `S.index` (i-1)]]
+    lambda' = _dualPartition' lambda
+    a (i, j) = lambda `S.index` (i-1) - j
+    l (i, j) = lambda' `S.index` (j-1) - i
+ 
 
 -- blambda :: (Eq a, AlgField.C a) => Partition -> (Int, Int) -> RatioOfSprays a
 -- blambda lambda s = if DM.member s a then num %//% den else unitRatioOfSprays

@@ -79,6 +79,8 @@ module Math.Algebra.SymmetricPolynomials
   , macdonaldPolynomial'
   , skewMacdonaldPolynomial
   , skewMacdonaldPolynomial'
+  , macdonaldJpolynomial
+  , macdonaldJpolynomial'
   -- * Flagged Schur polynomials
   , flaggedSchurPol
   , flaggedSchurPol'
@@ -89,7 +91,6 @@ module Math.Algebra.SymmetricPolynomials
   , factorialSchurPol'
   , skewFactorialSchurPol
   , skewFactorialSchurPol'
-  , macdonaldPolynomialJ
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -173,6 +174,7 @@ import           Math.Algebra.Hspray              (
                                                   , constantSpray
                                                   , allExponents
                                                   , asRatioOfSprays
+                                                  , asSimpleParametricSprayUnsafe
                                                   )
 import           Math.Algebra.Jack.Internal       ( 
                                                     Partition
@@ -223,10 +225,6 @@ import           Math.Combinat.Tableaux.Skew      (
                                                     SkewTableau (..) 
                                                   , semiStandardSkewTableaux 
                                                   )
-
-macdonaldPolynomialJ :: Int -> Partition -> ParametricQSpray
-macdonaldPolynomialJ n lambda = 
-  asRatioOfSprays (clambda lambda) *^ macdonaldPolynomial' n lambda 'P'
 
 -- | monomial symmetric polynomial
 msPolynomialUnsafe :: (AlgRing.C a, Eq a) 
@@ -1154,7 +1152,13 @@ tSchurPolynomial ::
   => Int
   -> Partition
   -> SimpleParametricSpray a
-tSchurPolynomial n lambda = tSkewSchurPolynomial n lambda []
+tSchurPolynomial n lambda
+  | n < 0 = 
+      error "tSchurPolynomial: negative number of variables."
+  | not (_isPartition lambda) =
+      error "tSchurPolynomial: invalid partition."
+  | otherwise =
+      tSkewSchurPolynomial n lambda []
 
 -- ^ t-Schur polynomial.
 tSchurPolynomial' ::
@@ -1246,6 +1250,22 @@ skewMacdonaldPolynomial' ::
   -> Char      -- ^ which skew Macdonald polynomial, @'P'@ or @'Q'@
   -> ParametricQSpray
 skewMacdonaldPolynomial' = skewMacdonaldPolynomial
+
+macdonaldJpolynomial :: 
+  forall a. (Eq a, AlgField.C a)
+  => Int 
+  -> Partition 
+  -> SimpleParametricSpray a
+macdonaldJpolynomial n lambda = 
+  asSimpleParametricSprayUnsafe $
+    HM.map ((AlgMod.*>) (clambda (S.fromList lambda) :: Spray a)) 
+      (macdonaldPolynomial n lambda 'P')
+
+macdonaldJpolynomial' :: 
+     Int 
+  -> Partition 
+  -> SimpleParametricQSpray
+macdonaldJpolynomial' = macdonaldJpolynomial
 
 -- | Flagged Schur polynomial. A flagged Schur polynomial is not symmetric 
 -- in general.
