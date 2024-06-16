@@ -394,10 +394,10 @@ clambda lambda =
     a (i, j) = lambda `S.index` (i-1) - j
     l (i, j) = lambda' `S.index` (j-1) - i
  
-clambdamu :: (Eq a, AlgRing.C a) => Seq Int -> Seq Int -> RatioOfSprays a
+clambdamu :: (Eq a, AlgField.C a) => Seq Int -> Seq Int -> RatioOfSprays a
 clambdamu lambda mu = num %//% den
   where
-    lambda' = _dualPartition lambda
+    lambda' = _dualPartition' lambda
     mu' = _dualPartition' mu 
     pairs_mu =
       [(i, j) | i <- [1 .. S.length mu], j <- [1 .. mu `S.index` (i-1)]]
@@ -407,8 +407,8 @@ clambdamu lambda mu = num %//% den
         [(i, j) | i <- [S.length mu + 1 .. S.length lambda], j <- [1 .. lambda `S.index` (i-1)]]
     als = 
       (
-        [(mu `S.index` (i-1) - j, mu' `S.index` (j-1) - i) | (i, j) <- pairs_mu]
-      , [(lambda `S.index` (i-1) - j, lambda' `S.index` (j-1) - i) | (i, j) <- pairs_lambda] 
+        [(lambda `S.index` (i-1) - j, lambda' `S.index` (j-1) - i) | (i, j) <- pairs_lambda] 
+      , [(mu `S.index` (i-1) - j, mu' `S.index` (j-1) - i) | (i, j) <- pairs_mu]
       )
     (num_map, den_map) =
       both (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty) als

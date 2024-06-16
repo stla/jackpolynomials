@@ -82,6 +82,7 @@ module Math.Algebra.SymmetricPolynomials
   , macdonaldJpolynomial
   , macdonaldJpolynomial'
   , skewMacdonaldJpolynomial
+  , skewMacdonaldJpolynomial'
   -- * Flagged Schur polynomials
   , flaggedSchurPol
   , flaggedSchurPol'
@@ -174,7 +175,6 @@ import           Math.Algebra.Hspray              (
                                                   , sumOfSprays
                                                   , constantSpray
                                                   , allExponents
-                                                  , asRatioOfSprays
                                                   , asSimpleParametricSprayUnsafe
                                                   )
 import           Math.Algebra.Jack.Internal       ( 
@@ -1270,15 +1270,21 @@ macdonaldJpolynomial' ::
 macdonaldJpolynomial' = macdonaldJpolynomial
 
 skewMacdonaldJpolynomial :: 
-  forall a. (Eq a, AlgField.C a)
+  (Eq a, AlgField.C a)
   => Int 
   -> Partition 
   -> Partition
   -> ParametricSpray a
 skewMacdonaldJpolynomial n lambda mu = 
---  asSimpleParametricSprayUnsafe $
     clambdamu (S.fromList lambda) (S.fromList mu)  
       *^ skewMacdonaldPolynomial n lambda mu 'P'
+
+skewMacdonaldJpolynomial' :: 
+     Int 
+  -> Partition 
+  -> Partition
+  -> ParametricQSpray
+skewMacdonaldJpolynomial' = skewMacdonaldJpolynomial
 
 -- | Flagged Schur polynomial. A flagged Schur polynomial is not symmetric 
 -- in general.

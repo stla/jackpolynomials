@@ -164,7 +164,7 @@ main = defaultMain $ testGroup
       skewHLpoly = skewHallLittlewoodPolynomial' n lambda mu 'Q'
       expected = asSimpleParametricSpray $
         HM.map ((swapVariables (1, 2)) . (substitute [Just 0, Nothing]))
-          skewMacdonaldJpolynomial' n lambda mu
+          (skewMacdonaldJpolynomial' n lambda mu)
     assertEqual "" skewHLpoly expected
 
   , testCase "Macdonald polynomial branching rule" $ do
@@ -178,10 +178,10 @@ main = defaultMain $ testGroup
         sumOfSprays 
           [
             skewMacdonaldJpolynomial' nx lambda mu 
-              ^*^ HM.map asRatioOfSprays 
-                    (changeVariables (macdonaldJpolynomial' ny mu) ys) 
+              ^*^ changeVariables (HM.map asRatioOfSprays $ macdonaldJpolynomial' ny mu) ys 
           | mu <- [[], [1], [2], [1,1], [2,1], [2,2]]
           ]
+    assertEqual "" macJpoly expected
 
   , testCase "Factorial Schur polynomial with y=[0 .. ] is Schur polynomial" $ do
     let 
