@@ -1148,11 +1148,12 @@ _tSkewSchurPolynomial f n lambda mu = sumOfSprays sprays
       | (rho, c) <- chi_lambda_mu_rhos, c /= 0
       ]
 
--- ^ t-Schur polynomial.
+-- | t-Schur polynomial. This is a multivariate 
+-- symmetric polynomial whose coefficients are polynomial in one parameter.
 tSchurPolynomial ::
   (Eq a, AlgField.C a)
-  => Int
-  -> Partition
+  => Int        -- ^ number of variables
+  -> Partition  -- ^ integer partition
   -> SimpleParametricSpray a
 tSchurPolynomial n lambda
   | n < 0 = 
@@ -1162,29 +1163,37 @@ tSchurPolynomial n lambda
   | otherwise =
       tSkewSchurPolynomial n lambda []
 
--- ^ t-Schur polynomial.
+-- | t-Schur polynomial. This is a multivariate 
+-- symmetric polynomial whose coefficients are polynomial in one parameter.
 tSchurPolynomial' ::
-     Int
-  -> Partition
+     Int        -- ^ number of variables
+  -> Partition  -- ^ integer partition
   -> SimpleParametricQSpray
 tSchurPolynomial' n lambda = tSkewSchurPolynomial' n lambda []
 
--- ^ Skew t-Schur polynomial.
+-- | Skew t-Schur polynomial of a given skew partition. This is a multivariate 
+-- symmetric polynomial whose coefficients are polynomial in one parameter.
 tSkewSchurPolynomial ::
   (Eq a, AlgField.C a)
-  => Int
-  -> Partition
-  -> Partition
+  => Int       -- ^ number of variables
+  -> Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
   -> SimpleParametricSpray a
-tSkewSchurPolynomial = 
+tSkewSchurPolynomial n lambda mu
+  | n < 0 = 
+      error "tSkewSchurPolynomial: negative number of variables."
+  | not (isSkewPartition lambda mu) = 
+      error "tSkewSchurPolynomial: invalid skew partition."
   _tSkewSchurPolynomial 
     (\i j -> AlgRing.fromInteger i AlgField./ AlgRing.fromInteger j)
+      n lambda mu
 
--- ^ Skew t-Schur polynomial.
+-- | Skew t-Schur polynomial of a given skew partition. This is a multivariate 
+-- symmetric polynomial whose coefficients are polynomial in one parameter.
 tSkewSchurPolynomial' ::
-     Int
-  -> Partition
-  -> Partition
+     Int       -- ^ number of variables
+  -> Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
   -> SimpleParametricQSpray
 tSkewSchurPolynomial' = _tSkewSchurPolynomial (%)
 
@@ -1253,36 +1262,56 @@ skewMacdonaldPolynomial' ::
   -> ParametricQSpray
 skewMacdonaldPolynomial' = skewMacdonaldPolynomial
 
+-- | Macdonald J-polynomial. This is a multivariate 
+-- symmetric polynomial whose coefficients are polynomial in two parameters.
 macdonaldJpolynomial :: 
   forall a. (Eq a, AlgField.C a)
-  => Int 
-  -> Partition 
+  => Int        -- ^ number of variables
+  -> Partition  -- ^ integer partition
   -> SimpleParametricSpray a
-macdonaldJpolynomial n lambda = 
-  asSimpleParametricSprayUnsafe $
-    HM.map ((AlgMod.*>) (clambda (S.fromList lambda) :: Spray a)) 
-      (macdonaldPolynomial n lambda 'P')
+macdonaldJpolynomial n lambda 
+  | n < 0 = error "macdonaldJpolynomial: negative number of variables."
+  | not (_isPartition lambda) = 
+      error "macdonaldJpolynomial: invalid partition."
+  | null lambda = unitSpray
+  | length lambda > n = zeroSpray
+  | otherwise =
+      asSimpleParametricSprayUnsafe $
+        HM.map ((AlgMod.*>) (clambda (S.fromList lambda) :: Spray a)) 
+          (macdonaldPolynomial n lambda 'P')
 
+-- | Macdonald J-polynomial. This is a multivariate 
+-- symmetric polynomial whose coefficients are polynomial in two parameters.
 macdonaldJpolynomial' :: 
-     Int 
-  -> Partition 
+     Int        -- ^ number of variables
+  -> Partition  -- ^ integer partition
   -> SimpleParametricQSpray
 macdonaldJpolynomial' = macdonaldJpolynomial
 
+-- | Skew Macdonald J-polynomial. This is a multivariate 
+-- symmetric polynomial whose coefficients depend on two parameters.
 skewMacdonaldJpolynomial :: 
   (Eq a, AlgField.C a)
-  => Int 
-  -> Partition 
-  -> Partition
+  => Int       -- ^ number of variables
+  -> Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
   -> ParametricSpray a
-skewMacdonaldJpolynomial n lambda mu = 
+skewMacdonaldJpolynomial n lambda mu 
+  | n < 0 = 
+      error "skewMacdonaldJpolynomial: negative number of variables."
+  | not (isSkewPartition lambda mu) = 
+      error "skewMacdonaldJpolynomial: invalid skew partition."
+  | n == 0 = 
+      if lambda == mu then unitSpray else zeroSpray
     clambdamu (S.fromList lambda) (S.fromList mu)  
       *^ skewMacdonaldPolynomial n lambda mu 'P'
 
+-- | Skew Macdonald J-polynomial. This is a multivariate 
+-- symmetric polynomial whose coefficients depend on two parameters.
 skewMacdonaldJpolynomial' :: 
-     Int 
-  -> Partition 
-  -> Partition
+     Int       -- ^ number of variables
+  -> Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
   -> ParametricQSpray
 skewMacdonaldJpolynomial' = skewMacdonaldJpolynomial
 
