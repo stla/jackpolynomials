@@ -95,6 +95,7 @@ module Math.Algebra.SymmetricPolynomials
   , skewFactorialSchurPol
   , skewFactorialSchurPol'
   , hbar
+  , hbar'
   , test
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
@@ -298,6 +299,24 @@ hbar n mu = asRatioOfSprays (t ^**^ nmu) *^ jp
     psCombo = DM.filter (/= AlgAdd.zero) 
             (unionsWith (AlgAdd.+) (map (DM.fromList . ff) assocs))
 
+hbar' :: forall a. (Eq a, AlgField.C a) => Int -> Partition -> SimpleParametricSpray a
+hbar' n mu = H.asSimpleParametricSpray jp
+  where
+    t = lone 2 :: Spray a
+    f = psCombo -- psCombination'' (macdonaldJpolynomial n mu)
+    den lambda = productOfSprays [unitSpray ^-^ t ^**^ k | k <- lambda]
+    jp = DM.foldlWithKey 
+      (\spray lambda c -> 
+          spray ^+^ (c %//% den lambda) *^ psPolynomial n lambda)
+      zeroSpray f
+
+    assocs = DM.assocs (macdonaldJinMSPbasis n mu) 
+    ff (lambda, coeff) = 
+      map (second (\r -> fromRational r *^ coeff)) (DM.toList symmPolyCombo)
+      where
+        symmPolyCombo = mspInPSbasis lambda :: Map Partition Rational
+    psCombo = DM.filter (/= AlgAdd.zero) 
+            (unionsWith (AlgAdd.+) (map (DM.fromList . ff) assocs))
 
 test :: Bool
 test = H.substituteParameters h [1,0] == cshPolynomial 3 [2] ^*^ cshPolynomial 3 [1]
