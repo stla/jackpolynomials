@@ -59,7 +59,6 @@ import qualified Data.HashMap.Strict                         as HM
 import           Data.List                                   ( 
                                                                nub
                                                              , foldl'
-                                                             , foldl1'
                                                              , uncons
                                                              )
 import           Data.List.Extra                             ( 
@@ -343,6 +342,8 @@ chi_lambda_mu_rho lambda mu rho =
 --     go i ps tree 
 --       | i == 0 = [[rootLabel tree]]
 --       | otherwise =  map (\subtree -> concat $ go (i-1) [pth ++ [rootLabel subtree] | subtree <- subForest tree, pth <- ps] subtree) (subForest tree) 
+
+
 
 type Partition = [Int]
 
