@@ -39,6 +39,7 @@ module Math.Algebra.Jack.Internal
   , chi_lambda_mu_rho
   , clambda
   , clambdamu
+  , macdonaldJinMSPbasis
   )
   where
 import           Prelude 
@@ -93,7 +94,7 @@ import qualified Data.Set                                    as DS
 import           Data.Tuple.Extra                            ( fst3, both, swap )
 import qualified Data.Vector                                 as V
 import           Math.Algebra.Hspray                         ( 
-                                                               RatioOfSprays, (%:%), (%//%), (%/%)
+                                                               RatioOfSprays (..), (%:%), (%//%), (%/%)
                                                              , unitRatioOfSprays
                                                              , zeroRatioOfSprays
                                                              , asRatioOfSprays
@@ -770,6 +771,34 @@ makeRatioOfSprays pairsMap pairs = num %//% den
     t = lone' 2
     poly ((a, l), c) = (unitSpray ^-^ q a ^*^ t l) ^**^ c
     (num, den) = both (productOfSprays . (map poly)) assocs
+
+macdonaldJinMSPbasis :: 
+  forall a. (Eq a, AlgField.C a) 
+  => Int 
+  -> Partition 
+  -> Map Partition (Spray a)
+macdonaldJinMSPbasis n lambda = 
+  DM.fromList 
+      (zipWith 
+        (\mu listOfPairs -> 
+          (
+            fromPartition mu
+          , _numerator $ c *> (AlgAdd.sum (map (makeRatioOfSprays pairsMap) listOfPairs) :: RatioOfSprays a)
+          )
+        ) mus listsOfPairs
+      )
+  where
+    c = clambda (S.fromList lambda) :: Spray a
+    lambda' = toPartitionUnsafe lambda
+    mus = filter (\mu -> partitionWidth mu <= n) (dominatedPartitions lambda')
+    pairing lambdas = zip (drop1 lambdas) lambdas
+    listsOfPairs = 
+      map (
+        map (pairing . gtPatternDiagonals') 
+          . (kostkaGelfandTsetlinPatterns lambda')
+      ) mus
+    allPairs = nub $ concat (concat listsOfPairs)
+    pairsMap = DM.fromList (zip allPairs (map psiLambdaMu allPairs))
 
 _macdonaldPolynomial :: 
   (Eq a, AlgField.C a) 

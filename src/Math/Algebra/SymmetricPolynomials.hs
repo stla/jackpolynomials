@@ -28,6 +28,7 @@ module Math.Algebra.SymmetricPolynomials
   , msCombination
   , psCombination
   , psCombination'
+  , psCombination''
   , cshCombination
   , cshCombination'
   , esCombination
@@ -94,6 +95,7 @@ module Math.Algebra.SymmetricPolynomials
   , skewFactorialSchurPol
   , skewFactorialSchurPol'
   , hbar
+  , test
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -107,7 +109,6 @@ import qualified Data.HashMap.Strict              as HM
 import           Data.List                        ( 
                                                     foldl1'
                                                   , nub
-                                                  , foldl'
                                                   )
 import           Data.List.Extra                  ( 
                                                     unsnoc
@@ -162,6 +163,7 @@ import           Math.Algebra.Hspray              (
                                                   , (%//%)
                                                   , RatioOfSprays (..)
                                                   , RatioOfQSprays
+                                                  , asRatioOfSprays
                                                   , constantRatioOfSprays
                                                   , zeroRatioOfSprays
                                                   , unitRatioOfSprays
@@ -207,6 +209,7 @@ import           Math.Algebra.Jack.Internal       (
                                                   , chi_lambda_mu_rho
                                                   , clambda
                                                   , clambdamu
+                                                  , macdonaldJinMSPbasis
                                                   )
 import           Math.Algebra.JackPol             ( 
                                                     schurPol
@@ -231,44 +234,75 @@ import           Math.Combinat.Tableaux.Skew      (
                                                   )
 import qualified Math.Algebra.Hspray as H
 
-roq :: QSpray -> RatioOfQSprays
-roq spray = evaluateAt [q, tm1] pspray
-  where
-    pspray = HM.map H.constantRatioOfSprays spray
-    q = H.asRatioOfSprays (qlone 1)
-    tm1 = RatioOfSprays unitSpray (qlone 2)
 
-plethysm' :: 
-  (Eq a, AlgField.C a) 
-  => Int 
-  -> [(Partition, RatioOfSprays a)] 
-  -> [(Partition, RatioOfSprays a)] 
-  -> ParametricSpray a
-plethysm' n f g = 
-  foldl' 
-    (\spray (lambda, c) -> 
-      spray ^+^ c *^ productOfSprays (map plethysm_g lambda)) 
-    zeroSpray f
-  where 
-    plethysm_mu mu k = psPolynomial n (map (*k) mu)
+-- plethysm' :: 
+--   (Eq a, AlgField.C a) 
+--   => Int 
+--   -> [(Partition, RatioOfSprays a)] 
+--   -> [(Partition, RatioOfSprays a)] 
+--   -> ParametricSpray a
+-- plethysm' n f g = 
+--   foldl' 
+--     (\spray (lambda, c) -> 
+--       spray ^+^ c *^ productOfSprays (map plethysm_g lambda)) 
+--     zeroSpray f
+--   where 
+--     plethysm_mu mu k = psPolynomial n (map (*k) mu)
+--     q = lone 1
+--     t = lone 2
+--     plethysm_g k = 
+--       foldl' (\spray (mu, r) -> spray ^+^ (changeVariables r [q, t^**^k]) *^ plethysm_mu mu k) zeroSpray g
+
+-- plethysm :: 
+--   (Eq a, AlgField.C a) 
+--   => Int 
+--   -> Map Partition (RatioOfSprays a)
+--   -> (Int, Map Partition (Spray a -> RatioOfSprays a)) 
+--   -> ParametricSpray a
+-- plethysm n f (i, g) = 
+--   DM.foldlWithKey 
+--     (\spray lambda c -> 
+--         spray ^+^ c *^ productOfSprays (map plethysm_g lambda)) 
+--     zeroSpray f
+--   where 
+--     plethysm_mu mu k = psPolynomial n (map (*k) mu)
+--     t = lone' i
+--     plethysm_g k = 
+--       DM.foldlWithKey 
+--         (\spray mu d -> spray ^+^ (d (t k) *^ plethysm_mu mu k)) 
+--           zeroSpray g
+
+hbar :: (Eq a, AlgField.C a) => Int -> Partition -> ParametricSpray a
+hbar n mu = asRatioOfSprays (t ^**^ nmu) *^ jp
+  where
     q = lone 1
     t = lone 2
-    plethysm_g k = 
-      foldl' (\spray (mu, r) -> spray ^+^ (changeVariables r [q, t^**^k]) *^ plethysm_mu mu k) zeroSpray g
-
-hbar :: Int -> Partition -> ParametricQSpray
-hbar n mu = H.asRatioOfSprays (t^**^nmu) *^ jp
-  where
-    t = qlone 2
-    ellMu = length mu
-    nmu = sum (zipWith (*) [ellMu-1, ellMu-2 ..] mu)
---    nmu = sum (zipWith (*) [1 .. ] (drop 1 mu))
-    j' = HM.map roq (macdonaldJpolynomial' n mu)
-    f = DM.assocs $ psCombination j'
---    f = DM.mapWithKey (\lambda c -> AlgRing.product [H.unitRatioOfSprays ]) psCombination j'
+    nmu = sum (zipWith (*) [1 .. ] (drop 1 mu))
+    q' = asRatioOfSprays q
     tm1 = RatioOfSprays unitSpray t
-    g = [([1], (RatioOfSprays t (t ^-^ unitSpray)))]
-    jp = plethysm' n f g
+    toROS spray = 
+      evaluateAt [q', tm1] (HM.map constantRatioOfSprays spray)
+    -- f = DM.map toROS (psCombination'' (macdonaldJpolynomial n mu))
+    f = psCombo -- psCombination'' (macdonaldJpolynomial n mu)
+    rOS lambda = (t ^**^ (sum lambda), productOfSprays [t ^**^ k ^-^ unitSpray | k <- lambda])
+    jp = DM.foldlWithKey 
+      (\spray lambda c -> let (num, den) = rOS lambda in
+          spray ^+^ toROS c *^ (num %//% den) *^ psPolynomial n lambda)
+      zeroSpray f
+
+    assocs = DM.assocs (macdonaldJinMSPbasis n mu) 
+    ff (lambda, coeff) = 
+      map (second (\r -> fromRational r *^ coeff)) (DM.toList symmPolyCombo)
+      where
+        symmPolyCombo = mspInPSbasis lambda :: Map Partition Rational
+    psCombo = DM.filter (/= AlgAdd.zero) 
+            (unionsWith (AlgAdd.+) (map (DM.fromList . ff) assocs))
+
+
+test :: Bool
+test = H.substituteParameters h [1,0] == cshPolynomial 3 [2] ^*^ cshPolynomial 3 [1]
+  where
+    h = hbar 3 [2, 1] :: ParametricQSpray
 
 -- | monomial symmetric polynomial
 msPolynomialUnsafe :: (AlgRing.C a, Eq a) 
@@ -575,6 +609,27 @@ _symmPolyCombination mspInSymmPolyBasis func spray =
             (unionsWith (AlgAdd.+) (map (DM.fromList . f) assocs))
 
 -- _symmPolyCombination' :: 
+--     forall a b. (Eq a, AlgRing.C a) 
+--   => (Partition -> Map Partition Rational) 
+--   -> (a -> a -> a)
+--   -> Spray a 
+--   -> Map Partition a
+-- _symmPolyCombination' mspInSymmPolyBasis func spray =
+--   if constantTerm == AlgAdd.zero 
+--     then symmPolyMap
+--     else insert [] constantTerm symmPolyMap
+--   where
+--     constantTerm = getConstantTerm spray
+--     assocs = msCombination' (spray <+ (AlgAdd.negate constantTerm)) :: [(Partition, a)]
+--     f :: (Partition, a) -> [(Partition, a)] 
+--     f (lambda, coeff) = 
+--       map (second (func coeff)) (DM.toList symmPolyCombo)
+--       where
+--         symmPolyCombo = DM.map fromRational (mspInSymmPolyBasis lambda) :: Map Partition a
+--     symmPolyMap = DM.filter (/= AlgAdd.zero) 
+--             (unionsWith (AlgAdd.+) (map (DM.fromList . f) assocs))
+
+-- _symmPolyCombination' :: 
 --     forall a. (Eq a, AlgRing.C a) 
 --   => (Partition -> Map Partition Rational) 
 --   -> (a -> Rational -> a) 
@@ -604,8 +659,7 @@ _psCombination = _symmPolyCombination mspInPSbasis
 -- Symmetry is not checked.
 psCombination :: 
   forall a. (Eq a, AlgField.C a) => Spray a -> Map Partition a
-psCombination = 
-  _psCombination (\coef r -> coef AlgRing.* fromRational r)
+psCombination = _psCombination (\coef r -> coef AlgRing.* fromRational r)
 
 -- | Symmetric polynomial as a linear combination of power sum polynomials. 
 -- Same as @psCombination@ but with other constraints on the base ring of the spray.
@@ -613,6 +667,14 @@ psCombination' ::
   forall a. (Eq a, AlgMod.C Rational a, AlgRing.C a) 
   => Spray a -> Map Partition a
 psCombination' = _psCombination (flip (AlgMod.*>))
+
+-- | Symmetric parametric spray as a linear combination of power sum polynomials. 
+psCombination'' ::
+    forall b. (FunctionLike b, Eq b, AlgRing.C b, AlgField.C (BaseRing b))
+  => Spray b    -- ^ parametric spray
+  -> Map Partition b  
+psCombination'' = 
+  _psCombination (\coef r -> fromRational r *^ coef)
 
 -- | the Hall inner product with parameter
 _hallInnerProduct :: 
@@ -1539,16 +1601,16 @@ skewFactorialSchurPol' ::
   -> QSpray
 skewFactorialSchurPol' = skewFactorialSchurPol
 
-plethysm :: (Eq a, AlgRing.C a) => Int -> Map Partition a -> Map Partition a -> Spray a
-plethysm n f g = 
-  DM.foldlWithKey 
-    (\spray lambda c -> 
-      spray ^+^ c *^ productOfSprays (map plethysm_g lambda)) 
-    zeroSpray f
-  where 
-    plethysm_mu mu k = psPolynomial n (map (*k) mu)
-    plethysm_g k = 
-      DM.foldlWithKey (\spray mu d -> spray ^+^ d *^ plethysm_mu mu k) zeroSpray g
+-- plethysm :: (Eq a, AlgRing.C a) => Int -> Map Partition a -> Map Partition a -> Spray a
+-- plethysm n f g = 
+--   DM.foldlWithKey 
+--     (\spray lambda c -> 
+--       spray ^+^ c *^ productOfSprays (map plethysm_g lambda)) 
+--     zeroSpray f
+--   where 
+--     plethysm_mu mu k = psPolynomial n (map (*k) mu)
+--     plethysm_g k = 
+--       DM.foldlWithKey (\spray mu d -> spray ^+^ d *^ plethysm_mu mu k) zeroSpray g
 
 -- test :: Bool
 -- test = poly == sumOfSprays sprays
