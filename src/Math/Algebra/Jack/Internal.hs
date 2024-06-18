@@ -135,6 +135,7 @@ import           Math.Combinat.Permutations                  ( permuteMultiset )
 import           Math.Combinat.Tableaux.GelfandTsetlin       (
                                                                 GT
                                                               , kostkaGelfandTsetlinPatterns
+                                                              , kostkaNumbersWithGivenLambda
                                                              )
 import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
 
@@ -259,6 +260,19 @@ import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
 --                   (S.zip (S.take (q-p) (S.drop (p-1) mu)) (S.drop p lambda))
 -- --          && and [mu `S.index` (i-1) < lambda' `S.index` i | i <- [p .. q-1]]
 -- --          && and [mu `S.index` (i-1) <= lambda' `S.index` (i-1)| i <- [q+1 .. n]]
+
+inverseKostkaNumbers :: Int -> Map Partition (Map Partition Int)
+inverseKostkaNumbers n = 
+  DM.fromDistinctDescList (zip lambdas' (map maps [1 .. length lambdas]))
+  where
+    lambdas = reverse (partitions n)
+    row lambda = 
+      map 
+        (\mu -> DM.findWithDefault 0 mu (kostkaNumbersWithGivenLambda lambda)) lambdas
+    matrix = inverseUnitTriangularMatrix (fromLists (map row lambdas))
+    lambdas' = map fromPartition lambdas
+    maps i = DM.fromDistinctDescList (zip lambdas' (V.toList (getRow i matrix)))  
+
 
 sequencesOfRibbons :: Seq Int -> Seq Int -> Seq Int -> [Seq (Seq Int)]
 sequencesOfRibbons lambda mu rho = 
