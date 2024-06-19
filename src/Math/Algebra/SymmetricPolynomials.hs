@@ -64,6 +64,9 @@ module Math.Algebra.SymmetricPolynomials
   , kostkaFoulkesPolynomial'
   , skewKostkaFoulkesPolynomial
   , skewKostkaFoulkesPolynomial'
+  -- * qt-Kostka polynomials
+  , qtKostkaPolynomials
+  , qtKostkaPolynomials'
   -- * Hall-Littlewood polynomials
   , hallLittlewoodPolynomial
   , hallLittlewoodPolynomial'
@@ -84,6 +87,8 @@ module Math.Algebra.SymmetricPolynomials
   , macdonaldJpolynomial'
   , skewMacdonaldJpolynomial
   , skewMacdonaldJpolynomial'
+  , modifiedMacdonaldPolynomial
+  , modifiedMacdonaldPolynomial'
   -- * Flagged Schur polynomials
   , flaggedSchurPol
   , flaggedSchurPol'
@@ -94,10 +99,7 @@ module Math.Algebra.SymmetricPolynomials
   , factorialSchurPol'
   , skewFactorialSchurPol
   , skewFactorialSchurPol'
-  , hbar
-  , hbar'
-  , test
-  , test'
+  , test, test'
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -278,34 +280,47 @@ import qualified Math.Algebra.Hspray as H
 --         (\spray mu d -> spray ^+^ (d (t k) *^ plethysm_mu mu k)) 
 --           zeroSpray g
 
-hbar :: (Eq a, AlgField.C a) => Int -> Partition -> ParametricSpray a
-hbar n mu = asRatioOfSprays (t ^**^ nmu) *^ jp
+modifiedMacdonaldPolynomial :: (Eq a, AlgField.C a) => Int -> Partition -> SimpleParametricSpray a
+modifiedMacdonaldPolynomial n mu = jp -- (t' nmu) *^ asSimpleParametricSprayUnsafe jp
   where
-    q = lone 1
-    t = lone 2
-    nmu = sum (zipWith (*) [1 .. ] (drop 1 mu))
-    q' = asRatioOfSprays q
-    tm1 = RatioOfSprays unitSpray t
-    toROS spray = 
-      evaluateAt [q', tm1] (HM.map constantRatioOfSprays spray)
-    -- f = DM.map toROS (psCombination'' (macdonaldJpolynomial n mu))
-    f = psCombo -- psCombination'' (macdonaldJpolynomial n mu)
-    rOS lambda = RatioOfSprays (t ^**^ (sum lambda)) (productOfSprays [t ^**^ k ^-^ unitSpray | k <- lambda])
-    jp = DM.foldlWithKey 
-      (\spray lambda c -> 
-          spray ^+^ toROS c *^ rOS lambda *^ psPolynomial n lambda)
-      zeroSpray f
+    macdonaldCombo = macdonaldJinMSPbasis (sum mu) mu
+    -- ff (lambda, spray) = 
+    --   map (second (\r -> fromRational r *^ spray)) (DM.toList symmPolyCombo)
+    --   where
+    --     symmPolyCombo = mspInPSbasis lambda :: Map Partition Rational
+    -- assocs = DM.assocs macdonaldCombo
 
-    assocs = DM.assocs (macdonaldJinMSPbasis (sum mu) mu) 
-    ff (lambda, coeff) = 
-      map (second (\r -> fromRational r *^ coeff)) (DM.toList symmPolyCombo)
+    -- psCombo = DM.filter (not . isZeroSpray) 
+    --         (unionsWith (^+^) (map (DM.fromList . ff) assocs))
+--    psCombo = psCombination'' (macdonaldJpolynomial (sum mu) mu)
+    ff lambda spray = 
+      DM.map (\r -> fromRational r *^ spray) symmPolyCombo
       where
         symmPolyCombo = mspInPSbasis lambda :: Map Partition Rational
-    psCombo = DM.filter (/= AlgAdd.zero) 
-            (unionsWith (AlgAdd.+) (map (DM.fromList . ff) assocs))
+    psCombo = DM.filter (not . isZeroSpray) 
+            (unionsWith (^+^) (DM.elems $ DM.mapWithKey ff macdonaldCombo))
+--    q = lone 1
+    t = lone 2
+    t' = lone' 2
+    nmu = sum (zipWith (*) [1 .. ] (drop 1 mu))
+--    q' = asRatioOfSprays q
+    tm1 = RatioOfSprays unitSpray t
+    toROS spray = 
+      evaluateAt [asRatioOfSprays (lone 1), tm1] (HM.map constantRatioOfSprays spray)
+    rOS lambda = RatioOfSprays (t' (nmu + sum lambda)) (productOfSprays [t' k ^-^ unitSpray | k <- lambda])
+    jp = DM.foldlWithKey 
+      (\spray lambda c -> 
+          spray ^+^ (_numerator $ rOS lambda AlgRing.* toROS c) *^ psPolynomial (n) lambda)
+      zeroSpray psCombo
 
-hbar' :: forall a. (Eq a, AlgField.C a) => Partition -> Map Partition (Spray a) -- SimpleParametricSpray a
-hbar' mu =  DM.map _numerator scs -- H.asSimpleParametricSpray jp
+modifiedMacdonaldPolynomial' :: Int -> Partition -> SimpleParametricQSpray 
+modifiedMacdonaldPolynomial' = modifiedMacdonaldPolynomial
+
+qtKostkaPolynomials :: 
+  forall a. (Eq a, AlgField.C a) 
+  => Partition 
+  -> Map Partition (Spray a) 
+qtKostkaPolynomials mu =  DM.map _numerator scs 
   where
     t = lone 2 :: Spray a
     f = psCombo -- psCombination'' (macdonaldJpolynomial n mu)
@@ -324,13 +339,7 @@ hbar' mu =  DM.map _numerator scs -- H.asSimpleParametricSpray jp
       (\m lambda c -> 
         DM.unionWith (AlgAdd.+) m (DM.map (\ikNumber -> (ikNumber .^ c) %//% den lambda) (coeffs lambda))
       )
---        DM.insertWith (AlgAdd.+) lambda (( lambda ^*^ c) %//% den lambda) m)
       DM.empty f
-      
-    -- jp = DM.foldlWithKey 
-    --   (\spray lambda c -> 
-    --       spray ^+^ (c %//% den lambda) *^ psPolynomial n lambda)
-    --   zeroSpray f
 
     assocs = DM.assocs (macdonaldJinMSPbasis n mu) 
     ff (lambda, coeff) = 
@@ -340,13 +349,18 @@ hbar' mu =  DM.map _numerator scs -- H.asSimpleParametricSpray jp
     psCombo = DM.filter (not . isZeroSpray) 
             (unionsWith (^+^) (map (DM.fromList . ff) assocs))
 
+qtKostkaPolynomials' :: 
+     Partition 
+  -> Map Partition QSpray
+qtKostkaPolynomials' = qtKostkaPolynomials
+
 test :: Bool
 test = H.substituteParameters h [1,0] == cshPolynomial 3 [2] ^*^ cshPolynomial 3 [1]
   where
-    h = hbar 3 [2, 1] :: ParametricQSpray
+    h = modifiedMacdonaldPolynomial' 3 [2, 1] 
 
 test' :: (Map Partition String, String)
-test' = (DM.map H.prettyQSpray (hbar' [2,1]), H.prettyParametricQSpray (hbar 2 [2,1]))
+test' = (DM.map H.prettyQSpray (qtKostkaPolynomials' [2,1]), H.prettySimpleParametricQSpray (modifiedMacdonaldPolynomial' 2 [2,1]))
 
 -- | monomial symmetric polynomial
 msPolynomialUnsafe :: (AlgRing.C a, Eq a) 
