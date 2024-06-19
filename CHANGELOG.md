@@ -122,6 +122,24 @@ greatly improved
 
 1.4.5.0
 -------
-* new function `macdonaldPolynomial`, to get a Macdonald polynomial
+* new function `tSchurPolynomial`, to get a t-Schur polynomial
 
-* new function `skewMacdonaldPolynomial`, to get a skew Macdonald polynomial
+* new function `tSkewSchurPolynomial`, to get a skew t-Schur polynomial
+
+* new function `macdonaldPolynomial`, to get a Macdonald P-polynomial or 
+Q-polynomial
+
+* new function `skewMacdonaldPolynomial`, to get a skew Macdonald P-polynomial
+or Q-polynomial
+
+* new function `macdonaldJpolynomial`, to get a Macdonald J-polynomial
+
+* new function `skewMacdonaldJpolynomial`, to get a skew Macdonald J-polynomial
+
+* new function `modifiedMacdonaldPolynomial`, to get a modified Macdonald 
+polynomial
+
+* new function `qtKostkaPolynomials`, to get qt-Kostka polynomials, aka
+Macdonald-Kostka polynomials
+
+

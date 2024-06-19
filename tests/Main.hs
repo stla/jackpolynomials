@@ -198,7 +198,7 @@ main = defaultMain $ testGroup
         qtKostkaPolys
     assertEqual "" macJpoly expected
 
-  , testCase "Modified Macdonald polynomial" $ do
+  , testCase "Modified Macdonald polynomial at (q, t) = (1, 1)" $ do
     let
       n = 4
       mu = [2, 1, 1]
@@ -208,6 +208,15 @@ main = defaultMain $ testGroup
 --      but with macHpoly = modifiedMacdonaldPolynomial' n [3, 1] (dual partition), this works
       expected = esPolynomial n [1] ^**^ (sum mu) 
     assertEqual "" macHpoly11 expected
+
+  , testCase "Modified Macdonald polynomial mu (q, t) = Modified Macdonald polynomial mu' (t, q)" $ do
+    let
+      n = 4
+      mu = [2, 1, 1]
+      mu' = [3, 1]
+      macHpoly = modifiedMacdonaldPolynomial' n mu
+      macHpoly' = HM.map (swapVariables (1, 2)) (modifiedMacdonaldPolynomial' n mu')
+    assertEqual "" macHpoly macHpoly'
 
   , testCase "Factorial Schur polynomial with y=[0 .. ] is Schur polynomial" $ do
     let 

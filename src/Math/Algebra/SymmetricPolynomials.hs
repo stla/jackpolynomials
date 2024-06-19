@@ -99,7 +99,6 @@ module Math.Algebra.SymmetricPolynomials
   , factorialSchurPol'
   , skewFactorialSchurPol
   , skewFactorialSchurPol'
-  , test, test'
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -240,7 +239,6 @@ import           Math.Combinat.Tableaux.Skew      (
                                                     SkewTableau (..) 
                                                   , semiStandardSkewTableaux 
                                                   )
-import qualified Math.Algebra.Hspray as H
 
 
 -- plethysm' :: 
@@ -357,13 +355,13 @@ qtKostkaPolynomials' ::
   -> Map Partition QSpray
 qtKostkaPolynomials' = qtKostkaPolynomials
 
-test :: Bool
-test = H.substituteParameters h [1,0] == cshPolynomial 3 [2] ^*^ cshPolynomial 3 [1]
-  where
-    h = modifiedMacdonaldPolynomial' 3 [2, 1] 
+-- test :: Bool
+-- test = H.substituteParameters h [1,0] == cshPolynomial 3 [2] ^*^ cshPolynomial 3 [1]
+--   where
+--     h = modifiedMacdonaldPolynomial' 3 [2, 1] 
 
-test' :: (Map Partition String, String)
-test' = (DM.map H.prettyQSpray (qtKostkaPolynomials' [2,1]), H.prettySimpleParametricQSpray (modifiedMacdonaldPolynomial' 2 [2,1]))
+-- test' :: (Map Partition String, String)
+-- test' = (DM.map H.prettyQSpray (qtKostkaPolynomials' [2,1]), H.prettySimpleParametricQSpray (modifiedMacdonaldPolynomial' 2 [2,1]))
 
 -- | monomial symmetric polynomial
 msPolynomialUnsafe :: (AlgRing.C a, Eq a) 
