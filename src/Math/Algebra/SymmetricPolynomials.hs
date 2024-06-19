@@ -289,17 +289,15 @@ macdonaldJinPSbasis mu =
         (\r -> fromRational r *^ spray) 
           (mspInPSbasis lambda)
 
-modifiedMacdonaldPolynomial :: (Eq a, AlgField.C a) => Int -> Partition -> SimpleParametricSpray a
+-- | Modified Macdonald polynomial. This is a multivariate symmetric polynomial
+-- whose coefficients are polynomials in two parameters.
+modifiedMacdonaldPolynomial :: 
+     (Eq a, AlgField.C a) 
+  => Int        -- ^ number of variables
+  -> Partition  -- ^ integer partition
+  -> SimpleParametricSpray a
 modifiedMacdonaldPolynomial n mu = jp 
   where
---    macdonaldCombo = macdonaldJinMSPbasis (sum mu) mu
-    -- macdonaldCombo = macdonaldJinMSPbasis mu
-    -- combo_to_map lambda spray = 
-    --   DM.map (\r -> fromRational r *^ spray) symmPolyCombo
-    --   where
-    --     symmPolyCombo = mspInPSbasis lambda :: Map Partition Rational
-    -- psCombo = DM.filter (not . isZeroSpray) 
-    --         (unionsWith (^+^) (DM.elems $ DM.mapWithKey combo_to_map macdonaldCombo))
     psCombo = macdonaldJinPSbasis mu
     q' = lone' 1
     t' = lone' 2
@@ -324,23 +322,25 @@ modifiedMacdonaldPolynomial n mu = jp
               *^ psPolynomial n lambda)
       zeroSpray psCombo
 
-modifiedMacdonaldPolynomial' :: Int -> Partition -> SimpleParametricQSpray 
+-- | Modified Macdonald polynomial. This is a multivariate symmetric polynomial
+-- whose coefficients are polynomials in two parameters.
+modifiedMacdonaldPolynomial' :: 
+     Int        -- ^ number of variables
+  -> Partition  -- ^ integer partition
+  -> SimpleParametricQSpray 
 modifiedMacdonaldPolynomial' = modifiedMacdonaldPolynomial
 
+-- | qt-Kostka polynomials, aka Kostka-Macdonald polynomials. They are usually
+-- denoted by \(K(\lambda, \mu)\) for two integer partitions \(\lambda\) and
+-- \(mu\). For a given partition \(\mu\), the function returns the polynomials
+-- \(K(\lambda, \mu)\) for all partitions \(\lambda\) of the same weight as 
+-- \(\mu\).
 qtKostkaPolynomials :: 
   forall a. (Eq a, AlgField.C a) 
   => Partition 
   -> Map Partition (Spray a) 
 qtKostkaPolynomials mu =  DM.map _numerator scs 
   where
---    macdonaldCombo = macdonaldJinMSPbasis (sum mu) mu
-    -- macdonaldCombo = macdonaldJinMSPbasis mu
-    -- ff lambda spray = 
-    --   DM.map (\r -> fromRational r *^ spray) symmPolyCombo
-    --   where
-    --     symmPolyCombo = mspInPSbasis lambda :: Map Partition Rational
-    -- psCombo = DM.filter (not . isZeroSpray) 
-    --         (unionsWith (^+^) (DM.elems $ DM.mapWithKey ff macdonaldCombo))
     psCombo = macdonaldJinPSbasis mu
     t = lone' 2 
 --    f = psCombo -- psCombination'' (macdonaldJpolynomial n mu)
@@ -361,6 +361,11 @@ qtKostkaPolynomials mu =  DM.map _numerator scs
       )
       DM.empty psCombo
 
+-- | qt-Kostka polynomials, aka Kostka-Macdonald polynomials. They are usually
+-- denoted by \(K(\lambda, \mu)\) for two integer partitions \(\lambda\) and
+-- \(mu\). For a given partition \(\mu\), the function returns the polynomials
+-- \(K(\lambda, \mu)\) for all partitions \(\lambda\) of the same weight as 
+-- \(\mu\).
 qtKostkaPolynomials' :: 
      Partition 
   -> Map Partition QSpray
