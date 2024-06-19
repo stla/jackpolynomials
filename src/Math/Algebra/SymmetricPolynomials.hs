@@ -138,7 +138,7 @@ import           Data.Matrix                      (
 import           Data.Maybe                       ( fromJust )
 import           Data.Ratio                       ( (%) )
 import           Data.Sequence                    ( 
-                                                    Seq
+                                                    Seq (..)
                                                   , (|>)
                                                   , index 
                                                   )
@@ -279,39 +279,36 @@ import           Math.Combinat.Tableaux.Skew      (
 --           zeroSpray g
 
 modifiedMacdonaldPolynomial :: (Eq a, AlgField.C a) => Int -> Partition -> SimpleParametricSpray a
-modifiedMacdonaldPolynomial n mu = jp -- (t' nmu) *^ asSimpleParametricSprayUnsafe jp
+modifiedMacdonaldPolynomial n mu = jp 
   where
     macdonaldCombo = macdonaldJinMSPbasis (sum mu) mu
-    -- ff (lambda, spray) = 
-    --   map (second (\r -> fromRational r *^ spray)) (DM.toList symmPolyCombo)
-    --   where
-    --     symmPolyCombo = mspInPSbasis lambda :: Map Partition Rational
-    -- assocs = DM.assocs macdonaldCombo
-
-    -- psCombo = DM.filter (not . isZeroSpray) 
-    --         (unionsWith (^+^) (map (DM.fromList . ff) assocs))
---    psCombo = psCombination'' (macdonaldJpolynomial (sum mu) mu)
-    ff lambda spray = 
+    combo_to_map lambda spray = 
       DM.map (\r -> fromRational r *^ spray) symmPolyCombo
       where
         symmPolyCombo = mspInPSbasis lambda :: Map Partition Rational
     psCombo = DM.filter (not . isZeroSpray) 
-            (unionsWith (^+^) (DM.elems $ DM.mapWithKey ff macdonaldCombo))
---    q = lone 1
-    t = lone 2
+            (unionsWith (^+^) (DM.elems $ DM.mapWithKey combo_to_map macdonaldCombo))
+    q' = lone' 1
     t' = lone' 2
-    nmu = sum (zipWith (*) [1 .. ] (drop 1 mu))
---    q' = asRatioOfSprays q
-    tm1 = RatioOfSprays unitSpray t
-    q' = asRatioOfSprays (lone 1)
+    -- toROS spray = 
+    --   evaluateAt [q', tm1] (HM.map constantRatioOfSprays spray)
+    num_and_den Empty = undefined
+    num_and_den (e :<| Empty) = (q' e, unitSpray)
+    num_and_den (e1 :<| (e2 :<| _)) = (q' e1, t' e2)
+    rOS_from_term powers coeff = coeff *^ RatioOfSprays spray1 spray2
+      where
+        (spray1, spray2) = num_and_den (exponents powers)
     toROS spray = 
-      evaluateAt [q', tm1] (HM.map constantRatioOfSprays spray)
-    -- rOS lambda = RatioOfSprays (t' (sum lambda)) (productOfSprays [t' k ^-^ unitSpray | k <- lambda])
-    -- t'' = t' nmu
+      HM.foldlWithKey' 
+        (\ros powers coeff -> ros AlgAdd.+ rOS_from_term powers coeff) 
+          zeroRatioOfSprays spray
     den lambda = productOfSprays [t' k ^-^ unitSpray | k <- lambda]
+    nmu = sum (zipWith (*) [1 .. ] (drop 1 mu))
     jp = DM.foldlWithKey 
       (\spray lambda c -> 
-          spray ^+^ (_numerator $ toROS (t' (nmu + sum lambda) ^*^ c) %/% den lambda) *^ psPolynomial n lambda)
+          spray ^+^ 
+            _numerator (toROS (t' (nmu + sum lambda) ^*^ c) %/% den lambda) 
+              *^ psPolynomial n lambda)
       zeroSpray psCombo
 
 modifiedMacdonaldPolynomial' :: Int -> Partition -> SimpleParametricQSpray 

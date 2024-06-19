@@ -798,7 +798,7 @@ macdonaldJinMSPbasis n lambda =
         (\mu listOfPairs -> 
           (
             fromPartition mu
-          , _numerator $ c *> (AlgAdd.sum (map (makeRatioOfSprays pairsMap) listOfPairs) :: RatioOfSprays a)
+          , c ^*^ _numerator (AlgAdd.sum (map (makeRatioOfSprays pairsMap) listOfPairs) :: RatioOfSprays a)
           )
         ) mus listsOfPairs
       )
