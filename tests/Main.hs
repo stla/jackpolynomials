@@ -75,6 +75,8 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , tSkewSchurPolynomial'
                                                 , macdonaldJpolynomial'
                                                 , skewMacdonaldJpolynomial'
+                                                , qtKostkaPolynomials'
+                                                , modifiedMacdonaldPolynomial'
                                                 )
 import Math.Combinat.Partitions.Integer         ( 
                                                   toPartition
@@ -182,6 +184,30 @@ main = defaultMain $ testGroup
           | mu <- [[], [1], [2], [1,1], [2,1], [2,2]]
           ]
     assertEqual "" macJpoly expected
+
+  , testCase "qt-Kostka polynomials" $ do
+    let
+      n = 4
+      mu = [2, 1, 1]
+      macJpoly = macdonaldJpolynomial' n mu
+      qtKostkaPolys = qtKostkaPolynomials' mu
+      expected = 
+        sumOfSprays $ DM.elems $ DM.mapWithKey 
+          (\lambda kp -> 
+            kp *^ (HM.map (swapVariables (1, 2)) (tSchurPolynomial' n lambda)))
+        qtKostkaPolys
+    assertEqual "" macJpoly expected
+
+  , testCase "Modified Macdonald polynomial" $ do
+    let
+      n = 4
+      mu = [2, 1, 1]
+      macHpoly = modifiedMacdonaldPolynomial' n mu
+      macHpoly11 = substituteParameters macHpoly [1, 1] 
+--      expected = productOfSprays [cshPolynomial n [k] | k <- mu] does not work
+--      but with macHpoly = modifiedMacdonaldPolynomial' n [3, 1] (dual partition), this works
+      expected = esPolynomial n [1] ^**^ (sum mu) 
+    assertEqual "" macHpoly11 expected
 
   , testCase "Factorial Schur polynomial with y=[0 .. ] is Schur polynomial" $ do
     let 
