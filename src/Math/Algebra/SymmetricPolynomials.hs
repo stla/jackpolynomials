@@ -110,19 +110,18 @@ import qualified Algebra.Ring                     as AlgRing
 import           Algebra.ToInteger                ( fromIntegral )
 import qualified Data.Foldable                    as DF
 import qualified Data.HashMap.Strict              as HM
+import           Data.IntMap.Strict               ( 
+                                                    IntMap
+                                                  )
+import qualified Data.IntMap.Strict               as IM
 import           Data.List                        ( 
                                                     foldl1'
                                                   , nub
-                                                  , foldl'
                                                   )
 import           Data.List.Extra                  ( 
                                                     unsnoc
                                                   , allSame
                                                   )
-import           Data.IntMap.Strict               ( 
-                                                    IntMap
-                                                  )
-import qualified Data.IntMap.Strict               as IM
 import           Data.Map.Merge.Strict            ( 
                                                     merge
                                                   , dropMissing
@@ -168,6 +167,7 @@ import           Math.Algebra.Hspray              (
                                                   , getConstantTerm
                                                   , isConstant
                                                   , (%//%)
+                                                  , (%/%)
                                                   , RatioOfSprays (..)
                                                   , RatioOfQSprays
                                                   , asRatioOfSprays
@@ -305,12 +305,15 @@ modifiedMacdonaldPolynomial n mu = jp -- (t' nmu) *^ asSimpleParametricSprayUnsa
     nmu = sum (zipWith (*) [1 .. ] (drop 1 mu))
 --    q' = asRatioOfSprays q
     tm1 = RatioOfSprays unitSpray t
+    q' = asRatioOfSprays (lone 1)
     toROS spray = 
-      evaluateAt [asRatioOfSprays (lone 1), tm1] (HM.map constantRatioOfSprays spray)
-    rOS lambda = RatioOfSprays (t' (nmu + sum lambda)) (productOfSprays [t' k ^-^ unitSpray | k <- lambda])
+      evaluateAt [q', tm1] (HM.map constantRatioOfSprays spray)
+    -- rOS lambda = RatioOfSprays (t' (sum lambda)) (productOfSprays [t' k ^-^ unitSpray | k <- lambda])
+    -- t'' = t' nmu
+    den lambda = productOfSprays [t' k ^-^ unitSpray | k <- lambda]
     jp = DM.foldlWithKey 
       (\spray lambda c -> 
-          spray ^+^ (_numerator $ rOS lambda AlgRing.* toROS c) *^ psPolynomial (n) lambda)
+          spray ^+^ (_numerator $ toROS (t' (nmu + sum lambda) ^*^ c) %/% den lambda) *^ psPolynomial n lambda)
       zeroSpray psCombo
 
 modifiedMacdonaldPolynomial' :: Int -> Partition -> SimpleParametricQSpray 
@@ -322,32 +325,32 @@ qtKostkaPolynomials ::
   -> Map Partition (Spray a) 
 qtKostkaPolynomials mu =  DM.map _numerator scs 
   where
-    t = lone 2 :: Spray a
-    f = psCombo -- psCombination'' (macdonaldJpolynomial n mu)
-    den lambda = productOfSprays [unitSpray ^-^ t ^**^ k | k <- lambda]
-    msCombo lambda = 
-      msCombination (psPolynomial (length lambda) lambda)
-    coeffs lambda = 
-      DM.map (\ikNumbers -> DF.sum $ DM.intersectionWith (*) (msCombo lambda) ikNumbers) ikn
-      -- foldl' (AlgAdd.+) 
-      --   zeroSpray (DM.intersectionWith (H..^) (ikn DM.! lambda) (msCombination (psPolynomial n lambda)))
-    n = sum mu
-    ikn = inverseKostkaNumbers n
---    sc lambda = DM.intersectionWith ()
-    --scs = DM.mapWithKey (\lambda c -> )
-    scs = DM.foldlWithKey
-      (\m lambda c -> 
-        DM.unionWith (AlgAdd.+) m (DM.map (\ikNumber -> (ikNumber .^ c) %//% den lambda) (coeffs lambda))
-      )
-      DM.empty f
-
-    assocs = DM.assocs (macdonaldJinMSPbasis n mu) 
-    ff (lambda, coeff) = 
-      map (second (\r -> fromRational r *^ coeff)) (DM.toList symmPolyCombo)
+    macdonaldCombo = macdonaldJinMSPbasis (sum mu) mu
+    ff lambda spray = 
+      DM.map (\r -> fromRational r *^ spray) symmPolyCombo
       where
         symmPolyCombo = mspInPSbasis lambda :: Map Partition Rational
     psCombo = DM.filter (not . isZeroSpray) 
-            (unionsWith (^+^) (map (DM.fromList . ff) assocs))
+            (unionsWith (^+^) (DM.elems $ DM.mapWithKey ff macdonaldCombo))
+    t = lone' 2 
+--    f = psCombo -- psCombination'' (macdonaldJpolynomial n mu)
+    den lambda = productOfSprays [unitSpray ^-^ t k | k <- lambda]
+    msCombo lambda = 
+      msCombination (psPolynomial (length lambda) lambda)
+    n = sum mu
+    ikn = inverseKostkaNumbers n
+    coeffs lambda = 
+      let combo = msCombo lambda in
+        DM.map 
+          (\ikNumbers -> 
+            DF.sum $ DM.intersectionWith (*) combo ikNumbers) 
+          ikn
+    scs = DM.foldlWithKey
+      (\m lambda c -> 
+        DM.unionWith (AlgAdd.+) m 
+          (DM.map (\ikNumber -> (ikNumber .^ c) %//% den lambda) (coeffs lambda))
+      )
+      DM.empty psCombo
 
 qtKostkaPolynomials' :: 
      Partition 
