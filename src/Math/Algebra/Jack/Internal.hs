@@ -789,23 +789,28 @@ makeRatioOfSprays pairsMap pairs = num %//% den
 
 macdonaldJinMSPbasis :: 
   forall a. (Eq a, AlgField.C a) 
-  => Int 
-  -> Partition 
+  => Partition 
   -> Map Partition (Spray a)
-macdonaldJinMSPbasis n lambda = 
+macdonaldJinMSPbasis lambda = 
   DM.fromList 
       (zipWith 
         (\mu listOfPairs -> 
           (
             fromPartition mu
-          , _numerator (c *> AlgAdd.sum (map (makeRatioOfSprays pairsMap) listOfPairs) :: RatioOfSprays a)
+          , _numerator 
+              (c *> 
+                AlgAdd.sum 
+                  (map (makeRatioOfSprays pairsMap) listOfPairs) 
+                    :: RatioOfSprays a
+              )
           )
         ) mus listsOfPairs
       )
   where
     c = clambda (S.fromList lambda) :: Spray a
     lambda' = toPartitionUnsafe lambda
-    mus = filter (\mu -> partitionWidth mu <= n) (dominatedPartitions lambda')
+    mus = dominatedPartitions lambda'
+--    mus = filter (\mu -> partitionWidth mu <= n) (dominatedPartitions lambda')
     pairing lambdas = zip (drop1 lambdas) lambdas
     listsOfPairs = 
       map (

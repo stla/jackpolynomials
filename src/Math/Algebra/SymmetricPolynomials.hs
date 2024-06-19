@@ -169,7 +169,6 @@ import           Math.Algebra.Hspray              (
                                                   , (%/%)
                                                   , RatioOfSprays (..)
                                                   , RatioOfQSprays
-                                                  , asRatioOfSprays
                                                   , constantRatioOfSprays
                                                   , zeroRatioOfSprays
                                                   , unitRatioOfSprays
@@ -278,16 +277,30 @@ import           Math.Combinat.Tableaux.Skew      (
 --         (\spray mu d -> spray ^+^ (d (t k) *^ plethysm_mu mu k)) 
 --           zeroSpray g
 
+macdonaldJinPSbasis ::
+  (Eq a, AlgField.C a) => Partition -> Map Partition (Spray a)
+macdonaldJinPSbasis mu = 
+  DM.filter (not . isZeroSpray) 
+    (unionsWith (^+^) (DM.elems $ DM.mapWithKey combo_to_map macdonaldCombo))
+  where
+    macdonaldCombo = macdonaldJinMSPbasis mu
+    combo_to_map lambda spray = 
+      DM.map 
+        (\r -> fromRational r *^ spray) 
+          (mspInPSbasis lambda)
+
 modifiedMacdonaldPolynomial :: (Eq a, AlgField.C a) => Int -> Partition -> SimpleParametricSpray a
 modifiedMacdonaldPolynomial n mu = jp 
   where
-    macdonaldCombo = macdonaldJinMSPbasis (sum mu) mu
-    combo_to_map lambda spray = 
-      DM.map (\r -> fromRational r *^ spray) symmPolyCombo
-      where
-        symmPolyCombo = mspInPSbasis lambda :: Map Partition Rational
-    psCombo = DM.filter (not . isZeroSpray) 
-            (unionsWith (^+^) (DM.elems $ DM.mapWithKey combo_to_map macdonaldCombo))
+--    macdonaldCombo = macdonaldJinMSPbasis (sum mu) mu
+    -- macdonaldCombo = macdonaldJinMSPbasis mu
+    -- combo_to_map lambda spray = 
+    --   DM.map (\r -> fromRational r *^ spray) symmPolyCombo
+    --   where
+    --     symmPolyCombo = mspInPSbasis lambda :: Map Partition Rational
+    -- psCombo = DM.filter (not . isZeroSpray) 
+    --         (unionsWith (^+^) (DM.elems $ DM.mapWithKey combo_to_map macdonaldCombo))
+    psCombo = macdonaldJinPSbasis mu
     q' = lone' 1
     t' = lone' 2
     -- toROS spray = 
@@ -320,20 +333,21 @@ qtKostkaPolynomials ::
   -> Map Partition (Spray a) 
 qtKostkaPolynomials mu =  DM.map _numerator scs 
   where
-    macdonaldCombo = macdonaldJinMSPbasis (sum mu) mu
-    ff lambda spray = 
-      DM.map (\r -> fromRational r *^ spray) symmPolyCombo
-      where
-        symmPolyCombo = mspInPSbasis lambda :: Map Partition Rational
-    psCombo = DM.filter (not . isZeroSpray) 
-            (unionsWith (^+^) (DM.elems $ DM.mapWithKey ff macdonaldCombo))
+--    macdonaldCombo = macdonaldJinMSPbasis (sum mu) mu
+    -- macdonaldCombo = macdonaldJinMSPbasis mu
+    -- ff lambda spray = 
+    --   DM.map (\r -> fromRational r *^ spray) symmPolyCombo
+    --   where
+    --     symmPolyCombo = mspInPSbasis lambda :: Map Partition Rational
+    -- psCombo = DM.filter (not . isZeroSpray) 
+    --         (unionsWith (^+^) (DM.elems $ DM.mapWithKey ff macdonaldCombo))
+    psCombo = macdonaldJinPSbasis mu
     t = lone' 2 
 --    f = psCombo -- psCombination'' (macdonaldJpolynomial n mu)
     den lambda = productOfSprays [unitSpray ^-^ t k | k <- lambda]
     msCombo lambda = 
       msCombination (psPolynomial (length lambda) lambda)
-    n = sum mu
-    ikn = inverseKostkaNumbers n
+    ikn = inverseKostkaNumbers (sum mu)
     coeffs lambda = 
       let combo = msCombo lambda in
         DM.map 
