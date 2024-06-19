@@ -110,6 +110,7 @@ import qualified Data.HashMap.Strict              as HM
 import           Data.List                        ( 
                                                     foldl1'
                                                   , nub
+                                                  , foldl'
                                                   )
 import           Data.List.Extra                  ( 
                                                     unsnoc
@@ -211,6 +212,7 @@ import           Math.Algebra.Jack.Internal       (
                                                   , clambda
                                                   , clambdamu
                                                   , macdonaldJinMSPbasis
+                                                  , inverseKostkaNumbers
                                                   )
 import           Math.Algebra.JackPol             ( 
                                                     schurPol
@@ -299,16 +301,32 @@ hbar n mu = asRatioOfSprays (t ^**^ nmu) *^ jp
     psCombo = DM.filter (/= AlgAdd.zero) 
             (unionsWith (AlgAdd.+) (map (DM.fromList . ff) assocs))
 
-hbar' :: forall a. (Eq a, AlgField.C a) => Int -> Partition -> SimpleParametricSpray a
-hbar' n mu = H.asSimpleParametricSpray jp
+hbar' :: forall a. (Eq a, AlgField.C a) => Int -> Partition -> Map Partition (Spray a) -- SimpleParametricSpray a
+hbar' n mu =  DM.map _numerator scs -- H.asSimpleParametricSpray jp
   where
     t = lone 2 :: Spray a
     f = psCombo -- psCombination'' (macdonaldJpolynomial n mu)
     den lambda = productOfSprays [unitSpray ^-^ t ^**^ k | k <- lambda]
-    jp = DM.foldlWithKey 
-      (\spray lambda c -> 
-          spray ^+^ (c %//% den lambda) *^ psPolynomial n lambda)
-      zeroSpray f
+    msCombo lambda = 
+      msCombination (psPolynomial n lambda)
+    coeffs lambda = 
+      DM.map (\ikNumbers -> DF.sum $ DM.intersectionWith (*) (msCombo lambda) ikNumbers) ikn
+      -- foldl' (AlgAdd.+) 
+      --   zeroSpray (DM.intersectionWith (H..^) (ikn DM.! lambda) (msCombination (psPolynomial n lambda)))
+    ikn = inverseKostkaNumbers n
+--    sc lambda = DM.intersectionWith ()
+    --scs = DM.mapWithKey (\lambda c -> )
+    scs = DM.foldlWithKey
+      (\m lambda c -> 
+        DM.unionWith (AlgAdd.+) m (DM.map (\ikNumber -> (ikNumber H..^ c) %//% den lambda) (coeffs lambda))
+      )
+--        DM.insertWith (AlgAdd.+) lambda (( lambda ^*^ c) %//% den lambda) m)
+      DM.empty f
+      
+    -- jp = DM.foldlWithKey 
+    --   (\spray lambda c -> 
+    --       spray ^+^ (c %//% den lambda) *^ psPolynomial n lambda)
+    --   zeroSpray f
 
     assocs = DM.assocs (macdonaldJinMSPbasis n mu) 
     ff (lambda, coeff) = 

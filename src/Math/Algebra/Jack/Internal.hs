@@ -40,6 +40,7 @@ module Math.Algebra.Jack.Internal
   , clambda
   , clambdamu
   , macdonaldJinMSPbasis
+  , inverseKostkaNumbers
   )
   where
 import           Prelude 
@@ -271,7 +272,7 @@ inverseKostkaNumbers n =
         (\mu -> DM.findWithDefault 0 mu (kostkaNumbersWithGivenLambda lambda)) lambdas
     matrix = inverseUnitTriangularMatrix (fromLists (map row lambdas))
     lambdas' = map fromPartition lambdas
-    maps i = DM.fromDistinctDescList (zip lambdas' (V.toList (getRow i matrix)))  
+    maps i = DM.fromDistinctDescList (zip lambdas' (V.toList (getCol i matrix)))  
 
 
 sequencesOfRibbons :: Seq Int -> Seq Int -> Seq Int -> [Seq (Seq Int)]
