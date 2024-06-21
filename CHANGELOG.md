@@ -142,4 +142,6 @@ polynomial
 * new function `qtKostkaPolynomials`, to get qt-Kostka polynomials, aka
 Macdonald-Kostka polynomials
 
+* new function `qtSkewKostkaPolynomials`, to get skew qt-Kostka polynomials
+
 

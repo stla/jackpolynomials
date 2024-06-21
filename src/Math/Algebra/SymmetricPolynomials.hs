@@ -281,135 +281,7 @@ import           Math.Combinat.Tableaux.Skew      (
 --         (\spray mu d -> spray ^+^ (d (t k) *^ plethysm_mu mu k)) 
 --           zeroSpray g
 
-macdonaldJinPSbasis ::
-  (Eq a, AlgField.C a) => Partition -> Map Partition (Spray a)
-macdonaldJinPSbasis mu = 
-  DM.filter (not . isZeroSpray) 
-    (unionsWith (^+^) (DM.elems $ DM.mapWithKey combo_to_map macdonaldCombo))
-  where
-    macdonaldCombo = macdonaldJinMSPbasis mu
-    combo_to_map lambda spray = 
-      DM.map 
-        (\r -> fromRational r *^ spray) 
-          (mspInPSbasis lambda)
 
--- | Modified Macdonald polynomial. This is a multivariate symmetric polynomial
--- whose coefficients are polynomials in two parameters.
-modifiedMacdonaldPolynomial :: 
-     (Eq a, AlgField.C a) 
-  => Int        -- ^ number of variables
-  -> Partition  -- ^ integer partition
-  -> SimpleParametricSpray a
-modifiedMacdonaldPolynomial n mu = jp 
-  where
-    psCombo = macdonaldJinPSbasis mu
-    q' = lone' 1
-    t' = lone' 2
-    -- toROS spray = 
-    --   evaluateAt [q', tm1] (HM.map constantRatioOfSprays spray)
-    num_and_den Empty = undefined
-    num_and_den (e :<| Empty) = (q' e, unitSpray)
-    num_and_den (e1 :<| (e2 :<| _)) = (q' e1, t' e2)
-    rOS_from_term powers coeff = coeff *^ RatioOfSprays spray1 spray2
-      where
-        (spray1, spray2) = num_and_den (exponents powers)
-    toROS spray = 
-      HM.foldlWithKey' 
-        (\ros powers coeff -> ros AlgAdd.+ rOS_from_term powers coeff) 
-          zeroRatioOfSprays spray
-    den lambda = productOfSprays [t' k ^-^ unitSpray | k <- lambda]
-    nmu = sum (zipWith (*) [1 .. ] (drop 1 mu))
-    jp = DM.foldlWithKey 
-      (\spray lambda c -> 
-          spray ^+^ 
-            _numerator (toROS (t' (nmu + sum lambda) ^*^ c) %/% den lambda) 
-              *^ psPolynomial n lambda)
-      zeroSpray psCombo
-
--- | Modified Macdonald polynomial. This is a multivariate symmetric polynomial
--- whose coefficients are polynomials in two parameters.
-modifiedMacdonaldPolynomial' :: 
-     Int        -- ^ number of variables
-  -> Partition  -- ^ integer partition
-  -> SimpleParametricQSpray 
-modifiedMacdonaldPolynomial' = modifiedMacdonaldPolynomial
-
--- | Skew qt-Kostka polynomials. They are usually
--- denoted by \(K(\lambda/\mu, \nu)\) for two integer partitions \(\lambda\) and
--- \(\mu\) defining a skew partition and an integer partition \(\nu\). 
--- For given partitions \(\lambda\) and \(\mu\), the function returns the polynomials
--- \(K(\lambda/\mu, \nu)\) for all partitions \(\nu\) of the same weight as 
--- the skew partition.
-qtSkewKostkaPolynomials :: 
-  (Eq a, AlgField.C a) 
-  => Partition -- ^ outer partition of the skew partition
-  -> Partition -- ^ inner partition of the skew partition
-  -> Map Partition (Spray a)
-qtSkewKostkaPolynomials lambda mu = 
-  if isSkewPartition lambda mu
-    then 
-      DM.fromList (map spray nus)
-    else
-      error "qtSkewKostkaPolynomials: invalid skew partition."
-  where
-    lrCoeffs = skewSchurLRCoefficients lambda mu
-    nus = partitions (sum lambda - sum mu)
-    spray nu = 
-      let nu' = fromPartition nu in
-        (
-          nu',
-          foldl'
-            (^+^) 
-              zeroSpray
-                (DM.intersectionWith (.^) lrCoeffs (qtKostkaPolynomials nu'))
-        )
-
-qtSkewKostkaPolynomials' :: 
-     Partition -- ^ outer partition of the skew partition
-  -> Partition -- ^ inner partition of the skew partition
-  -> Map Partition QSpray
-qtSkewKostkaPolynomials' = qtSkewKostkaPolynomials
-
--- | qt-Kostka polynomials, aka Kostka-Macdonald polynomials. They are usually
--- denoted by \(K(\lambda, \mu)\) for two integer partitions \(\lambda\) and
--- \(\mu\). For a given partition \(\mu\), the function returns the polynomials
--- \(K(\lambda, \mu)\) for all partitions \(\lambda\) of the same weight as 
--- \(\mu\).
-qtKostkaPolynomials :: 
-  forall a. (Eq a, AlgField.C a) 
-  => Partition 
-  -> Map Partition (Spray a) 
-qtKostkaPolynomials mu =  DM.map _numerator scs 
-  where
-    psCombo = macdonaldJinPSbasis mu
-    t = lone' 2 
---    f = psCombo -- psCombination'' (macdonaldJpolynomial n mu)
-    den lambda = productOfSprays [unitSpray ^-^ t k | k <- lambda]
-    msCombo lambda = 
-      msCombination (psPolynomial (length lambda) lambda)
-    ikn = inverseKostkaNumbers (sum mu)
-    coeffs lambda = 
-      let combo = msCombo lambda in
-        DM.map 
-          (\ikNumbers -> 
-            DF.sum $ DM.intersectionWith (*) combo ikNumbers) 
-          ikn
-    scs = DM.foldlWithKey
-      (\m lambda c -> 
-        DM.unionWith (AlgAdd.+) m 
-          (DM.map (\ikNumber -> (ikNumber .^ c) %//% den lambda) (coeffs lambda))
-      )
-      DM.empty psCombo
-
--- | qt-Kostka polynomials, aka Kostka-Macdonald polynomials. They are usually
--- denoted by \(K(\lambda, \mu)\) for two integer partitions \(\lambda\) and
--- \(mu\). For a given partition \(\mu\), the function returns the polynomials
--- \(K(\lambda, \mu)\) for all partitions \(\lambda\) of the same weight as 
--- \(\mu\).
-qtKostkaPolynomials' :: 
-     Partition 
-  -> Map Partition QSpray
-qtKostkaPolynomials' = qtKostkaPolynomials
 
 -- test :: Bool
 -- test = H.substituteParameters h [1,0] == cshPolynomial 3 [2] ^*^ cshPolynomial 3 [1]
@@ -1260,6 +1132,89 @@ skewKostkaFoulkesPolynomial' ::
   -> QSpray
 skewKostkaFoulkesPolynomial' = skewKostkaFoulkesPolynomial 
 
+-- | qt-Kostka polynomials, aka Kostka-Macdonald polynomials. They are usually
+-- denoted by \(K(\lambda, \mu)\) for two integer partitions \(\lambda\) and
+-- \(\mu\). For a given partition \(\mu\), the function returns the polynomials
+-- \(K(\lambda, \mu)\) for all partitions \(\lambda\) of the same weight as 
+-- \(\mu\).
+qtKostkaPolynomials :: 
+  forall a. (Eq a, AlgField.C a) 
+  => Partition 
+  -> Map Partition (Spray a) 
+qtKostkaPolynomials mu =  DM.map _numerator scs 
+  where
+    psCombo = macdonaldJinPSbasis mu
+    t = lone' 2 
+--    f = psCombo -- psCombination'' (macdonaldJpolynomial n mu)
+    den lambda = productOfSprays [unitSpray ^-^ t k | k <- lambda]
+    msCombo lambda = 
+      msCombination (psPolynomial (length lambda) lambda)
+    ikn = inverseKostkaNumbers (sum mu)
+    coeffs lambda = 
+      let combo = msCombo lambda in
+        DM.map 
+          (\ikNumbers -> 
+            DF.sum $ DM.intersectionWith (*) combo ikNumbers) 
+          ikn
+    scs = DM.foldlWithKey
+      (\m lambda c -> 
+        DM.unionWith (AlgAdd.+) m 
+          (DM.map (\ikNumber -> (ikNumber .^ c) %//% den lambda) (coeffs lambda))
+      )
+      DM.empty psCombo
+
+-- | qt-Kostka polynomials, aka Kostka-Macdonald polynomials. They are usually
+-- denoted by \(K(\lambda, \mu)\) for two integer partitions \(\lambda\) and
+-- \(mu\). For a given partition \(\mu\), the function returns the polynomials
+-- \(K(\lambda, \mu)\) for all partitions \(\lambda\) of the same weight as 
+-- \(\mu\).
+qtKostkaPolynomials' :: 
+     Partition 
+  -> Map Partition QSpray
+qtKostkaPolynomials' = qtKostkaPolynomials
+
+-- | Skew qt-Kostka polynomials. They are usually
+-- denoted by \(K(\lambda/\mu, \nu)\) for two integer partitions \(\lambda\) and
+-- \(\mu\) defining a skew partition and an integer partition \(\nu\). 
+-- For given partitions \(\lambda\) and \(\mu\), the function returns the polynomials
+-- \(K(\lambda/\mu, \nu)\) for all partitions \(\nu\) of the same weight as 
+-- the skew partition.
+qtSkewKostkaPolynomials :: 
+  (Eq a, AlgField.C a) 
+  => Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
+  -> Map Partition (Spray a)
+qtSkewKostkaPolynomials lambda mu = 
+  if isSkewPartition lambda mu
+    then 
+      DM.fromList (map spray nus)
+    else
+      error "qtSkewKostkaPolynomials: invalid skew partition."
+  where
+    lrCoeffs = skewSchurLRCoefficients lambda mu
+    nus = partitions (sum lambda - sum mu)
+    spray nu = 
+      let nu' = fromPartition nu in
+        (
+          nu',
+          foldl'
+            (^+^) 
+              zeroSpray
+                (DM.intersectionWith (.^) lrCoeffs (qtKostkaPolynomials nu'))
+        )
+
+-- | Skew qt-Kostka polynomials. They are usually
+-- denoted by \(K(\lambda/\mu, \nu)\) for two integer partitions \(\lambda\) and
+-- \(\mu\) defining a skew partition and an integer partition \(\nu\). 
+-- For given partitions \(\lambda\) and \(\mu\), the function returns the polynomials
+-- \(K(\lambda/\mu, \nu)\) for all partitions \(\nu\) of the same weight as 
+-- the skew partition.
+qtSkewKostkaPolynomials' :: 
+     Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
+  -> Map Partition QSpray
+qtSkewKostkaPolynomials' = qtSkewKostkaPolynomials
+
 -- | Hall-Littlewood polynomial of a given partition. This is a multivariate 
 -- symmetric polynomial whose coefficients are polynomial in one parameter.
 hallLittlewoodPolynomial :: 
@@ -1541,6 +1496,59 @@ skewMacdonaldJpolynomial' ::
   -> Partition -- ^ inner partition of the skew partition
   -> ParametricQSpray
 skewMacdonaldJpolynomial' = skewMacdonaldJpolynomial
+
+macdonaldJinPSbasis ::
+  (Eq a, AlgField.C a) => Partition -> Map Partition (Spray a)
+macdonaldJinPSbasis mu = 
+  DM.filter (not . isZeroSpray) 
+    (unionsWith (^+^) (DM.elems $ DM.mapWithKey combo_to_map macdonaldCombo))
+  where
+    macdonaldCombo = macdonaldJinMSPbasis mu
+    combo_to_map lambda spray = 
+      DM.map 
+        (\r -> fromRational r *^ spray) 
+          (mspInPSbasis lambda)
+
+-- | Modified Macdonald polynomial. This is a multivariate symmetric polynomial
+-- whose coefficients are polynomials in two parameters.
+modifiedMacdonaldPolynomial :: 
+     (Eq a, AlgField.C a) 
+  => Int        -- ^ number of variables
+  -> Partition  -- ^ integer partition
+  -> SimpleParametricSpray a
+modifiedMacdonaldPolynomial n mu = jp 
+  where
+    psCombo = macdonaldJinPSbasis mu
+    q' = lone' 1
+    t' = lone' 2
+    -- toROS spray = 
+    --   evaluateAt [q', tm1] (HM.map constantRatioOfSprays spray)
+    num_and_den Empty = undefined
+    num_and_den (e :<| Empty) = (q' e, unitSpray)
+    num_and_den (e1 :<| (e2 :<| _)) = (q' e1, t' e2)
+    rOS_from_term powers coeff = coeff *^ RatioOfSprays spray1 spray2
+      where
+        (spray1, spray2) = num_and_den (exponents powers)
+    toROS spray = 
+      HM.foldlWithKey' 
+        (\ros powers coeff -> ros AlgAdd.+ rOS_from_term powers coeff) 
+          zeroRatioOfSprays spray
+    den lambda = productOfSprays [t' k ^-^ unitSpray | k <- lambda]
+    nmu = sum (zipWith (*) [1 .. ] (drop 1 mu))
+    jp = DM.foldlWithKey 
+      (\spray lambda c -> 
+          spray ^+^ 
+            _numerator (toROS (t' (nmu + sum lambda) ^*^ c) %/% den lambda) 
+              *^ psPolynomial n lambda)
+      zeroSpray psCombo
+
+-- | Modified Macdonald polynomial. This is a multivariate symmetric polynomial
+-- whose coefficients are polynomials in two parameters.
+modifiedMacdonaldPolynomial' :: 
+     Int        -- ^ number of variables
+  -> Partition  -- ^ integer partition
+  -> SimpleParametricQSpray 
+modifiedMacdonaldPolynomial' = modifiedMacdonaldPolynomial
 
 -- | Flagged Schur polynomial. A flagged Schur polynomial is not symmetric 
 -- in general.
