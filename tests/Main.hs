@@ -207,7 +207,9 @@ main = defaultMain $ testGroup
       expected = 
         map ((swapVariables (1, 2)) . (substitute [Just 0, Nothing])) 
               (DM.elems qtSkewKostkaPolys)
-      skewKFpolys = map (skewKostkaFoulkesPolynomial' lambda mu) (DM.keys qtSkewKostkaPolys)
+      skewKFpolys = 
+        map (skewKostkaFoulkesPolynomial' lambda mu) 
+              (DM.keys qtSkewKostkaPolys)
     assertEqual "" skewKFpolys expected
 
   , testCase "Modified Macdonald polynomial at (q, t) = (1, 1)" $ do

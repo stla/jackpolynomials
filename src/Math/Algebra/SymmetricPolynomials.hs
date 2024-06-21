@@ -117,6 +117,7 @@ import           Data.IntMap.Strict               (
 import qualified Data.IntMap.Strict               as IM
 import           Data.List                        ( 
                                                     foldl1'
+                                                  , foldl'
                                                   , nub
                                                   )
 import           Data.List.Extra                  ( 
@@ -333,13 +334,23 @@ modifiedMacdonaldPolynomial' ::
   -> SimpleParametricQSpray 
 modifiedMacdonaldPolynomial' = modifiedMacdonaldPolynomial
 
+-- | Skew qt-Kostka polynomials. They are usually
+-- denoted by \(K(\lambda/\mu, \nu)\) for two integer partitions \(\lambda\) and
+-- \(\mu\) defining a skew partition and an integer partition \(\nu\). 
+-- For given partitions \(\lambda\) and \(\mu\), the function returns the polynomials
+-- \(K(\lambda/\mu, \nu)\) for all partitions \(\nu\) of the same weight as 
+-- the skew partition.
 qtSkewKostkaPolynomials :: 
-  forall a. (Eq a, AlgField.C a) 
-  => Partition 
-  -> Partition
+  (Eq a, AlgField.C a) 
+  => Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
   -> Map Partition (Spray a)
 qtSkewKostkaPolynomials lambda mu = 
-  DM.fromList (map spray nus)
+  if isSkewPartition lambda mu
+    then 
+      DM.fromList (map spray nus)
+    else
+      error "qtSkewKostkaPolynomials: invalid skew partition."
   where
     lrCoeffs = skewSchurLRCoefficients lambda mu
     nus = partitions (sum lambda - sum mu)
@@ -347,24 +358,21 @@ qtSkewKostkaPolynomials lambda mu =
       let nu' = fromPartition nu in
         (
           nu',
-          sumOfSprays 
-            (DM.elems $ DM.intersectionWith (.^) lrCoeffs (qtKostkaPolynomials nu'))
+          foldl'
+            (^+^) 
+              zeroSpray
+                (DM.intersectionWith (.^) lrCoeffs (qtKostkaPolynomials nu'))
         )
--- xx :: Partition -> Partition -> Map Partition (Spray Rational) -> Spray Rational
--- xx lambda mu m =
---   sumOfSprays (DM.elems m')
---   where
---     cc = skewSchurLRCoefficients lambda mu
---     m' = DM.mapWithKey (\nu c -> c .^ (m DM.! nu)) cc
 
 qtSkewKostkaPolynomials' :: 
-     Partition 
-  -> Partition
+     Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
   -> Map Partition QSpray
 qtSkewKostkaPolynomials' = qtSkewKostkaPolynomials
+
 -- | qt-Kostka polynomials, aka Kostka-Macdonald polynomials. They are usually
 -- denoted by \(K(\lambda, \mu)\) for two integer partitions \(\lambda\) and
--- \(mu\). For a given partition \(\mu\), the function returns the polynomials
+-- \(\mu\). For a given partition \(\mu\), the function returns the polynomials
 -- \(K(\lambda, \mu)\) for all partitions \(\lambda\) of the same weight as 
 -- \(\mu\).
 qtKostkaPolynomials :: 
