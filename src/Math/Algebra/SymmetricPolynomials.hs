@@ -67,6 +67,8 @@ module Math.Algebra.SymmetricPolynomials
   -- * qt-Kostka polynomials
   , qtKostkaPolynomials
   , qtKostkaPolynomials'
+  , qtSkewKostkaPolynomials
+  , qtSkewKostkaPolynomials'
   -- * Hall-Littlewood polynomials
   , hallLittlewoodPolynomial
   , hallLittlewoodPolynomial'
@@ -216,6 +218,7 @@ import           Math.Algebra.Jack.Internal       (
                                                   , clambdamu
                                                   , macdonaldJinMSPbasis
                                                   , inverseKostkaNumbers
+                                                  , skewSchurLRCoefficients
                                                   )
 import           Math.Algebra.JackPol             ( 
                                                     schurPol
@@ -330,6 +333,35 @@ modifiedMacdonaldPolynomial' ::
   -> SimpleParametricQSpray 
 modifiedMacdonaldPolynomial' = modifiedMacdonaldPolynomial
 
+qtSkewKostkaPolynomials :: 
+  forall a. (Eq a, AlgField.C a) 
+  => Partition 
+  -> Partition
+  -> Map Partition (Spray a)
+qtSkewKostkaPolynomials lambda mu = 
+  DM.fromList (map spray nus)
+  where
+    lrCoeffs = skewSchurLRCoefficients lambda mu
+    nus = partitions (sum lambda - sum mu)
+    spray nu = 
+      let nu' = fromPartition nu in
+        (
+          nu',
+          sumOfSprays 
+            (DM.elems $ DM.intersectionWith (.^) lrCoeffs (qtKostkaPolynomials nu'))
+        )
+-- xx :: Partition -> Partition -> Map Partition (Spray Rational) -> Spray Rational
+-- xx lambda mu m =
+--   sumOfSprays (DM.elems m')
+--   where
+--     cc = skewSchurLRCoefficients lambda mu
+--     m' = DM.mapWithKey (\nu c -> c .^ (m DM.! nu)) cc
+
+qtSkewKostkaPolynomials' :: 
+     Partition 
+  -> Partition
+  -> Map Partition QSpray
+qtSkewKostkaPolynomials' = qtSkewKostkaPolynomials
 -- | qt-Kostka polynomials, aka Kostka-Macdonald polynomials. They are usually
 -- denoted by \(K(\lambda, \mu)\) for two integer partitions \(\lambda\) and
 -- \(mu\). For a given partition \(\mu\), the function returns the polynomials

@@ -77,6 +77,7 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , skewMacdonaldJpolynomial'
                                                 , qtKostkaPolynomials'
                                                 , modifiedMacdonaldPolynomial'
+                                                , qtSkewKostkaPolynomials'
                                                 )
 import Math.Combinat.Partitions.Integer         ( 
                                                   toPartition
@@ -197,6 +198,17 @@ main = defaultMain $ testGroup
             kp *^ (HM.map (swapVariables (1, 2)) (tSchurPolynomial' n lambda)))
         qtKostkaPolys
     assertEqual "" macJpoly expected
+
+  , testCase "Skew qt-Kostka polynomials" $ do
+    let
+      lambda = [2, 1, 1]
+      mu = [1, 1]
+      qtSkewKostkaPolys = qtSkewKostkaPolynomials' lambda mu
+      expected = 
+        map ((swapVariables (1, 2)) . (substitute [Just 0, Nothing])) 
+              (DM.elems qtSkewKostkaPolys)
+      skewKFpolys = map (skewKostkaFoulkesPolynomial' lambda mu) (DM.keys qtSkewKostkaPolys)
+    assertEqual "" skewKFpolys expected
 
   , testCase "Modified Macdonald polynomial at (q, t) = (1, 1)" $ do
     let

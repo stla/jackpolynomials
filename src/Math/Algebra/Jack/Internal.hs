@@ -820,6 +820,32 @@ macdonaldJinMSPbasis lambda =
     allPairs = nub $ concat (concat listsOfPairs)
     pairsMap = DM.fromList (zip allPairs (map psiLambdaMu allPairs))
 
+-- skewMacdonaldJinMSPbasis :: 
+--   forall a. (Eq a, AlgField.C a) 
+--   => Partition 
+--   -> Partition
+--   -> Map Partition (RatioOfSprays a)
+-- skewMacdonaldJinMSPbasis lambda mu = 
+--   DM.map (((^*^) c) . AlgAdd.sum . (map (makeRatioOfSprays pairsMap))) mapOfPairs
+--   where
+--     nus = 
+--       dominatedPartitions 
+--         (toPartitionUnsafe (lastSubPartition (sum lambda - sum mu) lambda))
+--     pairing lambdas = zip (drop1 lambdas) lambdas
+--     mapOfPatterns = DM.filter (not . null) 
+--       (DM.fromList (map (\nu -> 
+--         let nu' = fromPartition nu in
+--           (
+--             nu'
+--           , skewGelfandTsetlinPatterns lambda mu nu'
+--           )        
+--         ) nus))
+--     mapOfPairs = DM.map (map pairing) mapOfPatterns
+--     listsOfPairs = DM.elems mapOfPairs
+--     allPairs = nub $ concat (concat listsOfPairs)
+--     pairsMap = DM.fromList (zip allPairs (map psiLambdaMu allPairs))
+--     c = clambdamu (S.fromList lambda) (S.fromList mu) :: RatioOfSprays a  
+
 _macdonaldPolynomial :: 
   (Eq a, AlgField.C a) 
   => (PartitionsPair -> ([(Int,Int)], [(Int,Int)]))
