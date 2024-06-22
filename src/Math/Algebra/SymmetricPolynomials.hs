@@ -586,14 +586,18 @@ _symmPolyCombination mspInSymmPolyBasis func spray =
     else insert [] constantTerm symmPolyMap
   where
     constantTerm = getConstantTerm spray
-    assocs = msCombination' (spray <+ (AlgAdd.negate constantTerm)) :: [(Partition, a)]
-    f :: (Partition, a) -> [(Partition, a)] 
-    f (lambda, coeff) = 
-      map (second (func coeff)) (DM.toList symmPolyCombo)
+    msCombo = 
+      msCombination (spray <+ (AlgAdd.negate constantTerm)) :: Map Partition a
+    f :: Partition -> a -> Map Partition a
+    f lambda coeff = 
+      DM.map (func coeff) symmPolyCombo
       where
         symmPolyCombo = mspInSymmPolyBasis lambda :: Map Partition b
-    symmPolyMap = DM.filter (/= AlgAdd.zero) 
-            (unionsWith (AlgAdd.+) (map (DM.fromList . f) assocs))
+    symmPolyMap = 
+      DM.filter (/= AlgAdd.zero) 
+        (DM.foldlWithKey' 
+          (\m lambda coeff -> DM.unionWith (AlgAdd.+) m (f lambda coeff)) 
+            DM.empty msCombo)
 
 -- _symmPolyCombination' :: 
 --     forall a b. (Eq a, AlgRing.C a) 
