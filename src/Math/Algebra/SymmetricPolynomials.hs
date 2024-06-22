@@ -954,15 +954,27 @@ _schurCombination func spray =
     else insert [] constantTerm schurMap
   where
     constantTerm = getConstantTerm spray
-    assocs = 
-      DM.toList $ _cshCombination func (spray <+ (AlgAdd.negate constantTerm))
-    f :: (Partition, a) -> [(Partition, a)] 
-    f (lambda, coeff) = 
-      map (second (func coeff)) (DM.toList schurCombo)
+    cshCombo = 
+      _cshCombination func (spray <+ (AlgAdd.negate constantTerm))
+    f :: Partition -> a -> Map Partition a
+    f lambda coeff = 
+      DM.map (func coeff) schurCombo
       where
         schurCombo = cshInSchurBasis (numberOfVariables spray) lambda 
-    schurMap = DM.filter (/= AlgAdd.zero) 
-            (unionsWith (AlgAdd.+) (map (DM.fromList . f) assocs))
+    schurMap = 
+      DM.filter (/= AlgAdd.zero) 
+        (DM.foldlWithKey' 
+          (\m lambda coeff -> DM.unionWith (AlgAdd.+) m (f lambda coeff)) 
+            DM.empty cshCombo)
+    -- assocs = 
+    --   DM.toList $ _cshCombination func (spray <+ (AlgAdd.negate constantTerm))
+    -- f :: (Partition, a) -> [(Partition, a)] 
+    -- f (lambda, coeff) = 
+    --   map (second (func coeff)) (DM.toList schurCombo)
+    --   where
+    --     schurCombo = cshInSchurBasis (numberOfVariables spray) lambda 
+    -- schurMap = DM.filter (/= AlgAdd.zero) 
+    --         (unionsWith (AlgAdd.+) (map (DM.fromList . f) assocs))
 
 -- | Symmetric polynomial as a linear combination of Schur polynomials. 
 -- Symmetry is not checked.
