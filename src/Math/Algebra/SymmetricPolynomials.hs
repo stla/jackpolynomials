@@ -1116,9 +1116,9 @@ skewKostkaFoulkesPolynomial ::
   -> Spray a
 skewKostkaFoulkesPolynomial lambda mu nu 
   | not (isSkewPartition lambda mu) =
-     error "skewKostkaFoulkesPolynomial: invalid skew partition"
+     error "skewKostkaFoulkesPolynomial: invalid skew partition."
   | not (_isPartition nu) =
-     error "skewKostkaFoulkesPolynomial: invalid partition"
+     error "skewKostkaFoulkesPolynomial: invalid partition."
   | otherwise = 
       _skewKostkaFoulkesPolynomial lambda mu nu
 
@@ -1141,7 +1141,13 @@ qtKostkaPolynomials ::
   forall a. (Eq a, AlgField.C a) 
   => Partition 
   -> Map Partition (Spray a) 
-qtKostkaPolynomials mu =  DM.map _numerator scs 
+qtKostkaPolynomials mu 
+  | not (_isPartition mu) =
+      error "qtKostkaPolynomials: invalid integer partition."
+  | null mu =
+      DM.singleton [] unitSpray
+  | otherwise = 
+      DM.map _numerator scs 
   where
     psCombo = macdonaldJinPSbasis mu
     t = lone' 2 
@@ -1158,8 +1164,12 @@ qtKostkaPolynomials mu =  DM.map _numerator scs
           ikn
     scs = DM.foldlWithKey
       (\m lambda c -> 
-        DM.unionWith (AlgAdd.+) m 
-          (DM.map (\ikNumber -> (ikNumber .^ c) %//% den lambda) (coeffs lambda))
+        let den_lambda = den lambda in
+          DM.unionWith (AlgAdd.+) m 
+            (DM.map 
+              (\ikNumber -> (ikNumber .^ c) %//% den_lambda) 
+                (coeffs lambda)
+            )
       )
       DM.empty psCombo
 
@@ -1184,12 +1194,13 @@ qtSkewKostkaPolynomials ::
   => Partition -- ^ outer partition of the skew partition
   -> Partition -- ^ inner partition of the skew partition
   -> Map Partition (Spray a)
-qtSkewKostkaPolynomials lambda mu = 
-  if isSkewPartition lambda mu
-    then 
-      DM.fromList (map spray nus)
-    else
+qtSkewKostkaPolynomials lambda mu 
+  | not (isSkewPartition lambda mu) =
       error "qtSkewKostkaPolynomials: invalid skew partition."
+  | lambda == mu =
+      DM.singleton [] unitSpray
+  | otherwise = 
+      DM.fromList (map spray nus)
   where
     lrCoeffs = skewSchurLRCoefficients lambda mu
     nus = partitions (sum lambda - sum mu)
@@ -1323,7 +1334,7 @@ _tSkewSchurPolynomial f n lambda mu = sumOfSprays sprays
       ]
 
 -- | t-Schur polynomial. This is a multivariate 
--- symmetric polynomial whose coefficients are polynomial in one parameter.
+-- symmetric polynomial whose coefficients are polynomial in a single parameter.
 tSchurPolynomial ::
   (Eq a, AlgField.C a)
   => Int        -- ^ number of variables
@@ -1516,7 +1527,15 @@ modifiedMacdonaldPolynomial ::
   => Int        -- ^ number of variables
   -> Partition  -- ^ integer partition
   -> SimpleParametricSpray a
-modifiedMacdonaldPolynomial n mu = jp 
+modifiedMacdonaldPolynomial n mu 
+  | n < 0 = 
+      error "modifiedMacdonaldPolynomial: negative number of variables."
+  | not (_isPartition mu) = 
+      error "modifiedMacdonaldPolynomial: invalid partition."
+  | null mu = 
+      unitSpray
+  | otherwise = 
+      jp 
   where
     psCombo = macdonaldJinPSbasis mu
     q' = lone' 1

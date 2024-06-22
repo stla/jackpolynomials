@@ -170,7 +170,7 @@ main = defaultMain $ testGroup
           (skewMacdonaldJpolynomial' n lambda mu)
     assertEqual "" skewHLpoly expected
 
-  , testCase "Macdonald polynomial branching rule" $ do
+  , testCase "Macdonald J-polynomial branching rule" $ do
     let
       nx = 2
       ny = 2
