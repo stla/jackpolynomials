@@ -465,6 +465,9 @@ psPolynomial n lambda
   | otherwise                 = productOfSprays sprays
     where
 --      llambda = length lambda
+      -- lists = [[(Powers (S.replicate (j-1) 0 |> k) j, AlgRing.one) | j <- [1 .. n]] | k <- lambda]
+      -- expts = map (\j -> (j, S.replicate j 0)) [0 .. n-1]
+      -- f k = map (\(j, sq) -> (Powers (sq |> k) j, AlgRing.one)) expts
       sprays = [HM.fromList $ [f i k | i <- [1 .. n]] | k <- lambda]
       f j k = (Powers expts j, AlgRing.one)
         where
@@ -515,12 +518,16 @@ eLambdaMu lambda mu
 -- | monomial symmetric polynomial as a linear combination of 
 -- power sum polynomials
 mspInPSbasis :: Partition -> Map Partition Rational
-mspInPSbasis kappa = DM.fromList (zipWith f weights lambdas)
+mspInPSbasis kappa = DM.fromList (map f weights_and_lambdas) --(zipWith f weights lambdas)
   where
     parts = partitions (sum kappa)
-    (weights, lambdas) = unzip $ filter ((/= 0) . fst) 
+    -- (weights, lambdas) = unzip $ filter ((/= 0) . fst) 
+    --   [let lambda = fromPartition part in (eLambdaMu kappa lambda, lambda) | part <- parts]
+    -- f weight lambda = 
+    --   (lambda, weight / toRational (zlambda lambda))
+    weights_and_lambdas = filter ((/= 0) . fst) 
       [let lambda = fromPartition part in (eLambdaMu kappa lambda, lambda) | part <- parts]
-    f weight lambda = 
+    f (weight, lambda) = 
       (lambda, weight / toRational (zlambda lambda))
 
 -- mspInPSbasis :: Partition -> Map Partition Rational
@@ -569,9 +576,9 @@ zlambda :: Partition -> Int
 zlambda lambda = p
   where
     parts = nub lambda
-    table = [sum [fromEnum (k == j) | k <- lambda] | j <- parts]
+    table = [(j, sum [fromEnum (k == j) | k <- lambda]) | j <- parts]
     p =  
-      product [factorial mj * part^mj | (part, mj) <- zip parts table]
+      product [factorial mj * part^mj | (part, mj) <- table]
     factorial n = product [2 .. n]
 
 _symmPolyCombination :: 
@@ -826,13 +833,13 @@ cshPolynomial n lambda
 -- | power sum polynomial as a linear combination of 
 -- complete symmetric homogeneous polynomials
 pspInCSHbasis :: Partition -> Map Partition Rational
-pspInCSHbasis mu = DM.fromList (zipWith f weights lambdas)
+pspInCSHbasis mu = DM.fromList lambdas_and_weights
   where
     parts = partitions (sum mu) 
     assoc kappa = 
-      let kappa' = fromPartition kappa in (eLambdaMu kappa' mu, kappa')
-    (weights, lambdas) = unzip $ filter ((/= 0) . fst) (map assoc parts)
-    f weight lambda = (lambda, weight)
+      let kappa' = fromPartition kappa in (kappa', eLambdaMu kappa' mu)
+    lambdas_and_weights = filter ((/= 0) . snd) (map assoc parts)
+    --f (weight, lambda) = (lambda, weight)
 
 -- | monomial symmetric polynomial as a linear combination of 
 -- complete symmetric homogeneous polynomials
@@ -887,17 +894,16 @@ esPolynomial n lambda
 -- | power sum polynomial as a linear combination of 
 -- elementary symmetric polynomials
 pspInESbasis :: Partition -> Map Partition Rational
-pspInESbasis mu = DM.fromList (zipWith f weights lambdas)
+pspInESbasis mu = DM.fromList lambdas_and_weights
   where
     wmu = sum mu
     parts = partitions wmu
     e = wmu - length mu
     e_is_even = even e
     negateIf = if e_is_even then id else negate 
-    pair kappa = (negateIf (eLambdaMu kappa mu), kappa)
-    (weights, lambdas) = unzip $ filter ((/= 0) . fst) 
+    pair kappa = (kappa, negateIf (eLambdaMu kappa mu))
+    lambdas_and_weights = filter ((/= 0) . snd) 
       [let lambda = fromPartition part in pair lambda | part <- parts]
-    f weight lambda = (lambda, weight)
 
 -- | monomial symmetric polynomial as a linear combination of 
 -- elementary symmetric polynomials
