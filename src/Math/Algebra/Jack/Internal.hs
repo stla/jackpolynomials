@@ -62,6 +62,7 @@ import           Data.List                                   (
                                                                nub
                                                              , foldl'
                                                              , uncons
+                                                             , tails
                                                              )
 import           Data.List.Extra                             ( 
                                                                unsnoc
@@ -1885,9 +1886,8 @@ _convParts lambda =
   (map fromIntegral lambda, map fromIntegral (_dualPartition lambda))
 
 _N :: [Int] -> [Int] -> Int
-_N lambda mu = sum $ zipWith (*) mu prods
-  where
-  prods = map (\i -> product $ drop i (map (+1) lambda)) [1 .. length lambda]
+_N lambda mu = 
+  sum $ zipWith (\i xs -> i * product xs) mu (tails (map (+1) (drop1 lambda)))
 
 hookLengths :: AlgRing.C a => Partition -> a -> ([a], [a])
 hookLengths lambda alpha = (lower, upper)
@@ -2027,7 +2027,7 @@ skewSchurLRCoefficients lambda mu =
 
 isSkewPartition :: Partition -> Partition -> Bool
 isSkewPartition lambda mu = 
-  _isPartition lambda && _isPartition mu && all (>= 0) (zipWith (-) lambda mu)
+  _isPartition lambda && _isPartition mu && and (zipWith (>=) lambda mu)
 
 sprayToMap :: Spray a -> Map [Int] a
 sprayToMap spray = 
@@ -2035,5 +2035,6 @@ sprayToMap spray =
 
 comboToSpray :: (Eq a, AlgRing.C a) => Map Partition a -> Spray a
 comboToSpray combo = sumOfSprays 
-  [ let part' = S.fromList part in HM.singleton (Powers part' (S.length part')) c 
+  [ let part' = S.fromList part in 
+      HM.singleton (Powers part' (S.length part')) c 
     | (part, c) <- DM.toList combo ]
