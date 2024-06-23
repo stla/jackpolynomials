@@ -917,16 +917,19 @@ _eSymbolic lambda =
     _n mu = sum (zipWith (P.*) [0 .. ] (fromPartition mu))
 
 _inverseKostkaMatrix :: 
-  forall a. (Eq a, AlgField.C a) 
-  => Int -> Int -> a -> Char -> (Matrix a, [Partition])
+  (Eq a, AlgField.C a) 
+  => Int -> Int -> a -> Char -> Map Partition (Map Partition a)
 _inverseKostkaMatrix n weight alpha which = 
-  (inverseTriangularMatrix (fromLists (map row lambdas)), lambdas)
+  DM.fromDistinctDescList (zip lambdas [maps i | i <- [1 .. length lambdas]])
   where
     kostkaNumbers = _kostkaNumbers n weight alpha which
     lambdas = reverse $ DM.keys kostkaNumbers
     msCombo lambda = kostkaNumbers DM.! lambda
     row lambda = 
       map (flip (DM.findWithDefault AlgAdd.zero) (msCombo lambda)) lambdas
+    matrix = inverseTriangularMatrix (fromLists (map row lambdas))
+    maps i = DM.filter (/= AlgAdd.zero) 
+          (DM.fromDistinctDescList (zip lambdas (V.toList (getRow i matrix))))
 
 _kostkaNumbers :: 
   forall a. (AlgField.C a) 
@@ -1083,21 +1086,19 @@ _symbolicKostkaNumbers nv weight which = kostkaMatrix'
               ]
 
 _inverseSymbolicKostkaMatrix :: 
-  forall a. (Eq a, AlgField.C a) 
-  => Int -> Int -> Char -> (Matrix (RatioOfSprays a), [Partition])
+  (Eq a, AlgField.C a) 
+  => Int -> Int -> Char -> Map Partition (Map Partition (RatioOfSprays a))
 _inverseSymbolicKostkaMatrix n weight which = 
---  (inverseTriangularMatrix (fromLists (map (\lambda -> map (row lambda) lambdas) lambdas)), lambdas)
-  (
-    inverseTriangularMatrix (fromLists [map (row mu) lambdas | mu <- lambdas])
-  , lambdas
-  )
+  DM.fromDistinctDescList (zip lambdas [maps i | i <- [1 .. length lambdas]])
   where
     kostkaNumbers = _symbolicKostkaNumbers n weight which
     lambdas = reverse $ DM.keys kostkaNumbers
     msCombo lambda = kostkaNumbers DM.! lambda
     row = flip (DM.findWithDefault zeroRatioOfSprays) . msCombo
-    -- row lambda = 
-    --   map (flip (DM.findWithDefault zeroRatioOfSprays) (msCombo lambda)) lambdas
+    matrix =
+      inverseTriangularMatrix (fromLists [map (row mu) lambdas | mu <- lambdas])
+    maps i = DM.filter (/= zeroRatioOfSprays) 
+          (DM.fromDistinctDescList (zip lambdas (V.toList (getRow i matrix))))
 
 inverseTriangularMatrix :: (Eq a, AlgField.C a) => Matrix a -> Matrix a
 inverseTriangularMatrix mat = 

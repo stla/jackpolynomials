@@ -135,9 +135,6 @@ import           Data.Map.Strict                  (
                                                   , insert
                                                   )
 import qualified Data.Map.Strict                  as DM
-import           Data.Matrix                      ( 
-                                                    getRow
-                                                  )
 import           Data.Maybe                       ( fromJust )
 import           Data.Ratio                       ( (%) )
 import           Data.Sequence                    ( 
@@ -145,7 +142,6 @@ import           Data.Sequence                    (
                                                   , (|>)
                                                   )
 import qualified Data.Sequence                    as S
-import qualified Data.Vector                      as V
 import           Math.Algebra.Hspray              (
                                                     FunctionLike (..)
                                                   , (/^)
@@ -888,22 +884,14 @@ msPolynomialsInJackBasis ::
   (Eq a, AlgField.C a)
   => a -> Char -> Int -> Int -> Map Partition (Map Partition a)
 msPolynomialsInJackBasis alpha which n weight = 
-  DM.fromDistinctDescList (zip lambdas [maps i | i <- [1 .. length lambdas]])
-  where
-    (matrix, lambdas) = _inverseKostkaMatrix n weight alpha which
-    maps i = DM.filter (/= AlgAdd.zero) 
-          (DM.fromDistinctDescList (zip lambdas (V.toList (getRow i matrix))))
+   _inverseKostkaMatrix n weight alpha which
 
 -- | monomial symmetric polynomials in Jack polynomials basis
 msPolynomialsInJackSymbolicBasis :: 
   (Eq a, AlgField.C a) 
   => Char -> Int -> Int -> Map Partition (Map Partition (RatioOfSprays a))
 msPolynomialsInJackSymbolicBasis which n weight = 
-  DM.fromDistinctDescList (zip lambdas [maps i | i <- [1 .. length lambdas]])
-  where
-    (matrix, lambdas) = _inverseSymbolicKostkaMatrix n weight which
-    maps i = DM.filter (/= zeroRatioOfSprays) 
-          (DM.fromDistinctDescList (zip lambdas (V.toList (getRow i matrix))))
+  _inverseSymbolicKostkaMatrix n weight which
 
 -- | Symmetric polynomial as a linear combination of Jack polynomials with a 
 -- given Jack parameter. Symmetry is not checked.
@@ -1113,13 +1101,16 @@ hallLittlewoodPolynomial ::
   -> Char      -- ^ which Hall-Littlewood polynomial, @'P'@ or @'Q'@
   -> SimpleParametricSpray a
 hallLittlewoodPolynomial n lambda which 
-  | n < 0 = error "hallLittlewoodPolynomial: negative number of variables."
+  | n < 0 = 
+      error "hallLittlewoodPolynomial: negative number of variables."
   | not (_isPartition lambda) = 
       error "hallLittlewoodPolynomial: invalid partition."
   | not (which `elem` ['P', 'Q']) =
       error "hallLittlewoodPolynomial: last argument must be 'P' or 'Q'."
-  | null lambda = unitSpray
-  | length lambda > n = zeroSpray
+  | null lambda = 
+      unitSpray
+  | length lambda > n = 
+      zeroSpray
   | otherwise = sumOfSprays sprays
     where
       coeffs = _hallLittlewoodPolynomialsInSchurBasis which lambda
@@ -1283,13 +1274,16 @@ macdonaldPolynomial :: (Eq a, AlgField.C a)
   -> Char       -- ^ which Macdonald polynomial, @'P'@ or @'Q'@
   -> ParametricSpray a
 macdonaldPolynomial n lambda which
-  | n < 0 = error "macdonaldPolynomial: negative number of variables."
+  | n < 0 = 
+      error "macdonaldPolynomial: negative number of variables."
   | not (_isPartition lambda) = 
       error "macdonaldPolynomial: invalid partition."
   | not (which `elem` ['P', 'Q']) =
       error "macdonaldPolynomial: last argument must be 'P' or 'Q'."
-  | null lambda = unitSpray
-  | length lambda > n = zeroSpray
+  | null lambda = 
+      unitSpray
+  | length lambda > n = 
+      zeroSpray
   | otherwise = 
       if which == 'P'
         then macdonaldPolynomialP n lambda
@@ -1344,11 +1338,14 @@ macdonaldJpolynomial ::
   -> Partition  -- ^ integer partition
   -> SimpleParametricSpray a
 macdonaldJpolynomial n lambda 
-  | n < 0 = error "macdonaldJpolynomial: negative number of variables."
+  | n < 0 = 
+      error "macdonaldJpolynomial: negative number of variables."
   | not (_isPartition lambda) = 
       error "macdonaldJpolynomial: invalid partition."
-  | null lambda = unitSpray
-  | length lambda > n = zeroSpray
+  | null lambda = 
+      unitSpray
+  | length lambda > n = 
+      zeroSpray
   | otherwise =
       asSimpleParametricSprayUnsafe $
         HM.map ((AlgMod.*>) (clambda (S.fromList lambda) :: Spray a)) 
