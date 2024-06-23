@@ -143,7 +143,6 @@ import           Data.Ratio                       ( (%) )
 import           Data.Sequence                    ( 
                                                     Seq (..)
                                                   , (|>)
-                                                  , index 
                                                   )
 import qualified Data.Sequence                    as S
 import qualified Data.Vector                      as V
@@ -469,59 +468,14 @@ eLambdaMu lambda mu
 -- power sum polynomials
 mspInPSbasis :: Partition -> Map Partition Rational
 mspInPSbasis kappa = 
-  DM.filter (/= 0) (DM.fromDistinctAscList lambdas_and_weights) --(zipWith f weights lambdas)
+  DM.filter (/= 0) (DM.fromDistinctAscList lambdas_and_weights) 
   where
     parts = partitions (sum kappa)
-    -- (weights, lambdas) = unzip $ filter ((/= 0) . fst) 
-    --   [let lambda = fromPartition part in (eLambdaMu kappa lambda, lambda) | part <- parts]
-    -- f weight lambda = 
-    --   (lambda, weight / toRational (zlambda lambda))
     lambdas_and_weights = 
       [let lambda = fromPartition part 
            weight = eLambdaMu kappa lambda in
          (lambda, weight / toRational (zlambda lambda))
         | part <- parts]
-
--- mspInPSbasis :: Partition -> Map Partition Rational
--- mspInPSbasis mu = 
---   maps (1 + (fromJust $ elemIndex mu lambdas))
---   where
---     weight = sum mu
---     lambdas = map fromPartition (partitions weight)
---     msCombo lambda = msCombination (psPolynomial 3 lambda)
---     row lambda = map (flip (DM.findWithDefault 0) (msCombo lambda)) lambdas
---     kostkaMatrix = fromLists (map row lambdas)
---     matrix = case inverse kostkaMatrix of
---       Left _  -> error "mspInJackBasis: should not happen:"
---       Right m -> m 
---     maps i = DM.fromList (zip lambdas (filter (/= 0) $ V.toList (getRow i matrix)))
-
--- km :: Int -> Partition -> (Matrix Rational, Maybe (Matrix Rational))
--- km n mu = 
---   (kostkaMatrix, matrix)
---   where
---     weight = sum mu
---     lambdas = map fromPartition (partitions weight)
---     msCombo lambda = msCombination (psPolynomial n lambda)
---     row lambda = map (flip (DM.findWithDefault 0) (msCombo lambda)) lambdas
---     kostkaMatrix = fromLists (map row lambdas)
---     matrix = case inverse kostkaMatrix of
---       Left _  -> Nothing
---       Right m -> Just m 
-
--- mspInPSbasis' :: Int -> Partition -> Map Partition Rational
--- mspInPSbasis' n mu = 
---   DM.filter (/= 0) (maps (1 + (fromJust $ elemIndex mu lambdas)))
---   where
---     weight = sum mu
---     lambdas = filter (\lambda -> length lambda <= n) (map fromPartition (partitions weight))
---     msCombo lambda = msCombination (psPolynomial n lambda)
---     row lambda = map (flip (DM.findWithDefault 0) (msCombo lambda)) lambdas
---     kostkaMatrix = fromLists (map row lambdas)
---     matrix = case inverse kostkaMatrix of
---       Left _  -> error "mspInJackBasis: should not happen:"
---       Right m -> m 
---     maps i = DM.fromList (zip lambdas (V.toList (getRow i matrix)))
 
 -- | the factor in the Hall inner product
 zlambda :: Partition -> Int
@@ -557,48 +511,6 @@ _symmPolyCombination mspInSymmPolyBasis func spray =
         (DM.foldlWithKey' 
           (\m lambda coeff -> DM.unionWith (AlgAdd.+) m (f lambda coeff)) 
             DM.empty msCombo)
-
--- _symmPolyCombination' :: 
---     forall a b. (Eq a, AlgRing.C a) 
---   => (Partition -> Map Partition Rational) 
---   -> (a -> a -> a)
---   -> Spray a 
---   -> Map Partition a
--- _symmPolyCombination' mspInSymmPolyBasis func spray =
---   if constantTerm == AlgAdd.zero 
---     then symmPolyMap
---     else insert [] constantTerm symmPolyMap
---   where
---     constantTerm = getConstantTerm spray
---     assocs = msCombination' (spray <+ (AlgAdd.negate constantTerm)) :: [(Partition, a)]
---     f :: (Partition, a) -> [(Partition, a)] 
---     f (lambda, coeff) = 
---       map (second (func coeff)) (DM.toList symmPolyCombo)
---       where
---         symmPolyCombo = DM.map fromRational (mspInSymmPolyBasis lambda) :: Map Partition a
---     symmPolyMap = DM.filter (/= AlgAdd.zero) 
---             (unionsWith (AlgAdd.+) (map (DM.fromList . f) assocs))
-
--- _symmPolyCombination' :: 
---     forall a. (Eq a, AlgRing.C a) 
---   => (Partition -> Map Partition Rational) 
---   -> (a -> Rational -> a) 
---   -> Spray a 
---   -> Map Partition a
--- _symmPolyCombination' mspInSymmPolyBasis func spray =
---   if constantTerm == AlgAdd.zero 
---     then symmPolyMap
---     else insert [] constantTerm symmPolyMap
---   where
---     constantTerm = getConstantTerm spray
---     assocs = msCombination' (spray <+ (AlgAdd.negate constantTerm))
---     f :: (Partition, a) -> [(Partition, a)] 
---     f (lambda, coeff) = 
---       map (second (func coeff)) (DM.toList symmPolyCombo)
---       where
---         symmPolyCombo = mspInSymmPolyBasis lambda :: Map Partition Rational
---     symmPolyMap = DM.filter (/= AlgAdd.zero) 
---             (unionsWith (AlgAdd.+) (map (DM.fromList . f) assocs))
 
 -- | symmetric polynomial as a linear combination of power sum polynomials
 _psCombination :: 
@@ -920,15 +832,6 @@ _schurCombination func spray =
         (DM.foldlWithKey' 
           (\m lambda coeff -> DM.unionWith (AlgAdd.+) m (f lambda coeff)) 
             DM.empty cshCombo)
-    -- assocs = 
-    --   DM.toList $ _cshCombination func (spray <+ (AlgAdd.negate constantTerm))
-    -- f :: (Partition, a) -> [(Partition, a)] 
-    -- f (lambda, coeff) = 
-    --   map (second (func coeff)) (DM.toList schurCombo)
-    --   where
-    --     schurCombo = cshInSchurBasis (numberOfVariables spray) lambda 
-    -- schurMap = DM.filter (/= AlgAdd.zero) 
-    --         (unionsWith (AlgAdd.+) (map (DM.fromList . f) assocs))
 
 -- | Symmetric polynomial as a linear combination of Schur polynomials. 
 -- Symmetry is not checked.
@@ -1127,7 +1030,6 @@ qtKostkaPolynomials mu
   where
     psCombo = macdonaldJinPSbasis mu
     t = lone' 2 
---    f = psCombo -- psCombination'' (macdonaldJpolynomial n mu)
     den lambda = productOfSprays [unitSpray ^-^ t k | k <- lambda]
     msCombo lambda = 
       msCombination (psPolynomial (length lambda) lambda)
@@ -1323,7 +1225,10 @@ tSchurPolynomial n lambda
   | not (_isPartition lambda) =
       error "tSchurPolynomial: invalid partition."
   | otherwise =
-      tSkewSchurPolynomial n lambda []
+      _tSkewSchurPolynomial 
+        (\i j -> AlgRing.fromInteger i AlgField./ AlgRing.fromInteger j)
+          n lambda []
+
 
 -- | t-Schur polynomial. This is a multivariate 
 -- symmetric polynomial whose coefficients are polynomial in one parameter.
@@ -1337,7 +1242,7 @@ tSchurPolynomial' n lambda
   | not (_isPartition lambda) =
       error "tSchurPolynomial': invalid partition."
   | otherwise =
-      tSkewSchurPolynomial' n lambda []
+      _tSkewSchurPolynomial (%) n lambda []
 
 -- | Skew t-Schur polynomial of a given skew partition. This is a multivariate 
 -- symmetric polynomial whose coefficients are polynomial in one parameter.
@@ -1517,8 +1422,6 @@ modifiedMacdonaldPolynomial n mu
     psCombo = macdonaldJinPSbasis mu
     q' = lone' 1
     t' = lone' 2
-    -- toROS spray = 
-    --   evaluateAt [q', tm1] (HM.map constantRatioOfSprays spray)
     num_and_den Empty = undefined
     num_and_den (e :<| Empty) = (q' e, unitSpray)
     num_and_den (e1 :<| (e2 :<| _)) = (q' e1, t' e2)
@@ -1565,7 +1468,7 @@ flaggedSchurPol lambda as bs
       error "flaggedSchurPol: the list of lower bounds is not increasing."
   | not (isIncreasing bs) = 
       error "flaggedSchurPol: the list of upper bounds is not increasing."
-  | any (== True) (zipWith (>) as bs) = 
+  | or (zipWith (>) as bs) = 
       error "flaggedSchurPol: lower bounds must be smaller than upper bounds."
   | otherwise = sumOfSprays sprays
     where
@@ -1604,7 +1507,7 @@ flaggedSkewSchurPol lambda mu as bs
       error "flaggedSkewSchurPol: the list of lower bounds is not increasing."
   | not (isIncreasing bs) = 
       error "flaggedSkewSchurPol: the list of upper bounds is not increasing."
-  | any (== True) (zipWith (>) as bs) = 
+  | or (zipWith (>) as bs) = 
       error "flaggedSkewSchurPol: lower bounds must be smaller than upper bounds."
   | lambda == mu =
       unitSpray
@@ -1720,42 +1623,3 @@ skewFactorialSchurPol' ::
   -> QSpray
 skewFactorialSchurPol' = skewFactorialSchurPol
 
--- plethysm :: (Eq a, AlgRing.C a) => Int -> Map Partition a -> Map Partition a -> Spray a
--- plethysm n f g = 
---   DM.foldlWithKey 
---     (\spray lambda c -> 
---       spray ^+^ c *^ productOfSprays (map plethysm_g lambda)) 
---     zeroSpray f
---   where 
---     plethysm_mu mu k = psPolynomial n (map (*k) mu)
---     plethysm_g k = 
---       DM.foldlWithKey (\spray mu d -> spray ^+^ d *^ plethysm_mu mu k) zeroSpray g
-
--- test :: Bool
--- test = poly == sumOfSprays sprays
---   where
---     which = 'J'
---     alpha = 4
---     mu = [3, 1, 1]
---     poly = msPolynomial 5 mu ^+^ psPolynomial 5 mu ^+^ cshPolynomial 5 mu ^+^ esPolynomial 5 mu :: QSpray
---     sprays = [c *^ jackPol' 5 lambda alpha which | (lambda, c) <- DM.toList (jackCombination which alpha poly)]
-
--- test :: Bool
--- test = psp == sumOfSprays esps
---   where
---     mu = [3, 2, 1, 1]
---     psp = psPolynomial 7 mu :: QSpray
---     esps = [c *^ esPolynomial 7 lambda | (lambda, c) <- DM.toList (pspInESbasis mu)]
-
--- test :: Bool
--- test = poly == sumOfSprays ess
---   where
---     mu = [3, 1, 1]
---     poly = msPolynomial 5 mu ^+^ psPolynomial 5 mu ^+^ cshPolynomial 5 mu ^+^ esPolynomial 5 mu :: QSpray
---     ess = [c *^ esPolynomial 5 lambda | (lambda, c) <- DM.toList (esCombination poly)]
-
--- test'' :: (String, String)
--- test'' = (prettyParametricQSpray result, prettyParametricQSprayABCXYZ ["a"] ["b"] $ result)
---   where 
---     jsp = jackSymbolicPol' 3 [2, 1] 'P'
---     result = hallSymbolic'' jsp jsp

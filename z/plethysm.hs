@@ -35,3 +35,13 @@
 --         (\spray mu d -> spray ^+^ (d (t k) *^ plethysm_mu mu k)) 
 --           zeroSpray g
 
+-- plethysm :: (Eq a, AlgRing.C a) => Int -> Map Partition a -> Map Partition a -> Spray a
+-- plethysm n f g = 
+--   DM.foldlWithKey 
+--     (\spray lambda c -> 
+--       spray ^+^ c *^ productOfSprays (map plethysm_g lambda)) 
+--     zeroSpray f
+--   where 
+--     plethysm_mu mu k = psPolynomial n (map (*k) mu)
+--     plethysm_g k = 
+--       DM.foldlWithKey (\spray mu d -> spray ^+^ d *^ plethysm_mu mu k) zeroSpray g
