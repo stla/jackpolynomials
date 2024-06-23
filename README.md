@@ -1,6 +1,6 @@
 # jackpolynomials
 
-***Jack, zonal, Schur, skew Schur, and Hall-Littlewood polynomials.***
+***Jack, zonal, Schur, and other symmetric polynomials.***
 
 <!-- badges: start -->
 [![Stack-lts](https://github.com/stla/jackpolynomials/actions/workflows/Stack-lts.yml/badge.svg)](https://github.com/stla/jackpolynomials/actions/workflows/Stack-lts.yml)
@@ -10,9 +10,10 @@
 Schur polynomials have applications in combinatorics and zonal polynomials have
 applications in multivariate statistics. They are particular cases of
 [Jack polynomials](https://en.wikipedia.org/wiki/Jack_function). This package
-allows to evaluate these polynomials as well as the Hall-Littlewood polynomials 
-and to compute them in symbolic form. It also provides some utilities for 
-symmetric polynomials.
+allows to compute these polynomials. It also allows to compute other 
+symmetric polynomials: Kostka-Foulkes polynomials, t-Schur polynomials, 
+Hall-Littlewood polynomials, Kostka-Macdonald polynomials, and Macdonald 
+polynomials.
 
 ___
 
@@ -199,7 +200,7 @@ import Math.Algebra.JackPol
 import Math.Algebra.SymmetricPolynomials 
 import Math.Algebra.Hspray 
 lambda = [2, 1]
-hlPoly = hallLittlewoodPolynomial 3 lambda 'P' :: SimpleParametricQSpray
+hlPoly = hallLittlewoodPolynomial' 3 lambda 'P' 
 putStrLn $ prettySymmetricSimpleParametricQSpray ["t"] hlPoly
 -- (1)*M[2,1] + (-t^2 - t + 2)*M[1,1,1]
 hlPolyAt0 = substituteParameters hlPoly [0]
