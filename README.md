@@ -209,6 +209,35 @@ hlPolyAt0 == schurPol' 3 lambda
 ```
 
 
+### Macdonald polynomials
+
+As of version 1.4.5.0, the package can compute some Macdonald polynomials. 
+The Macdonald polynomials are symmetric multivariate polynomials whose 
+coefficients depend on two parameters usually denoted by $q$ and $t$. 
+Let's consider for example the Macdonald P-polynomial. It generalizes 
+the Hall-Littlewood P-polynomial: the Hall-Littlewood P-polynomial with 
+parameter $t$ is obtained from the Macdonald P-polynomial by substituting
+the parameter $q$ with $0$.
+
+```haskell
+import Math.Algebra.Hspray
+import Math.Algebra.SymmetricPolynomials
+n = 4
+lambda = [2, 2]
+macPoly = macdonaldPolynomial' n lambda 'P'
+poly = changeParameters macPoly [zeroSpray, qlone 1]
+hlPoly = hallLittlewoodPolynomial' n lambda 'P'
+asSimpleParametricSpray poly == hlPoly
+-- True
+```
+
+We use `asSimpleParametricSpray` because, contrary to the Hall-Littlewood 
+J-polynomial, the Macdonald J-polynomial is not represented by a 
+`SimpleParametricSpray a` spray but by a `ParametricSpray a` spray, because 
+its coefficients are not polynomials in the two parameters $q$ and $t$, but 
+ratios of polynomials.
+
+
 ## References
 
 * I.G. Macdonald. *Symmetric Functions and Hall Polynomials*. Oxford Mathematical Monographs. The Clarendon Press Oxford University Press, New York, second edition, 1995.
