@@ -140,6 +140,13 @@ import           Math.Combinat.Tableaux.GelfandTsetlin       (
                                                              )
 import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
 
+
+type Partition = [Int]
+
+type PartitionsPair = (Seq Int, Seq Int)
+type PairsMap = Map PartitionsPair ([(Int,Int)], [(Int,Int)]) 
+
+
 -- f :: [Int] -> Tree MCP.Partition
 -- f rho = unfoldTree (\p -> (p, map (fst . fromSkewPartition  . rbShape) $ outerRibbonsOfLength p (rho !! (partitionWidth p)))) (toPartitionUnsafe [])
 
@@ -269,11 +276,11 @@ inverseKostkaNumbers n =
     lambdas = reverse (partitions n)
     row lambda = 
       map 
-        (\mu -> DM.findWithDefault 0 mu (kostkaNumbersWithGivenLambda lambda)) lambdas
+        (\mu -> DM.findWithDefault 0 mu (kostkaNumbersWithGivenLambda lambda)) 
+          lambdas
     matrix = inverseUnitTriangularMatrix (fromLists (map row lambdas))
     lambdas' = map fromPartition lambdas
     maps i = DM.fromDistinctDescList (zip lambdas' (V.toList (getCol i matrix)))  
-
 
 sequencesOfRibbons :: Seq Int -> Seq Int -> Seq Int -> [Seq (Seq Int)]
 sequencesOfRibbons lambda mu rho = 
@@ -360,12 +367,6 @@ chi_lambda_mu_rho lambda mu rho =
 --       | otherwise =  map (\subtree -> concat $ go (i-1) [pth ++ [rootLabel subtree] | subtree <- subForest tree, pth <- ps] subtree) (subForest tree) 
 
 
-
-type Partition = [Int]
-
-type PartitionsPair = (Seq Int, Seq Int)
-type PairsMap = Map PartitionsPair ([(Int,Int)], [(Int,Int)]) 
-
 -- qPochammer :: (Eq a, AlgRing.C a) => a -> a -> Int -> a
 -- qPochammer q a n = 
 --   AlgRing.product [AlgRing.one AlgAdd.- a AlgRing.* q AlgRing.^ (toInteger i) | i <- [0 .. n-1]]
@@ -407,7 +408,8 @@ clambda lambda =
   where
     q = lone' 1
     t = lone' 2
-    pairs = [(i, j) | i <- [1 .. S.length lambda], j <- [1 .. lambda `S.index` (i-1)]]
+    pairs = 
+      [(i, j) | i <- [1 .. S.length lambda], j <- [1 .. lambda `S.index` (i-1)]]
     lambda' = _dualPartition' lambda
     a (i, j) = lambda `S.index` (i-1) - j
     l (i, j) = lambda' `S.index` (j-1) - i
@@ -434,14 +436,16 @@ clambdamu lambda mu = num %//% den
        foldl' 
           (
             \sq (m, i) -> 
-              sq >< fmap (\(m', j) -> (m - j, m'- i)) (S.zip lambda' (S.take m rg))
+              sq >< 
+                fmap (\(m', j) -> (m - j, m'- i)) (S.zip lambda' (S.take m rg))
           ) 
            S.empty (S.zip lambda rg)
     als_mu = 
        foldl'
           (
             \sq (m, i) -> 
-              sq >< fmap (\(m', j) -> (m - j, m'- i)) (S.zip mu' (S.take m rg))
+              sq >< 
+                fmap (\(m', j) -> (m - j, m'- i)) (S.zip mu' (S.take m rg))
           ) 
            S.empty (S.zip mu rg)
 --      map (\(m,i) -> zip [m-1, m-2 .. 0] (DF.toList $ fmap (subtract i) (S.take m mu'))) (zip (DF.toList mu) [1..S.length mu])
@@ -566,7 +570,8 @@ codedRatio (lambda, lambda') (mu, mu') (i, j)
 
 psiLambdaMu :: PartitionsPair -> ([(Int,Int)], [(Int,Int)])
 psiLambdaMu (lambda, mu) = 
-  both concat (unzip (map (swap . (codedRatio (lambda, lambda') (mu, mu'))) ss))
+  both concat 
+    (unzip (map (swap . (codedRatio (lambda, lambda') (mu, mu'))) pairs))
   where
     lambda' = _dualPartition' lambda
     mu' = _dualPartition' mu
@@ -577,9 +582,10 @@ psiLambdaMu (lambda, mu) =
     emptyRows = S.zipWith (==) lambda mu
     bools' = S.zipWith (==) lambda' mu' 
     emptyColumns = S.elemIndicesL True bools'
-    ss = [
+    pairs = [
           (i+1, j+1) 
-          | i <- [0 .. ellLambda - 1], i >= ellMu || not (emptyRows `S.index` i), -- not (i `S.elem` emptyRows), 
+          | i <- [0 .. ellLambda - 1], 
+            i >= ellMu || not (emptyRows `S.index` i), -- not (i `S.elem` emptyRows), 
             j <- emptyColumns, j < lambda `S.index` i
         ]
 
@@ -722,7 +728,7 @@ psiLambdaMu (lambda, mu) =
 
 phiLambdaMu :: PartitionsPair -> ([(Int,Int)], [(Int,Int)])
 phiLambdaMu (lambda, mu) = 
-  both concat (unzip (map (codedRatio (lambda, lambda') (mu, mu')) ss))
+  both concat (unzip (map (codedRatio (lambda, lambda') (mu, mu')) pairs))
   where
     lambda' = _dualPartition' lambda
     mu' = _dualPartition' mu
@@ -730,7 +736,7 @@ phiLambdaMu (lambda, mu) =
       S.zipWith (==) lambda' mu' 
         >< S.replicate (S.length lambda' - S.length mu') False 
     nonEmptyColumns = S.elemIndicesL False bools'
-    ss = [(i, j+1) | j <- nonEmptyColumns, i <- [1 .. lambda' `S.index` j]] 
+    pairs = [(i, j+1) | j <- nonEmptyColumns, i <- [1 .. lambda' `S.index` j]] 
     -- ellMu = S.length mu
     -- ratio (i, j) 
     --   | i <= ellMu && j <= mu_im1 = 
@@ -769,7 +775,9 @@ makeRatioOfSprays ::
 makeRatioOfSprays pairsMap pairs = num %//% den
   where
 --    als = both concat (unzip (map ((DM.!) pairsMap) pairs))
-    als = both concat (unzip (DM.elems $ DM.restrictKeys pairsMap (DS.fromList pairs)))
+    als = 
+      both concat 
+        (unzip (DM.elems $ DM.restrictKeys pairsMap (DS.fromList pairs)))
     (num_map, den_map) =
       both (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty) als
     f k1 k2 = if k1 > k2 then Just (k1 - k2) else Nothing
@@ -1321,8 +1329,10 @@ gtPatternToTableau pattern =
       where
         differences = zipWith (-) kappa nu ++ drop (length nu) kappa
     go i tableau
-      | i == 0 = go 1 (S.adjust' (flip (><) (S.replicate corner 1)) 0 tableau)
-      | i == l+2 = tableau
+      | i == 0 = 
+          go 1 (S.adjust' (flip (><) (S.replicate corner 1)) 0 tableau)
+      | i == l+2 = 
+          tableau
       | otherwise = 
           go (i+1) (growTableau (i+1) tableau (skewPartitions !! (i-1)))
     growTableau :: 

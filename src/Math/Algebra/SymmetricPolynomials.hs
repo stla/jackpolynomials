@@ -147,7 +147,6 @@ import           Data.Sequence                    (
                                                   )
 import qualified Data.Sequence                    as S
 import qualified Data.Vector                      as V
-import           Data.Tuple.Extra                 ( second )
 import           Math.Algebra.Hspray              (
                                                     FunctionLike (..)
                                                   , (/^)
