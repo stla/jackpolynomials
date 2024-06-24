@@ -222,7 +222,7 @@ import           Math.Combinat.Compositions       ( compositions1 )
 import           Math.Combinat.Partitions.Integer ( 
                                                     fromPartition
                                                   , toPartition
-                                                  , mkPartition
+                                                  , toPartitionUnsafe
                                                   , partitions 
                                                   , partitionWidth
                                                   )
@@ -606,7 +606,7 @@ hallInnerProduct'' spray1 spray2 alpha =
 -- >>> jp = jackSymbolicPol 3 [2, 1] 'P'
 -- >>> hallInnerProduct''' jp jp 5 == hallInnerProduct jp jp (constantRatioOfSprays 5)
 hallInnerProduct''' :: 
-  forall b. (Eq b, AlgField.C b, AlgMod.C (BaseRing b) b)
+  (Eq b, AlgField.C b, AlgMod.C (BaseRing b) b)
   => Spray b    -- ^ parametric spray
   -> Spray b    -- ^ parametric spray
   -> BaseRing b -- ^ parameter
@@ -618,7 +618,7 @@ hallInnerProduct''' = _hallInnerProduct psCombination (AlgMod.*>)
 -- applicable to @SimpleParametricQSpray@ sprays, while @hallInnerProduct'''@ 
 -- is not.
 hallInnerProduct'''' :: 
-  forall b. (Eq b, AlgRing.C b, AlgMod.C Rational b, AlgMod.C (BaseRing b) b)
+  (Eq b, AlgRing.C b, AlgMod.C Rational b, AlgMod.C (BaseRing b) b)
   => Spray b    -- ^ parametric spray
   -> Spray b    -- ^ parametric spray
   -> BaseRing b -- ^ parameter
@@ -700,7 +700,6 @@ pspInCSHbasis mu =
     assoc kappa = 
       let kappa' = fromPartition kappa in (kappa', eLambdaMu kappa' mu)
     lambdas_and_weights = map assoc parts
-    --f (weight, lambda) = (lambda, weight)
 
 -- | monomial symmetric polynomial as a linear combination of 
 -- complete symmetric homogeneous polynomials
@@ -714,7 +713,7 @@ mspInCSHbasis mu = sprayToMap (sumOfSprays sprays)
 -- | symmetric polynomial as a linear combination of 
 -- complete symmetric homogeneous polynomials
 _cshCombination :: 
-  forall a. (Eq a, AlgRing.C a) 
+  (Eq a, AlgRing.C a) 
   => (a -> Rational -> a) -> Spray a -> Map Partition a
 _cshCombination = _symmPolyCombination mspInCSHbasis
 
@@ -799,12 +798,12 @@ esCombination' = _esCombination (flip (AlgMod.*>))
 
 -- | complete symmetric homogeneous polynomial as a linear combination of 
 -- Schur polynomials
-cshInSchurBasis :: Int -> Partition -> Map Partition Rational
+cshInSchurBasis :: Int -> Partition -> Map Partition Int
 cshInSchurBasis n mu = 
   DM.filterWithKey (\k _ -> length k <= n) 
                     (DM.mapKeys fromPartition kNumbers)
   where
-    kNumbers = DM.map toRational (kostkaNumbersWithGivenMu (mkPartition mu))
+    kNumbers = kostkaNumbersWithGivenMu (toPartitionUnsafe mu)
 
 -- | symmetric polynomial as a linear combination of Schur polynomials
 _schurCombination :: 
@@ -820,7 +819,7 @@ _schurCombination func spray =
       _cshCombination func (spray <+ (AlgAdd.negate constantTerm))
     f :: Partition -> a -> Map Partition a
     f lambda coeff = 
-      DM.map (func coeff) schurCombo
+      DM.map ((func coeff) . toRational) schurCombo
       where
         schurCombo = cshInSchurBasis (numberOfVariables spray) lambda 
     schurMap = 

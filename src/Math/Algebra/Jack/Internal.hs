@@ -744,17 +744,19 @@ _paths n lambda mu =
             in
       (
         nu''
-      , map pairing (skewGelfandTsetlinPatterns lambda' (DF.toList mu) nu'')
+      , map pairing (skewGelfandTsetlinPatterns lambda' mu' nu'')
       )
     ) 
     nus)
   where
+    mu' = DF.toList mu
     pairing lambdas = zip (drop1 lambdas) lambdas
     lambda' = DF.toList lambda
     nus = 
       filter ((<= n) . partitionWidth) $ 
         dominatedPartitions 
-          (toPartitionUnsafe (lastSubPartition (DF.sum lambda - DF.sum mu) lambda'))
+          (toPartitionUnsafe 
+            (lastSubPartition (DF.sum lambda - DF.sum mu) lambda'))
 
 psi_lambda_mu :: (Eq a, AlgRing.C a) 
   => Seq Int -> Seq Int -> Spray a
