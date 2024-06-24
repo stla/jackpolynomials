@@ -41,6 +41,8 @@ module Math.Algebra.Jack.Internal
   , clambdamu
   , macdonaldJinMSPbasis
   , inverseKostkaNumbers
+  , jackInMSPbasis
+  , psCombinationsProduct
   )
   where
 import           Prelude 
@@ -63,6 +65,7 @@ import           Data.List                                   (
                                                              , foldl'
                                                              , uncons
                                                              , tails
+                                                             , sortBy
                                                              )
 import           Data.List.Extra                             ( 
                                                                unsnoc
@@ -348,6 +351,73 @@ makeRatioOfSprays pairsMap pairs = num %//% den
     t = lone' 2
     poly ((a, l), c) = (unitSpray ^-^ q a ^*^ t l) ^**^ c
     (num, den) = both (productOfSprays . (map poly)) assocs
+
+psCombinationsProduct :: 
+  (Eq a, AlgRing.C a) => Map Partition a -> Map Partition a -> Map Partition a 
+psCombinationsProduct psCombo1 psCombo2 = 
+  DM.fromListWith (AlgAdd.+)
+    [
+      (sortBy (flip compare) (lambda1 ++ lambda2), coeff1 AlgRing.* coeff2)
+      | (lambda1, coeff1) <- DM.assocs psCombo1, 
+        (lambda2, coeff2) <- DM.assocs psCombo2
+    ]
+
+jackInMSPbasis :: 
+  forall a. (Eq a, AlgField.C a) 
+  => Char
+  -> Partition 
+  -> Map Partition (RatioOfSprays a)
+jackInMSPbasis which lambda = 
+  DM.fromList 
+      (zipWith 
+        (\mu listOfPairs -> 
+          (
+            fromPartition mu,
+            makeRatioOfSpraysFromListOfPairs listOfPairs
+          )
+        )
+        mus listsOfPairs
+      )
+  where
+    lambda' = toPartitionUnsafe lambda
+    mus = dominatedPartitions lambda'
+    pairing lambdas = zip (drop1 lambdas) lambdas
+    listsOfPairs = 
+      map (
+        map (pairing . gtPatternDiagonals') 
+          . (kostkaGelfandTsetlinPatterns lambda')
+      ) mus
+    allPairs = nub $ concat (concat listsOfPairs)
+    funcLambdaMu = if which == 'Q' then phiLambdaMu else psiLambdaMu
+    pairsMap = 
+      DM.fromList (zip allPairs (map funcLambdaMu allPairs))
+    f k1 k2 = if k1 > k2 then Just (k1 - k2) else Nothing
+    alpha = lone 1
+    poly ((a, l), c) = (a .^ alpha <+ (_fromInt l)) ^**^ c
+    makeRatioOfSpraysFromPairs :: [PartitionsPair] -> RatioOfSprays a
+    makeRatioOfSpraysFromPairs pairs = num %//% den
+      where
+        als = 
+          both concat 
+            (unzip (DM.elems $ DM.restrictKeys pairsMap (DS.fromList pairs)))
+        (num_map, den_map) =
+          both (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty) als
+        assocs = both DM.assocs
+          (
+            DM.differenceWith f num_map den_map
+          , DM.differenceWith f den_map num_map
+          )
+        (num, den) = both (productOfSprays . (map poly)) assocs
+    makeRatioOfSpraysFromListOfPairs :: [[PartitionsPair]] -> RatioOfSprays a
+    makeRatioOfSpraysFromListOfPairs listOfPairs = 
+      if which == 'J'
+        then 
+          c *> rOS
+        else 
+          rOS
+      where
+        c = clambda (S.fromList lambda) :: Spray a
+        rOS = AlgAdd.sum (map makeRatioOfSpraysFromPairs listOfPairs) 
 
 macdonaldJinMSPbasis :: 
   forall a. (Eq a, AlgField.C a) 
