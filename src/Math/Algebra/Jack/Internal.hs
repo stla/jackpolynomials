@@ -534,6 +534,108 @@ lastSubPartition _ [] = []
 lastSubPartition w (k:ks) =  
   if w <= k then [w] else k : lastSubPartition (w - k) ks
 
+skewJackInMSPbasis :: 
+  forall a. (Eq a, AlgField.C a) 
+  => Char
+  -> Partition 
+  -> Partition
+  -> Map Partition (RatioOfSprays a)
+skewJackInMSPbasis which lambda mu = 
+  DM.map makeRatioOfSpraysFromListOfPairs mapOfPairs
+  -- DM.fromList 
+  --     (zipWith 
+  --       (\nu listOfPairs -> 
+  --         (
+  --           fromPartition nu,
+  --           makeRatioOfSpraysFromListOfPairs listOfPairs
+  --         )
+  --       )
+  --       nus listsOfPairs
+  --     )
+  where
+    nus = 
+      dominatedPartitions 
+        (toPartitionUnsafe (lastSubPartition (sum lambda - sum mu) lambda))
+    pairing lambdas = zip (drop1 lambdas) lambdas
+    mapOfPatterns = DM.filter (not . null) 
+      (DM.fromList (map (\nu -> 
+        let nu' = fromPartition nu in
+          (
+            nu'
+          , skewGelfandTsetlinPatterns lambda mu nu'
+          )        
+        ) nus))
+    mapOfPairs = DM.map (map pairing) mapOfPatterns
+    listsOfPairs = DM.elems mapOfPairs
+    allPairs = nub $ concat (concat listsOfPairs)
+    funcLambdaMu = if which == 'Q' then phiLambdaMu else psiLambdaMu
+    pairsMap = 
+      DM.fromList (zip allPairs (map funcLambdaMu allPairs))
+    f k1 k2 = if k1 > k2 then Just (k1 - k2) else Nothing
+    alpha = lone 1
+    poly ((a, l), c) = (a .^ alpha <+ (_fromInt l)) ^**^ c
+    makeRatioOfSpraysFromPairs :: [PartitionsPair] -> RatioOfSprays a
+    makeRatioOfSpraysFromPairs pairs = num %//% den
+      where
+        als = 
+          both concat 
+            (unzip (DM.elems $ DM.restrictKeys pairsMap (DS.fromList pairs)))
+        (num_map, den_map) =
+          both (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty) als
+        assocs = both DM.assocs
+          (
+            DM.differenceWith f num_map den_map
+          , DM.differenceWith f den_map num_map
+          )
+        (num, den) = both (productOfSprays . (map poly)) assocs
+    clambdamu' :: RatioOfSprays a
+    clambdamu' = num %//% den
+      where
+        slambda = S.fromList lambda
+        smu = S.fromList mu
+        lambda' = _dualPartition' slambda
+        mu' = _dualPartition' smu 
+        rg = S.fromList [1 .. max (S.length slambda) (slambda `S.index` 0)]
+        als_lambda = 
+          foldl' 
+              (
+                \sq (m, i) -> 
+                  sq >< 
+                    fmap (\(m', j) -> (m - j, m'- i)) (S.zip lambda' (S.take m rg))
+              ) 
+              S.empty (S.zip slambda rg)
+        als_mu = 
+          foldl'
+              (
+                \sq (m, i) -> 
+                  sq >< 
+                    fmap (\(m', j) -> (m - j, m'- i)) (S.zip mu' (S.take m rg))
+              ) 
+              S.empty (S.zip smu rg)
+        als = 
+          (
+            als_lambda, als_mu
+          )
+        (num_map, den_map) =
+          both (foldl' (\i al -> DM.insertWith (+) al 1 i) DM.empty) als
+        assocs = both DM.assocs
+          (
+            DM.differenceWith f num_map den_map
+          , DM.differenceWith f den_map num_map
+          )
+        poly' ((a, l), c) = (a .^ alpha <+ (_fromInt (l+1))) ^**^ c
+        (num, den) = both (productOfSprays . (map poly')) assocs
+    makeRatioOfSpraysFromListOfPairs :: [[PartitionsPair]] -> RatioOfSprays a
+    makeRatioOfSpraysFromListOfPairs listOfPairs = 
+      if which == 'J'
+        then 
+          c ^*^ rOS
+        else 
+          rOS
+      where
+        c = clambdamu' :: RatioOfSprays a
+        rOS = AlgAdd.sum (map makeRatioOfSpraysFromPairs listOfPairs) 
+
 _skewMacdonaldPolynomial :: 
   (Eq a, AlgField.C a) 
   => (PartitionsPair -> ([(Int,Int)], [(Int,Int)]))
