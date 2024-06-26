@@ -15,9 +15,7 @@ module Math.Algebra.JackSymbolicPol
   ( jackSymbolicPol, jackSymbolicPol', skewJackSymbolicPol, skewJackSymbolicPol' )
   where
 import           Prelude 
-  hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger, recip)
-import           Algebra.Additive           ( (+), (-), sum )
-import           Algebra.Ring               ( (*), product )
+  hiding ((/), (^), (*>), product, fromIntegral, fromInteger, recip)
 import           Algebra.Field              ( recip )
 import qualified Algebra.Field              as AlgField
 import           Control.Lens               ( (.~), element )
@@ -30,13 +28,14 @@ import           Math.Algebra.Jack.Internal ( _betaRatioOfSprays
                                             , jackSymbolicCoeffPinv
                                             , jackSymbolicCoeffQinv
                                             , _N, _isPartition, Partition
+                                            , isSkewPartition
                                             , skewSymbolicJackInMSPbasis )
 import           Math.Algebra.Hspray        ( FunctionLike (..), (.^)
                                             , lone, lone'
                                             , ParametricSpray, ParametricQSpray
                                             , Spray, asRatioOfSprays
-                                            , RatioOfSprays, unitRatioOfSprays
                                             , zeroSpray, unitSpray
+                                            , productOfSprays
                                             , fromList )
 import           Math.Combinat.Permutations ( permuteMultiset )
 
@@ -57,65 +56,67 @@ jackSymbolicPol :: forall a. (Eq a, AlgField.C a)
   -> ParametricSpray a
 jackSymbolicPol n lambda which =
   case _isPartition lambda of
-    False -> error "jackSymbolicPol: invalid integer partition"
+    False -> error "jackSymbolicPol: invalid integer partition."
     True -> case which of 
       'J' -> resultJ
       'C' -> jackSymbolicCoeffC lambda *^ resultJ
       'P' -> recip (asRatioOfSprays (jackSymbolicCoeffPinv lambda)) *^ resultJ 
       'Q' -> recip (asRatioOfSprays (jackSymbolicCoeffQinv lambda)) *^ resultJ
       _   -> error 
-        "jackSymbolicPol: please use 'J', 'C', 'P' or 'Q' for last argument"
+        "jackSymbolicPol: please use 'J', 'C', 'P' or 'Q' for last argument."
       where
       alpha = lone 1 :: Spray a
-      resultJ = jac n 0 lambda lambda arr0 unitRatioOfSprays
+      jck m kappa arr = jac m 0 kappa kappa arr 
+      resultJ = jck n lambda arr0 
       nll = _N lambda lambda
-      -- x = map lone [1 .. n] :: [ParametricSpray a]
       arr0 = listArray ((1, 1), (nll, n)) (replicate (nll * n) Nothing)
-      theproduct :: Int -> RatioOfSprays a
-      theproduct nu0 = if nu0 <= 1
-        then unitRatioOfSprays
-        else asRatioOfSprays $ product
-              [i .^ alpha ^+^ unitSpray | i <- [1 .. nu0-1]]
       jac :: Int -> Int -> Partition -> Partition 
              -> Array (Int,Int) (Maybe (ParametricSpray a)) 
-             -> RatioOfSprays a -> ParametricSpray a
-      jac m k mu nu arr beta
-        | null nu || nu !! 0 == 0 || m == 0 = unitSpray
-        | length nu > m && nu !! m > 0      = zeroSpray
-        | m == 1                            = 
-            theproduct (nu !! 0) *^ (lone' 1 (nu !! 0)) 
-        | k == 0 && isJust (arr ! (_N lambda nu, m)) =
-                      fromJust $ arr ! (_N lambda nu, m)
+             -> ParametricSpray a
+      jac m k mu nu arr 
+        | null nu || nu0 == 0 || m == 0 = unitSpray
+        | ellNu > m && nu !! m > 0      = zeroSpray
+        | m == 1                        = 
+            if nu0 == 1
+              then 
+                lone 1
+              else 
+                let sprays = [i .^ alpha ^+^ unitSpray | i <- [1 .. nu0-1]] in
+                asRatioOfSprays (productOfSprays sprays) *^ x nu0
+        | k == 0 && isJust maybe_pspray =
+            fromJust $ maybe_pspray
         | otherwise = s
           where
-            s = go (beta *^ (jac (m-1) 0 nu nu arr unitRatioOfSprays ^*^ 
-                  (lone' m (sum mu - sum nu)))) (max 1 k)
+            nu0 = nu !! 0
+            ellNu = length nu
+            x = lone' m
+            _N_lambda_nu_m = (_N lambda nu, m)
+            maybe_pspray = arr ! _N_lambda_nu_m
+            wMu = sum mu
+            jck' kappa array = jck (m-1) kappa array ^*^ x (wMu - sum kappa)
+            s = go (jck' nu arr) (max 1 k)
             go :: ParametricSpray a -> Int -> ParametricSpray a
             go !ss ii
-              | length nu < ii || nu!!(ii-1) == 0 = ss
-              | otherwise =
-                let u = nu!!(ii-1) in
-                if length nu == ii && u > 0 || u > nu !! ii
-                  then
-                    let nu'   = (element (ii-1) .~ u-1) nu in
-                    let gamma = _betaRatioOfSprays mu nu ii * beta in
-                    if u > 1
-                      then
-                        go (ss ^+^ jac m ii mu nu' arr gamma) (ii + 1)
-                      else
-                        if nu' !! 0 == 0
-                          then
-                            go (ss ^+^ (gamma *^ (lone' m (sum mu)))) 
-                                (ii + 1)
-                          else
-                            let arr' = arr // [((_N lambda nu, m), Just ss)] in
-                            let jck = 
-                                  jac (m-1) 0 nu' nu' arr' unitRatioOfSprays in
-                            let jck' = gamma *^ (jck ^*^ 
-                                        (lone' m (sum mu - sum nu'))) in
-                            go (ss ^+^ jck') (ii + 1)
-                  else
-                    go ss (ii + 1)
+              | ellNu < ii || u == 0 = 
+                  ss
+              | ellNu == ii && u > 0 || u > nu !! ii = 
+                  go (ss ^+^ tt) (ii + 1)
+              | otherwise = 
+                  go ss (ii + 1)
+                where
+                  jj = ii - 1
+                  u = nu !! jj
+                  nu' = (element jj .~ u - 1) nu
+                  gamma = _betaRatioOfSprays mu nu ii
+                  tt = gamma *^ pspray
+                    where
+                      pspray
+                        | u > 1 =
+                            jac m ii mu nu' arr 
+                        | nu' !! 0 == 0 =
+                            x wMu
+                        | otherwise =
+                            jck' nu' (arr // [(_N_lambda_nu_m, Just ss)]) 
 
 skewJackSymbolicPol :: 
     (Eq a, AlgField.C a) 
@@ -124,19 +125,30 @@ skewJackSymbolicPol ::
   -> Partition -- ^ inner partition of the skew partition
   -> Char      -- ^ which skew Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> ParametricSpray a
-skewJackSymbolicPol n lambda mu which = 
-  HM.unions sprays
+skewJackSymbolicPol n lambda mu which 
+  | n < 0 = 
+      error "skewJackSymbolicPol: negative number of variables."
+  | not (isSkewPartition lambda mu) = 
+      error "skewJackSymbolicPol: invalid skew partition."
+  | not (which `elem` ['J', 'C', 'P', 'Q']) = 
+      error "skewJackSymbolicPol: please use 'J', 'C', 'P' or 'Q' for last argument."
+  | n == 0 = 
+      if lambda == mu then unitSpray else zeroSpray
+  | otherwise =
+      HM.unions sprays
   where
     msCombo = 
-      DM.filterWithKey 
-        (\kappa _ -> length kappa <= n) 
-          (skewSymbolicJackInMSPbasis which lambda mu)
+      DM.filter
+        ((<= n) . fst)
+          (DM.mapWithKey 
+            (\kappa rOS -> (length kappa, rOS)) 
+              (skewSymbolicJackInMSPbasis which lambda mu))
     sprays = 
       map (
-        \(kappa, rOS) -> 
+        \(kappa, (l, rOS)) -> 
           fromList
             (zip 
-              (permuteMultiset (kappa ++ replicate (n - length kappa) 0)) 
+              (permuteMultiset (kappa ++ replicate (n - l) 0)) 
               (repeat rOS))
         ) (DM.assocs msCombo)
 

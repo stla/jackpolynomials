@@ -124,8 +124,17 @@ skewJackPol ::
   -> a         -- ^ Jack parameter
   -> Char      -- ^ which skew Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> Spray a
-skewJackPol n lambda mu alpha which = 
-  HM.unions sprays
+skewJackPol n lambda mu alpha which 
+  | n < 0 = 
+      error "skewJackPol: negative number of variables."
+  | not (isSkewPartition lambda mu) = 
+      error "skewJackPol: invalid skew partition."
+  | not (which `elem` ['J', 'C', 'P', 'Q']) = 
+      error "skewJackPol: please use 'J', 'C', 'P' or 'Q' for last argument."
+  | n == 0 = 
+      if lambda == mu then unitSpray else zeroSpray
+  | otherwise =
+      HM.unions sprays
   where
     msCombo = 
       DM.filterWithKey 
