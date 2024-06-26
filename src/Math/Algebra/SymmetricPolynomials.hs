@@ -606,15 +606,21 @@ jackInPSbasis which mu =
 skewJackPolTerm :: 
   forall a. (Eq a, AlgField.C a) => Int -> Char -> Partition -> Partition -> Partition -> ParametricSpray a
 skewJackPolTerm n which lambda mu nu = 
-  coeff *^ jackSymbolicPol n nu which
+  coeff *^ jackSymbolicPol n nu 'Q'
   where
-    psCombo_lambda = jackInPSbasis which lambda
-    psCombo_mu = jackInPSbasis which mu
-    psCombo_nu = jackInPSbasis which nu
+    psCombo_lambda = jackInPSbasis 'Q' lambda
+    psCombo_mu = jackInPSbasis 'P' mu
+    psCombo_nu = jackInPSbasis 'P' nu
     psCombo_mu_nu = psCombinationsProduct psCombo_mu psCombo_nu
     coeff = 
-      evaluate (_hallInnerProductFromPScombinations psCombo_lambda psCombo_mu_nu) [lone 1 %//% unitSpray] AlgField./ 
-        evaluate (_hallInnerProductFromPScombinations psCombo_nu psCombo_nu) [lone 1 %//% unitSpray]
+      evaluate (_hallInnerProductFromPScombinations psCombo_lambda psCombo_mu_nu) [lone 1 %//% unitSpray]  
+    -- psCombo_lambda = jackInPSbasis which lambda
+    -- psCombo_mu = jackInPSbasis which mu
+    -- psCombo_nu = jackInPSbasis which nu
+    -- psCombo_mu_nu = psCombinationsProduct psCombo_mu psCombo_nu
+    -- coeff = 
+    --   evaluate (_hallInnerProductFromPScombinations psCombo_lambda psCombo_mu_nu) [lone 1 %//% unitSpray] AlgField./ 
+    --     evaluate (_hallInnerProductFromPScombinations psCombo_nu psCombo_nu) [lone 1 %//% unitSpray]
     -- hip = _hallInnerProductFromPScombinations (AlgRing.*) :: 
     --   Map Partition (ParametricSpray a) -> Map Partition (ParametricSpray a) -> ParametricSpray a -> ParametricSpray a
     -- alpha = lone 1 :: ParametricSpray a
