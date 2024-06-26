@@ -41,8 +41,7 @@ module Math.Algebra.Jack.Internal
   , clambdamu
   , macdonaldJinMSPbasis
   , inverseKostkaNumbers
-  , jackInMSPbasis
-  , psCombinationsProduct
+  , skewJackInMSPbasis
   )
   where
 import           Prelude 
@@ -65,7 +64,6 @@ import           Data.List                                   (
                                                              , foldl'
                                                              , uncons
                                                              , tails
-                                                             , sortBy
                                                              )
 import           Data.List.Extra                             ( 
                                                                unsnoc
@@ -234,9 +232,7 @@ alMapFromPairs als =
   foldl' (\i al -> DM.insertWith (+) al 1 i) DM.empty als
 
 alMap :: Seq Int -> Map (Int, Int) Int
-alMap lambda = 
-  alMapFromPairs als
---  foldl' (\i al -> DM.insertWith (+) al 1 i) DM.empty als
+alMap lambda = alMapFromPairs als
   where
     lambda' = _dualPartition' lambda
     zs = S.zip lambda (S.fromList [1 .. S.length lambda])
@@ -258,11 +254,16 @@ poly_from_assoc ((a, l), c) =
     , (Powers (S.fromList [a, l]) 2, AlgAdd.negate AlgRing.one)
     ]) ^**^ c 
 
+poly_from_assocs :: (Eq a, AlgRing.C a) => [((Int, Int), Int)] -> Spray a
+poly_from_assocs assocs = productOfSprays (map poly_from_assoc assocs)
+
 clambda :: (Eq a, AlgRing.C a) => Seq Int -> Spray a
 clambda lambda = 
-  productOfSprays (map poly_from_assoc (DM.assocs (alMap lambda)))
+  poly_from_assocs (DM.assocs (alMap lambda))
 
-assocsFromMaps :: Map (Int, Int) Int -> Map (Int, Int) Int -> ([((Int, Int), Int)], [((Int, Int), Int)])
+assocsFromMaps :: 
+  Map (Int, Int) Int -> Map (Int, Int) Int 
+  -> ([((Int, Int), Int)], [((Int, Int), Int)])
 assocsFromMaps num_map den_map = 
   both DM.assocs
     (
@@ -272,16 +273,10 @@ assocsFromMaps num_map den_map =
   where
     f k1 k2 = if k1 > k2 then Just (k1 - k2) else Nothing
 
-clambdamuAssocs :: Seq Int -> Seq Int -> ([((Int, Int), Int)], [((Int, Int), Int)])
-clambdamuAssocs lambda mu =
-  assocsFromMaps num_map den_map
-  -- both DM.assocs
-  --   (
-  --     DM.differenceWith f num_map den_map
-  --   , DM.differenceWith f den_map num_map
-  --   )
+clambdamuAssocs :: 
+  Seq Int -> Seq Int -> ([((Int, Int), Int)], [((Int, Int), Int)])
+clambdamuAssocs lambda mu = assocsFromMaps num_map den_map
   where
-    -- f k1 k2 = if k1 > k2 then Just (k1 - k2) else Nothing
     num_map = alMap lambda
     den_map = alMap mu
 
@@ -289,45 +284,7 @@ clambdamu :: (Eq a, AlgField.C a) => Seq Int -> Seq Int -> RatioOfSprays a
 clambdamu lambda mu = num %//% den
   where
     assocs = clambdamuAssocs lambda mu
-    (num, den) = both (productOfSprays . (map poly_from_assoc)) assocs
-    -- lambda' = _dualPartition' lambda
-    -- mu' = _dualPartition' mu 
-    -- rg = S.fromList [1 .. max (S.length lambda) (lambda `S.index` 0)]
-    -- als_lambda = 
-    --    foldl' 
-    --       (
-    --         \sq (m, i) -> 
-    --           sq >< 
-    --             fmap (\(m', j) -> (m - j, m'- i)) (S.zip lambda' (S.take m rg))
-    --       ) 
-    --        S.empty (S.zip lambda rg)
-    -- als_mu = 
-    --    foldl'
-    --       (
-    --         \sq (m, i) -> 
-    --           sq >< 
-    --             fmap (\(m', j) -> (m - j, m'- i)) (S.zip mu' (S.take m rg))
-    --       ) 
-    --        S.empty (S.zip mu rg)
-    -- als = 
-    --   (
-    --     als_lambda, als_mu
-    --   )
-    -- (num_map, den_map) =
-    --   both (foldl' (\i al -> DM.insertWith (+) al 1 i) DM.empty) als
-    -- f k1 k2 = if k1 > k2 then Just (k1 - k2) else Nothing
-    -- assocs = both DM.assocs
-    --   (
-    --     DM.differenceWith f num_map den_map
-    --   , DM.differenceWith f den_map num_map
-    --   )
-    -- poly ((a, l), c) = 
-    --   (HM.fromList 
-    --     [
-    --       (Powers S.empty 0, AlgRing.one)
-    --     , (Powers (S.fromList [a, l+1]) 2, AlgAdd.negate AlgRing.one)
-    --     ]) ^**^ c 
-    -- (num, den) = both (productOfSprays . (map poly)) assocs
+    (num, den) = both poly_from_assocs assocs
 
 _dualPartition' :: Seq Int -> Seq Int
 _dualPartition' Empty = S.empty
@@ -395,87 +352,93 @@ makeRatioOfSprays ::
 makeRatioOfSprays pairsMap pairs = num %//% den
   where
     als = 
-      both concat 
+      both (S.fromList . concat) 
         (unzip (DM.elems $ DM.restrictKeys pairsMap (DS.fromList pairs)))
-    (num_map, den_map) =
-      both (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty) als
-    f k1 k2 = if k1 > k2 then Just (k1 - k2) else Nothing
-    assocs = both DM.assocs
-      (
-        DM.differenceWith f num_map den_map
-      , DM.differenceWith f den_map num_map
-      )
-    q = lone' 1
-    t = lone' 2
-    poly ((a, l), c) = (unitSpray ^-^ q a ^*^ t l) ^**^ c
-    (num, den) = both (productOfSprays . (map poly)) assocs
+    (num_map, den_map) = both alMapFromPairs als 
+    assocs = assocsFromMaps num_map den_map
+    (num, den) = both poly_from_assocs assocs
+    -- als = 
+    --   both concat 
+    --     (unzip (DM.elems $ DM.restrictKeys pairsMap (DS.fromList pairs)))
+    -- (num_map, den_map) =
+    --   both (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty) als
+    -- f k1 k2 = if k1 > k2 then Just (k1 - k2) else Nothing
+    -- assocs = both DM.assocs
+    --   (
+    --     DM.differenceWith f num_map den_map
+    --   , DM.differenceWith f den_map num_map
+    --   )
+    -- q = lone' 1
+    -- t = lone' 2
+    -- poly ((a, l), c) = (unitSpray ^-^ q a ^*^ t l) ^**^ c
+    -- (num, den) = both (productOfSprays . (map poly)) assocs
 
-psCombinationsProduct :: 
-  (Eq a, AlgRing.C a) => Map Partition a -> Map Partition a -> Map Partition a 
-psCombinationsProduct psCombo1 psCombo2 = 
-  DM.fromListWith (AlgAdd.+)
-    [
-      (sortBy (flip compare) (lambda1 ++ lambda2), coeff1 AlgRing.* coeff2)
-      | (lambda1, coeff1) <- DM.assocs psCombo1, 
-        (lambda2, coeff2) <- DM.assocs psCombo2
-    ]
+-- psCombinationsProduct :: 
+--   (Eq a, AlgRing.C a) => Map Partition a -> Map Partition a -> Map Partition a 
+-- psCombinationsProduct psCombo1 psCombo2 = 
+--   DM.fromListWith (AlgAdd.+)
+--     [
+--       (sortBy (flip compare) (lambda1 ++ lambda2), coeff1 AlgRing.* coeff2)
+--       | (lambda1, coeff1) <- DM.assocs psCombo1, 
+--         (lambda2, coeff2) <- DM.assocs psCombo2
+--     ]
 
-jackInMSPbasis :: 
-  forall a. (Eq a, AlgField.C a) 
-  => Char
-  -> Partition 
-  -> Map Partition (RatioOfSprays a)
-jackInMSPbasis which lambda = 
-  DM.fromList 
-      (zipWith 
-        (\mu listOfPairs -> 
-          (
-            fromPartition mu,
-            makeRatioOfSpraysFromListOfPairs listOfPairs
-          )
-        )
-        mus listsOfPairs
-      )
-  where
-    lambda' = toPartitionUnsafe lambda
-    mus = dominatedPartitions lambda'
-    pairing lambdas = zip (drop1 lambdas) lambdas
-    listsOfPairs = 
-      map (
-        map (pairing . gtPatternDiagonals') 
-          . (kostkaGelfandTsetlinPatterns lambda')
-      ) mus
-    allPairs = nub $ concat (concat listsOfPairs)
-    funcLambdaMu = if which == 'Q' then phiLambdaMu else psiLambdaMu
-    pairsMap = 
-      DM.fromList (zip allPairs (map funcLambdaMu allPairs))
-    f k1 k2 = if k1 > k2 then Just (k1 - k2) else Nothing
-    alpha = lone 1
-    poly ((a, l), c) = (a .^ alpha <+ (_fromInt l)) ^**^ c
-    makeRatioOfSpraysFromPairs :: [PartitionsPair] -> RatioOfSprays a
-    makeRatioOfSpraysFromPairs pairs = num %//% den
-      where
-        als = 
-          both concat 
-            (unzip (DM.elems $ DM.restrictKeys pairsMap (DS.fromList pairs)))
-        (num_map, den_map) =
-          both (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty) als
-        assocs = both DM.assocs
-          (
-            DM.differenceWith f num_map den_map
-          , DM.differenceWith f den_map num_map
-          )
-        (num, den) = both (productOfSprays . (map poly)) assocs
-    makeRatioOfSpraysFromListOfPairs :: [[PartitionsPair]] -> RatioOfSprays a
-    makeRatioOfSpraysFromListOfPairs listOfPairs = 
-      if which == 'J'
-        then 
-          c *> rOS
-        else 
-          rOS
-      where
-        c = clambda (S.fromList lambda) :: Spray a
-        rOS = AlgAdd.sum (map makeRatioOfSpraysFromPairs listOfPairs) 
+-- jackInMSPbasis :: 
+--   forall a. (Eq a, AlgField.C a) 
+--   => Char
+--   -> Partition 
+--   -> Map Partition (RatioOfSprays a)
+-- jackInMSPbasis which lambda = 
+--   DM.fromList 
+--       (zipWith 
+--         (\mu listOfPairs -> 
+--           (
+--             fromPartition mu,
+--             makeRatioOfSpraysFromListOfPairs listOfPairs
+--           )
+--         )
+--         mus listsOfPairs
+--       )
+--   where
+--     lambda' = toPartitionUnsafe lambda
+--     mus = dominatedPartitions lambda'
+--     pairing lambdas = zip (drop1 lambdas) lambdas
+--     listsOfPairs = 
+--       map (
+--         map (pairing . gtPatternDiagonals') 
+--           . (kostkaGelfandTsetlinPatterns lambda')
+--       ) mus
+--     allPairs = nub $ concat (concat listsOfPairs)
+--     funcLambdaMu = if which == 'Q' then phiLambdaMu else psiLambdaMu
+--     pairsMap = 
+--       DM.fromList (zip allPairs (map funcLambdaMu allPairs))
+--     f k1 k2 = if k1 > k2 then Just (k1 - k2) else Nothing
+--     alpha = lone 1
+--     poly ((a, l), c) = (a .^ alpha <+ (_fromInt l)) ^**^ c
+--     makeRatioOfSpraysFromPairs :: [PartitionsPair] -> RatioOfSprays a
+--     makeRatioOfSpraysFromPairs pairs = num %//% den
+--       where
+--         als = 
+--           both concat 
+--             (unzip (DM.elems $ DM.restrictKeys pairsMap (DS.fromList pairs)))
+--         (num_map, den_map) =
+--           both (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty) als
+--         assocs = both DM.assocs
+--           (
+--             DM.differenceWith f num_map den_map
+--           , DM.differenceWith f den_map num_map
+--           )
+--         (num, den) = both (productOfSprays . (map poly)) assocs
+--     makeRatioOfSpraysFromListOfPairs :: [[PartitionsPair]] -> RatioOfSprays a
+--     makeRatioOfSpraysFromListOfPairs listOfPairs = 
+--       if which == 'J'
+--         then 
+--           c *> rOS
+--         else 
+--           rOS
+--       where
+--         c = clambda (S.fromList lambda) :: Spray a
+--         rOS = AlgAdd.sum (map makeRatioOfSpraysFromPairs listOfPairs) 
 
 macdonaldJinMSPbasis :: 
   forall a. (Eq a, AlgField.C a) 
@@ -619,61 +582,16 @@ skewJackInMSPbasis which lambda mu =
     funcLambdaMu = if which == 'Q' then phiLambdaMu else psiLambdaMu
     pairsMap = 
       DM.fromList (zip allPairs (map funcLambdaMu allPairs))
---    f k1 k2 = if k1 > k2 then Just (k1 - k2) else Nothing
     alpha = lone 1
     poly ((a, l), c) = (a .^ alpha <+ (_fromInt l)) ^**^ c
-    makeRatioOfSpraysFromPairs :: [PartitionsPair] -> ([((Int, Int), Int)], [((Int, Int), Int)]) -- RatioOfSprays a
-    makeRatioOfSpraysFromPairs pairs = assocs -- num %//% den
+    makeAssocsFromPairs :: 
+      [PartitionsPair] -> ([((Int, Int), Int)], [((Int, Int), Int)]) 
+    makeAssocsFromPairs pairs = assocsFromMaps num_map den_map
       where
         als = 
           both (S.fromList . concat) 
             (unzip (DM.elems $ DM.restrictKeys pairsMap (DS.fromList pairs)))
-        (num_map, den_map) =
-          both alMapFromPairs als --  (foldl' (\m k -> DM.insertWith (+) k 1 m) DM.empty) als
-        assocs = assocsFromMaps num_map den_map
-        -- assocs = both DM.assocs
-        --   (
-        --     DM.differenceWith f num_map den_map
-        --   , DM.differenceWith f den_map num_map
-        --   )
-        -- (num, den) = both (productOfSprays . (map poly)) assocs
-    clambdamu' :: ([((Int, Int), Int)], [((Int, Int), Int)]) -- RatioOfSprays a
-    clambdamu' = assocs -- num %//% den
-      where
-        -- slambda = S.fromList lambda
-        -- smu = S.fromList mu
-        -- lambda' = _dualPartition' slambda
-        -- mu' = _dualPartition' smu 
-        -- rg = S.fromList [1 .. max (S.length slambda) (slambda `S.index` 0)]
-        -- als_lambda = 
-        --   foldl' 
-        --       (
-        --         \sq (m, i) -> 
-        --           sq >< 
-        --             fmap (\(m', j) -> (m - j, m'- i)) (S.zip lambda' (S.take m rg))
-        --       ) 
-        --       S.empty (S.zip slambda rg)
-        -- als_mu = 
-        --   foldl'
-        --       (
-        --         \sq (m, i) -> 
-        --           sq >< 
-        --             fmap (\(m', j) -> (m - j, m'- i)) (S.zip mu' (S.take m rg))
-        --       ) 
-        --       S.empty (S.zip smu rg)
-        -- als = 
-        --   (
-        --     als_lambda, als_mu
-        --   )
-        -- (num_map, den_map) =
-        --   both (foldl' (\i al -> DM.insertWith (+) al 1 i) DM.empty) als
-        -- assocs = both DM.assocs
-        --   (
-        --     DM.differenceWith f num_map den_map
-        --   , DM.differenceWith f den_map num_map
-        --   )
-        assocs = clambdamuAssocs (S.fromList lambda) (S.fromList mu)
---        (num, den) = both (productOfSprays . (map poly)) assocs
+        (num_map, den_map) = both alMapFromPairs als 
     rosFromAssocs :: ([((Int, Int), Int)], [((Int, Int), Int)]) -> RatioOfSprays a
     rosFromAssocs assocs = num %//% den
       where
@@ -686,8 +604,8 @@ skewJackInMSPbasis which lambda mu =
         else 
           rOS
       where
-        c = rosFromAssocs clambdamu' :: RatioOfSprays a
-        rOS = AlgAdd.sum (map (rosFromAssocs . makeRatioOfSpraysFromPairs) listOfPairs) 
+        c = rosFromAssocs (clambdamuAssocs (S.fromList lambda) (S.fromList mu))
+        rOS = AlgAdd.sum (map (rosFromAssocs . makeAssocsFromPairs) listOfPairs) 
 
 _skewMacdonaldPolynomial :: 
   (Eq a, AlgField.C a) 
