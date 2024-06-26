@@ -12,7 +12,7 @@ See README for examples and references.
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Math.Algebra.JackSymbolicPol
-  ( jackSymbolicPol, jackSymbolicPol' )
+  ( jackSymbolicPol, jackSymbolicPol', skewJackSymbolicPol, skewJackSymbolicPol' )
   where
 import           Prelude 
   hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger, recip)
@@ -22,18 +22,24 @@ import           Algebra.Field              ( recip )
 import qualified Algebra.Field              as AlgField
 import           Control.Lens               ( (.~), element )
 import           Data.Array                 ( Array, (!), (//), listArray )
+import qualified Data.HashMap.Strict        as HM
+import qualified Data.Map.Strict            as DM
 import           Data.Maybe                 ( fromJust, isJust )
 import           Math.Algebra.Jack.Internal ( _betaRatioOfSprays
                                             , jackSymbolicCoeffC
                                             , jackSymbolicCoeffPinv
                                             , jackSymbolicCoeffQinv
-                                            , _N, _isPartition, Partition )
+                                            , _N, _isPartition, Partition
+                                            , skewSymbolicJackInMSPbasis )
 import           Math.Algebra.Hspray        ( FunctionLike (..), (.^)
                                             , lone, lone'
                                             , ParametricSpray, ParametricQSpray
                                             , Spray, asRatioOfSprays
                                             , RatioOfSprays, unitRatioOfSprays
-                                            , zeroSpray, unitSpray )
+                                            , zeroSpray, unitSpray
+                                            , fromList )
+import           Math.Combinat.Permutations ( permuteMultiset )
+
 
 -- | Jack polynomial with symbolic Jack parameter
 jackSymbolicPol' 
@@ -111,3 +117,33 @@ jackSymbolicPol n lambda which =
                   else
                     go ss (ii + 1)
 
+skewJackSymbolicPol :: 
+    (Eq a, AlgField.C a) 
+  => Int 
+  -> Partition 
+  -> Partition 
+  -> Char 
+  -> ParametricSpray a
+skewJackSymbolicPol n lambda mu which = 
+  HM.unions sprays
+  where
+    msCombo = 
+      DM.filterWithKey 
+        (\kappa _ -> length kappa <= n) 
+          (skewSymbolicJackInMSPbasis which lambda mu)
+    sprays = 
+      map (
+        \(kappa, rOS) -> 
+          fromList
+            (zip 
+              (permuteMultiset (kappa ++ replicate (n - length kappa) 0)) 
+              (repeat rOS))
+        ) (DM.assocs msCombo)
+
+skewJackSymbolicPol' :: 
+     Int 
+  -> Partition 
+  -> Partition 
+  -> Char 
+  -> ParametricQSpray 
+skewJackSymbolicPol' = skewJackSymbolicPol

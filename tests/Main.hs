@@ -35,9 +35,9 @@ import Math.Algebra.Jack                        ( schur, skewSchur
                                                 , jack', zonal'
                                                 , Partition )
 import Math.Algebra.Jack.HypergeoPQ             ( hypergeoPQ )
-import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol'
+import Math.Algebra.JackPol                     ( zonalPol, zonalPol', jackPol', skewJackPol'
                                                 , schurPol, schurPol', skewSchurPol' )
-import Math.Algebra.JackSymbolicPol             ( jackSymbolicPol' )
+import Math.Algebra.JackSymbolicPol             ( jackSymbolicPol', skewJackSymbolicPol' )
 import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , prettySymmetricParametricQSpray
                                                 , laplaceBeltrami
@@ -78,7 +78,6 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , qtKostkaPolynomials'
                                                 , modifiedMacdonaldPolynomial'
                                                 , qtSkewKostkaPolynomials'
-                                                , skewJackSymbolicPol
                                                 )
 import Math.Combinat.Partitions.Integer         ( 
                                                   toPartition
@@ -128,12 +127,29 @@ main = defaultMain $ testGroup
       nx = 2
       ny = 2
       lambda = [2, 2]
+      alpha = 2
+      ys = [lone 3, lone 4]
+      jackPoly = jackPol' (nx + ny) lambda alpha 'P'
+      expected = 
+        sumOfSprays 
+          [
+            skewJackPol' nx lambda mu alpha 'P'
+              ^*^ changeVariables (jackPol' ny mu alpha 'P') ys 
+          | mu <- [[], [1], [2], [1,1], [2,1], [2,2]]
+          ]
+    assertEqual "" jackPoly expected
+  
+  , testCase "Jack symbolic polynomial branching rule" $ do
+    let
+      nx = 2
+      ny = 2
+      lambda = [2, 2]
       ys = [lone 3, lone 4]
       jackPoly = jackSymbolicPol' (nx + ny) lambda 'P'
       expected = 
         sumOfSprays 
           [
-            skewJackSymbolicPol nx lambda mu 'P'
+            skewJackSymbolicPol' nx lambda mu 'P'
               ^*^ changeVariables (jackSymbolicPol' ny mu 'P') ys 
           | mu <- [[], [1], [2], [1,1], [2,1], [2,2]]
           ]

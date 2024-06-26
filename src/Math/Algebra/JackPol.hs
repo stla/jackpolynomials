@@ -12,8 +12,8 @@ See README for examples and references.
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Math.Algebra.JackPol
-  ( jackPol', zonalPol', schurPol', skewSchurPol'
-  , jackPol, zonalPol, schurPol, skewSchurPol )
+  ( jackPol', skewJackPol', zonalPol', schurPol', skewSchurPol'
+  , jackPol, skewJackPol, zonalPol, schurPol, skewSchurPol )
   where
 import           Prelude 
   hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger)
@@ -23,16 +23,20 @@ import           Algebra.Ring               ( (*), product, one, fromInteger )
 import qualified Algebra.Ring               as AlgRing
 import           Control.Lens               ( (.~), element )
 import           Data.Array                 ( Array, (!), (//), listArray )
+import qualified Data.HashMap.Strict        as HM
 import qualified Data.Map.Strict            as DM
 import           Data.Maybe                 ( fromJust, isJust )
 import           Math.Algebra.Jack.Internal ( _betaratio, jackCoeffC
                                             , _N, _isPartition, Partition
                                             , jackCoeffP, jackCoeffQ
                                             , skewSchurLRCoefficients
-                                            , isSkewPartition, _fromInt )
+                                            , isSkewPartition, _fromInt
+                                            , skewJackInMSPbasis )
 import           Math.Algebra.Hspray        ( FunctionLike (..), (.^)
-                                            , lone, Spray
-                                            , zeroSpray, unitSpray )
+                                            , lone, Spray, QSpray
+                                            , zeroSpray, unitSpray
+                                            , fromList )
+import           Math.Combinat.Permutations ( permuteMultiset )
 
 -- | Symbolic Jack polynomial
 jackPol' 
@@ -40,7 +44,7 @@ jackPol'
   -> Partition -- ^ partition of integers
   -> Rational  -- ^ Jack parameter
   -> Char      -- ^ which Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
-  -> Spray Rational
+  -> QSpray
 jackPol' = jackPol
 
 -- | Symbolic Jack polynomial
@@ -112,15 +116,48 @@ jackPol n lambda alpha which
                   else
                     go ss (ii + 1)
 
+skewJackPol :: 
+    (Eq a, AlgField.C a) 
+  => Int 
+  -> Partition 
+  -> Partition 
+  -> a
+  -> Char 
+  -> Spray a
+skewJackPol n lambda mu alpha which = 
+  HM.unions sprays
+  where
+    msCombo = 
+      DM.filterWithKey 
+        (\kappa _ -> length kappa <= n) 
+          (skewJackInMSPbasis alpha which lambda mu)
+    sprays = 
+      map (
+        \(kappa, coeff) -> 
+          fromList
+            (zip 
+              (permuteMultiset (kappa ++ replicate (n - length kappa) 0)) 
+              (repeat coeff))
+        ) (DM.assocs msCombo)
+
+skewJackPol' :: 
+     Int 
+  -> Partition 
+  -> Partition 
+  -> Rational
+  -> Char 
+  -> QSpray
+skewJackPol' = skewJackPol
+
 -- | Symbolic zonal polynomial
 zonalPol' 
   :: Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
-  -> Spray Rational
+  -> QSpray
 zonalPol' = zonalPol
 
 -- | Symbolic zonal polynomial
-zonalPol :: forall a. (Eq a, AlgField.C a) 
+zonalPol :: (Eq a, AlgField.C a) 
   => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> Spray a
@@ -131,7 +168,7 @@ zonalPol n lambda =
 schurPol' 
   :: Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
-  -> Spray Rational
+  -> QSpray 
 schurPol' = schurPol
 
 -- | Symbolic Schur polynomial
@@ -189,7 +226,7 @@ skewSchurPol'
   :: Int       -- ^ number of variables
   -> Partition -- ^ outer partition of the skew partition
   -> Partition -- ^ inner partition of the skew partition
-  -> Spray Rational
+  -> QSpray
 skewSchurPol' = skewSchurPol
 
 -- | Symbolic skew Schur polynomial
