@@ -118,11 +118,11 @@ jackPol n lambda alpha which
 
 skewJackPol :: 
     (Eq a, AlgField.C a) 
-  => Int 
-  -> Partition 
-  -> Partition 
-  -> a
-  -> Char 
+  => Int       -- ^ number of variables
+  -> Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
+  -> a         -- ^ Jack parameter
+  -> Char      -- ^ which skew Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> Spray a
 skewJackPol n lambda mu alpha which = 
   HM.unions sprays
@@ -141,11 +141,11 @@ skewJackPol n lambda mu alpha which =
         ) (DM.assocs msCombo)
 
 skewJackPol' :: 
-     Int 
-  -> Partition 
-  -> Partition 
-  -> Rational
-  -> Char 
+     Int       -- ^ number of variables
+  -> Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
+  -> Rational  -- ^ Jack parameter
+  -> Char      -- ^ which skew Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> QSpray
 skewJackPol' = skewJackPol
 

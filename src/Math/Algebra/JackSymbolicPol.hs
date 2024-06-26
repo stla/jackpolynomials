@@ -119,10 +119,10 @@ jackSymbolicPol n lambda which =
 
 skewJackSymbolicPol :: 
     (Eq a, AlgField.C a) 
-  => Int 
-  -> Partition 
-  -> Partition 
-  -> Char 
+  => Int       -- ^ number of variables
+  -> Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
+  -> Char      -- ^ which skew Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> ParametricSpray a
 skewJackSymbolicPol n lambda mu which = 
   HM.unions sprays
@@ -141,9 +141,9 @@ skewJackSymbolicPol n lambda mu which =
         ) (DM.assocs msCombo)
 
 skewJackSymbolicPol' :: 
-     Int 
-  -> Partition 
-  -> Partition 
-  -> Char 
+     Int       -- ^ number of variables
+  -> Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
+  -> Char      -- ^ which skew Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> ParametricQSpray 
 skewJackSymbolicPol' = skewJackSymbolicPol
