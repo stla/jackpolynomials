@@ -559,11 +559,12 @@ lastSubPartition w (k:ks) =
 _skewJackInMSPbasis :: 
   forall a. (AlgRing.C a) 
   => (([((Int, Int), Int)], [((Int, Int), Int)]) -> a)
+  -> (Partition -> Partition -> a)
   -> Char
   -> Partition 
   -> Partition
   -> Map Partition a
-_skewJackInMSPbasis func which lambda mu = 
+_skewJackInMSPbasis func ccoeff which lambda mu = 
   DM.map makeCoeffFromListOfPairs mapOfPairs
   where
     nus = 
@@ -593,11 +594,12 @@ _skewJackInMSPbasis func which lambda mu =
             (unzip (DM.elems $ DM.restrictKeys pairsMap (DS.fromList pairs)))
         (num_map, den_map) = both alMapFromPairs als 
     makeCoeffFromListOfPairs :: [[PartitionsPair]] -> a
-    makeCoeffFromListOfPairs listOfPairs = 
-      if which == 'J'
-        then 
+    makeCoeffFromListOfPairs listOfPairs  
+      | which == 'J' =
           c AlgRing.* coeff
-        else 
+      | which == 'C' = 
+          ccoeff lambda mu AlgRing.* c AlgRing.* coeff
+      | otherwise =
           coeff
       where
         c = func (clambdamuAssocs (S.fromList lambda) (S.fromList mu))
@@ -610,13 +612,14 @@ skewSymbolicJackInMSPbasis ::
   -> Partition
   -> Map Partition (RatioOfSprays a)
 skewSymbolicJackInMSPbasis = 
-  _skewJackInMSPbasis rosFromAssocs
+  _skewJackInMSPbasis rosFromAssocs ccoeff
   where
     alpha = lone 1
     poly ((a, l), c) = (a .^ alpha <+ (_fromInt l)) ^**^ c
     rosFromAssocs assocs = num %//% den
       where
         (num, den) = both (productOfSprays . (map poly)) assocs
+    ccoeff lambda mu = jackSymbolicCoeffC lambda AlgField./ jackSymbolicCoeffC mu
 
 skewJackInMSPbasis :: 
   (Eq a, AlgField.C a) 
@@ -626,13 +629,14 @@ skewJackInMSPbasis ::
   -> Partition
   -> Map Partition a
 skewJackInMSPbasis alpha = 
-  _skewJackInMSPbasis ratioFromAssocs
+  _skewJackInMSPbasis ratioFromAssocs ccoeff
   where
     coeff ((a, l), c) = 
       (a .^ alpha AlgAdd.+ (_fromInt l)) AlgRing.^ (toInteger c)
     ratioFromAssocs assocs = num AlgField./ den
       where
         (num, den) = both (AlgRing.product . (map coeff)) assocs
+    ccoeff lambda mu = jackCoeffC lambda alpha AlgField./ jackCoeffC mu alpha
 
   -- DM.map makeRatioOfSpraysFromListOfPairs mapOfPairs
   -- where

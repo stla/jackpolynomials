@@ -128,13 +128,14 @@ main = defaultMain $ testGroup
       ny = 2
       lambda = [2, 2]
       alpha = 2
+      which = 'C'
       ys = [lone 3, lone 4]
-      jackPoly = jackPol' (nx + ny) lambda alpha 'P'
+      jackPoly = jackPol' (nx + ny) lambda alpha which
       expected = 
         sumOfSprays 
           [
-            skewJackPol' nx lambda mu alpha 'P'
-              ^*^ changeVariables (jackPol' ny mu alpha 'P') ys 
+            skewJackPol' nx lambda mu alpha which
+              ^*^ changeVariables (jackPol' ny mu alpha which) ys 
           | mu <- [[], [1], [2], [1,1], [2,1], [2,2]]
           ]
     assertEqual "" jackPoly expected
@@ -144,13 +145,14 @@ main = defaultMain $ testGroup
       nx = 2
       ny = 2
       lambda = [2, 2]
+      which = 'Q'
       ys = [lone 3, lone 4]
-      jackPoly = jackSymbolicPol' (nx + ny) lambda 'P'
+      jackPoly = jackSymbolicPol' (nx + ny) lambda which
       expected = 
         sumOfSprays 
           [
-            skewJackSymbolicPol' nx lambda mu 'P'
-              ^*^ changeVariables (jackSymbolicPol' ny mu 'P') ys 
+            skewJackSymbolicPol' nx lambda mu which
+              ^*^ changeVariables (jackSymbolicPol' ny mu which) ys 
           | mu <- [[], [1], [2], [1,1], [2,1], [2,2]]
           ]
     assertEqual "" jackPoly expected
