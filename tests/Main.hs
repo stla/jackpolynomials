@@ -78,6 +78,7 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , qtKostkaPolynomials'
                                                 , modifiedMacdonaldPolynomial'
                                                 , qtSkewKostkaPolynomials'
+                                                , skewJackSymbolicPol
                                                 )
 import Math.Combinat.Partitions.Integer         ( 
                                                   toPartition
@@ -122,7 +123,23 @@ main = defaultMain $ testGroup
   "Tests"
 
   [ 
-  testCase "t-Schur polynomial" $ do
+  testCase "Jack polynomial branching rule" $ do
+    let
+      nx = 2
+      ny = 2
+      lambda = [2, 2]
+      ys = [lone 3, lone 4]
+      jackPoly = jackSymbolicPol' (nx + ny) lambda 'P'
+      expected = 
+        sumOfSprays 
+          [
+            skewJackSymbolicPol nx lambda mu 'P'
+              ^*^ changeVariables (jackSymbolicPol' ny mu 'P') ys 
+          | mu <- [[], [1], [2], [1,1], [2,1], [2,2]]
+          ]
+    assertEqual "" jackPoly expected
+    
+  , testCase "t-Schur polynomial" $ do
     let 
       tSchurPoly = tSchurPolynomial' 2 [2, 1]
       t = qlone 1

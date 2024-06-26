@@ -604,7 +604,7 @@ _skewJackInMSPbasis func which lambda mu =
         coeff = AlgAdd.sum (map (func . makeAssocsFromPairs) listOfPairs) 
 
 skewSymbolicJackInMSPbasis :: 
-  forall a. (Eq a, AlgField.C a) 
+  (Eq a, AlgField.C a) 
   => Char
   -> Partition 
   -> Partition
@@ -619,7 +619,7 @@ skewSymbolicJackInMSPbasis =
         (num, den) = both (productOfSprays . (map poly)) assocs
 
 skewJackInMSPbasis :: 
-  forall a. (Eq a, AlgField.C a) 
+  (Eq a, AlgField.C a) 
   => a
   -> Char
   -> Partition 
@@ -628,7 +628,8 @@ skewJackInMSPbasis ::
 skewJackInMSPbasis alpha = 
   _skewJackInMSPbasis ratioFromAssocs
   where
-    coeff ((a, l), c) = (a .^ alpha AlgAdd.+ (_fromInt l)) AlgRing.^ (toInteger c)
+    coeff ((a, l), c) = 
+      (a .^ alpha AlgAdd.+ (_fromInt l)) AlgRing.^ (toInteger c)
     ratioFromAssocs assocs = num AlgField./ den
       where
         (num, den) = both (AlgRing.product . (map coeff)) assocs
