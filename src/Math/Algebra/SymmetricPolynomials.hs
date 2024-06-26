@@ -102,6 +102,7 @@ module Math.Algebra.SymmetricPolynomials
   , skewFactorialSchurPol
   , skewFactorialSchurPol'
   , skewJackPol
+  , skewJackSymbolicPol
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -216,6 +217,7 @@ import           Math.Algebra.Jack.Internal       (
                                                   , inverseKostkaNumbers
                                                   , skewSchurLRCoefficients
                                                   , skewJackInMSPbasis
+                                                  , skewSymbolicJackInMSPbasis 
                                                   )
 import           Math.Algebra.JackPol             ( 
                                                     schurPol
@@ -634,15 +636,39 @@ skewJackPol ::
   => Int 
   -> Partition 
   -> Partition 
+  -> a
   -> Char 
-  -> ParametricSpray a
-skewJackPol n lambda mu which = 
+  -> Spray a
+skewJackPol n lambda mu alpha which = 
   HM.unions sprays
   where
     msCombo = 
       DM.filterWithKey 
         (\kappa _ -> length kappa <= n) 
-          (skewJackInMSPbasis which lambda mu)
+          (skewJackInMSPbasis alpha which lambda mu)
+    sprays = 
+      map (
+        \(kappa, coeff) -> 
+          fromList
+            (zip 
+              (permuteMultiset (kappa ++ replicate (n - length kappa) 0)) 
+              (repeat coeff))
+        ) (DM.assocs msCombo)
+
+skewJackSymbolicPol :: 
+    (Eq a, AlgField.C a) 
+  => Int 
+  -> Partition 
+  -> Partition 
+  -> Char 
+  -> ParametricSpray a
+skewJackSymbolicPol n lambda mu which = 
+  HM.unions sprays
+  where
+    msCombo = 
+      DM.filterWithKey 
+        (\kappa _ -> length kappa <= n) 
+          (skewSymbolicJackInMSPbasis which lambda mu)
     sprays = 
       map (
         \(kappa, rOS) -> 

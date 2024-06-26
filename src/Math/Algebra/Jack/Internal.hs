@@ -41,6 +41,7 @@ module Math.Algebra.Jack.Internal
   , clambdamu
   , macdonaldJinMSPbasis
   , inverseKostkaNumbers
+  , skewSymbolicJackInMSPbasis 
   , skewJackInMSPbasis
   )
   where
@@ -555,14 +556,15 @@ lastSubPartition _ [] = []
 lastSubPartition w (k:ks) =  
   if w <= k then [w] else k : lastSubPartition (w - k) ks
 
-skewJackInMSPbasis :: 
-  forall a. (Eq a, AlgField.C a) 
-  => Char
+_skewJackInMSPbasis :: 
+  forall a. (AlgRing.C a) 
+  => (([((Int, Int), Int)], [((Int, Int), Int)]) -> a)
+  -> Char
   -> Partition 
   -> Partition
-  -> Map Partition (RatioOfSprays a)
-skewJackInMSPbasis which lambda mu = 
-  DM.map makeRatioOfSpraysFromListOfPairs mapOfPairs
+  -> Map Partition a
+_skewJackInMSPbasis func which lambda mu = 
+  DM.map makeCoeffFromListOfPairs mapOfPairs
   where
     nus = 
       dominatedPartitions 
@@ -582,8 +584,6 @@ skewJackInMSPbasis which lambda mu =
     funcLambdaMu = if which == 'Q' then phiLambdaMu else psiLambdaMu
     pairsMap = 
       DM.fromList (zip allPairs (map funcLambdaMu allPairs))
-    alpha = lone 1
-    poly ((a, l), c) = (a .^ alpha <+ (_fromInt l)) ^**^ c
     makeAssocsFromPairs :: 
       [PartitionsPair] -> ([((Int, Int), Int)], [((Int, Int), Int)]) 
     makeAssocsFromPairs pairs = assocsFromMaps num_map den_map
@@ -592,20 +592,91 @@ skewJackInMSPbasis which lambda mu =
           both (S.fromList . concat) 
             (unzip (DM.elems $ DM.restrictKeys pairsMap (DS.fromList pairs)))
         (num_map, den_map) = both alMapFromPairs als 
-    rosFromAssocs :: ([((Int, Int), Int)], [((Int, Int), Int)]) -> RatioOfSprays a
+    makeCoeffFromListOfPairs :: [[PartitionsPair]] -> a
+    makeCoeffFromListOfPairs listOfPairs = 
+      if which == 'J'
+        then 
+          c AlgRing.* coeff
+        else 
+          coeff
+      where
+        c = func (clambdamuAssocs (S.fromList lambda) (S.fromList mu))
+        coeff = AlgAdd.sum (map (func . makeAssocsFromPairs) listOfPairs) 
+
+skewSymbolicJackInMSPbasis :: 
+  forall a. (Eq a, AlgField.C a) 
+  => Char
+  -> Partition 
+  -> Partition
+  -> Map Partition (RatioOfSprays a)
+skewSymbolicJackInMSPbasis = 
+  _skewJackInMSPbasis rosFromAssocs
+  where
+    alpha = lone 1
+    poly ((a, l), c) = (a .^ alpha <+ (_fromInt l)) ^**^ c
     rosFromAssocs assocs = num %//% den
       where
         (num, den) = both (productOfSprays . (map poly)) assocs
-    makeRatioOfSpraysFromListOfPairs :: [[PartitionsPair]] -> RatioOfSprays a
-    makeRatioOfSpraysFromListOfPairs listOfPairs = 
-      if which == 'J'
-        then 
-          c ^*^ rOS
-        else 
-          rOS
+
+skewJackInMSPbasis :: 
+  forall a. (Eq a, AlgField.C a) 
+  => a
+  -> Char
+  -> Partition 
+  -> Partition
+  -> Map Partition a
+skewJackInMSPbasis alpha = 
+  _skewJackInMSPbasis ratioFromAssocs
+  where
+    coeff ((a, l), c) = (a .^ alpha AlgAdd.+ (_fromInt l)) AlgRing.^ (toInteger c)
+    ratioFromAssocs assocs = num AlgField./ den
       where
-        c = rosFromAssocs (clambdamuAssocs (S.fromList lambda) (S.fromList mu))
-        rOS = AlgAdd.sum (map (rosFromAssocs . makeAssocsFromPairs) listOfPairs) 
+        (num, den) = both (AlgRing.product . (map coeff)) assocs
+
+  -- DM.map makeRatioOfSpraysFromListOfPairs mapOfPairs
+  -- where
+  --   nus = 
+  --     dominatedPartitions 
+  --       (toPartitionUnsafe (lastSubPartition (sum lambda - sum mu) lambda))
+  --   pairing lambdas = zip (drop1 lambdas) lambdas
+  --   mapOfPatterns = DM.filter (not . null) 
+  --     (DM.fromList (map (\nu -> 
+  --       let nu' = fromPartition nu in
+  --         (
+  --           nu'
+  --         , skewGelfandTsetlinPatterns lambda mu nu'
+  --         )        
+  --       ) nus))
+  --   mapOfPairs = DM.map (map pairing) mapOfPatterns
+  --   listsOfPairs = DM.elems mapOfPairs
+  --   allPairs = nub $ concat (concat listsOfPairs)
+  --   funcLambdaMu = if which == 'Q' then phiLambdaMu else psiLambdaMu
+  --   pairsMap = 
+  --     DM.fromList (zip allPairs (map funcLambdaMu allPairs))
+  --   alpha = lone 1
+  --   poly ((a, l), c) = (a .^ alpha <+ (_fromInt l)) ^**^ c
+  --   makeAssocsFromPairs :: 
+  --     [PartitionsPair] -> ([((Int, Int), Int)], [((Int, Int), Int)]) 
+  --   makeAssocsFromPairs pairs = assocsFromMaps num_map den_map
+  --     where
+  --       als = 
+  --         both (S.fromList . concat) 
+  --           (unzip (DM.elems $ DM.restrictKeys pairsMap (DS.fromList pairs)))
+  --       (num_map, den_map) = both alMapFromPairs als 
+  --   rosFromAssocs :: ([((Int, Int), Int)], [((Int, Int), Int)]) -> RatioOfSprays a
+  --   rosFromAssocs assocs = num %//% den
+  --     where
+  --       (num, den) = both (productOfSprays . (map poly)) assocs
+  --   makeRatioOfSpraysFromListOfPairs :: [[PartitionsPair]] -> RatioOfSprays a
+  --   makeRatioOfSpraysFromListOfPairs listOfPairs = 
+  --     if which == 'J'
+  --       then 
+  --         c ^*^ rOS
+  --       else 
+  --         rOS
+  --     where
+  --       c = rosFromAssocs (clambdamuAssocs (S.fromList lambda) (S.fromList mu))
+  --       rOS = AlgAdd.sum (map (rosFromAssocs . makeAssocsFromPairs) listOfPairs) 
 
 _skewMacdonaldPolynomial :: 
   (Eq a, AlgField.C a) 
