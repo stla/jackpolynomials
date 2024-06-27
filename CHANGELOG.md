@@ -122,6 +122,12 @@ greatly improved
 
 1.4.5.0
 -------
+* new function `skewJackPol`, to get a skew Jack polynomial with a given 
+Jack parameter
+
+* new function `skewJackSymbolicPol`, to get a skew Jack polynomial with a
+symbolic Jack parameter
+
 * new function `tSchurPolynomial`, to get a t-Schur polynomial
 
 * new function `tSkewSchurPolynomial`, to get a skew t-Schur polynomial
