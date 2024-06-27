@@ -590,7 +590,7 @@ _skewMacdonaldPolynomial f n lambda mu = HM.unions hashMaps
     hashMaps = 
       map 
         (\nu'' -> 
-          let nu''' = DF.toList nu'' ++ (replicate (n - S.length nu'') 0)
+          let nu''' = DF.toList (nu'' >< (S.replicate (n - S.length nu'') 0))
               coeff = coeffs HM.! nu''
               compos = permuteMultiset nu'''
           in
