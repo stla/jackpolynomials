@@ -125,6 +125,7 @@ import           Data.List                        (
 import           Data.List.Extra                  ( 
                                                     unsnoc
                                                   , allSame
+                                                  , drop1
                                                   )
 import           Data.Map.Merge.Strict            ( 
                                                     merge
@@ -450,7 +451,8 @@ eLambdaMu lambda mu
               ]
         nuWeights = [sum nu | nu <- nus]
         decreasing ys = 
-          and [ys !! i >= ys !! (i+1) | i <- [0 .. length ys - 2]]
+          and (zipWith (>=) ys (drop1 ys))
+--          and [ys !! i >= ys !! (i+1) | i <- [0 .. length ys - 2]]
         test = and (zipWith (==) mu nuWeights) && all decreasing nus
     ---- 
     eMuNus :: [Partition] -> Rational
@@ -538,99 +540,6 @@ psCombination'' ::
 psCombination'' = 
   _psCombination (\coef r -> fromRational r *^ coef)
 
--- _hallInnerProductFromPScombinations :: 
---   forall b. (Eq b, AlgRing.C b)
---   => (Spray b -> Spray b -> Spray b)
---   -> Map Partition (Spray b)
---   -> Map Partition (Spray b)
---   -> Spray b         -- ^ parameter
---   -> Spray b 
--- _hallInnerProductFromPScombinations multabFunc psCombo1 psCombo2 alpha = 
---   AlgAdd.sum $ DM.elems
---     (merge dropMissing dropMissing (zipWithMatched f) psCombo1 psCombo2)
---   where
---     zlambda' :: Partition -> Spray b
---     zlambda' lambda = fromIntegral (zlambda lambda) 
---       AlgRing.* alpha AlgRing.^ (toInteger $ length lambda)
---     f :: Partition -> Spray b -> Spray b -> Spray b
---     f lambda coeff1 coeff2 = 
---       multabFunc (zlambda' lambda) (coeff1 AlgRing.* coeff2)
-
--- _hallInnerProductFromPScombinations :: 
---   forall b. (Eq b, AlgRing.C b)
---   => Map Partition b
---   -> Map Partition b
---   -> Spray b 
--- _hallInnerProductFromPScombinations psCombo1 psCombo2 = 
---   AlgAdd.sum $ DM.elems
---     (merge dropMissing dropMissing (zipWithMatched f) psCombo1 psCombo2)
---   where
---     alpha = lone 1 :: Spray b
---     zlambda' :: Partition -> Spray b
---     zlambda' lambda = zlambda lambda .^ (alpha ^**^ (length lambda))
---     f :: Partition -> b -> b -> Spray b
---     f lambda coeff1 coeff2 = 
---       (coeff1 AlgRing.* coeff2) *^ (zlambda' lambda) 
-
--- -- symbolicHallInnerProductFromPScombinations :: 
--- --   (Eq b, AlgField.C b) => Map Partition b -> Map Partition b -> Spray b
--- -- symbolicHallInnerProductFromPScombinations =
--- --   _symbolicHallInnerProductFromPScombinations 
--- --     (
--- --       _hallInnerProductFromPScombinations (^*^)
--- --     ) 
--- -- _symbolicHallInnerProductFromPScombinations :: 
--- --   (Eq b, AlgRing.C b) 
--- --   => (Map Partition (Spray b) -> Map Partition (Spray b) -> Spray b -> Spray b) 
--- --   -> Map Partition b -> Map Partition b -> Spray b
--- -- _symbolicHallInnerProductFromPScombinations func psCombo1 psCombo2 = func psCombo1' psCombo2' (lone 1)
--- --   where
--- --     psCombo1' = DM.map constantSpray psCombo1
--- --     psCombo2' = DM.map constantSpray psCombo2
-
--- jackInPSbasis ::
---   forall a. (Eq a, AlgField.C a) => Char -> Partition -> Map Partition (RatioOfSprays a)
--- jackInPSbasis which mu = 
---   DM.filter (/= AlgAdd.zero) 
---     (unionsWith (^+^) (DM.elems $ DM.mapWithKey combo_to_map jackCombo))
---   where
---     jackCombo = jackInMSPbasis which mu :: Map Partition (RatioOfSprays a)
---     combo_to_map lambda rOS = 
---       DM.map 
---         (\r -> (fromRational r :: a) AlgMod.*> rOS) (mspInPSbasis lambda)
--- --          (psCombination (msPolynomial (sum lambda) lambda))
-
--- skewJackPolTerm :: 
---   forall a. (Eq a, AlgField.C a) => Int -> Char -> Partition -> Partition -> Partition -> ParametricSpray a
--- skewJackPolTerm n which lambda mu nu = 
---   coeff *^ jackSymbolicPol n nu 'Q'
---   where
---     psCombo_lambda = jackInPSbasis 'Q' lambda
---     psCombo_mu = jackInPSbasis 'P' mu
---     psCombo_nu = jackInPSbasis 'P' nu
---     psCombo_mu_nu = psCombinationsProduct psCombo_mu psCombo_nu
---     coeff = 
---       evaluate (_hallInnerProductFromPScombinations psCombo_lambda psCombo_mu_nu) [lone 1 %//% unitSpray]  
---     -- psCombo_lambda = jackInPSbasis which lambda
---     -- psCombo_mu = jackInPSbasis which mu
---     -- psCombo_nu = jackInPSbasis which nu
---     -- psCombo_mu_nu = psCombinationsProduct psCombo_mu psCombo_nu
---     -- coeff = 
---     --   evaluate (_hallInnerProductFromPScombinations psCombo_lambda psCombo_mu_nu) [lone 1 %//% unitSpray] AlgField./ 
---     --     evaluate (_hallInnerProductFromPScombinations psCombo_nu psCombo_nu) [lone 1 %//% unitSpray]
---     -- hip = _hallInnerProductFromPScombinations (AlgRing.*) :: 
---     --   Map Partition (ParametricSpray a) -> Map Partition (ParametricSpray a) -> ParametricSpray a -> ParametricSpray a
---     -- alpha = lone 1 :: ParametricSpray a
---     -- coeff = hip psCombo_lambda psCombo_mu_nu alpha --AlgField./ hip psCombo_nu psCombo_nu alpha
-
--- skewJackPol :: 
---   (Eq a, AlgField.C a) => Int -> Char -> Partition -> Partition -> ParametricSpray a
--- skewJackPol n which lambda mu = 
---   sumOfSprays (map ((skewJackPolTerm n which lambda mu) . fromPartition) nus)
---   where
---     lambda' = toPartitionUnsafe lambda
---     nus = filter (isSuperPartitionOf lambda') (partitions (sum lambda - sum mu))
-
 -- | the Hall inner product with parameter
 _hallInnerProduct :: 
   forall a b. (AlgRing.C b, AlgRing.C a)
@@ -653,10 +562,10 @@ _hallInnerProduct psCombinationFunc multabFunc spray1 spray2 alpha =
     f lambda coeff1 coeff2 = 
       multabFunc (zlambda' lambda) (coeff1 AlgRing.* coeff2)
 
--- | Hall inner product with parameter, aka Jack-scalar product. It makes sense 
--- only for symmetric sprays, and the symmetry is not checked. 
+-- | Hall inner product with Jack parameter, aka Jack-scalar product. It 
+-- makes sense only for symmetric sprays, and the symmetry is not checked. 
 hallInnerProduct :: 
-  forall a. (Eq a, AlgField.C a)
+  (Eq a, AlgField.C a)
   => Spray a   -- ^ spray
   -> Spray a   -- ^ spray
   -> a         -- ^ parameter
@@ -666,7 +575,7 @@ hallInnerProduct = _hallInnerProduct psCombination (AlgRing.*)
 -- | Hall inner product with parameter. Same as @hallInnerProduct@ but 
 -- with other constraints on the base ring of the sprays.
 hallInnerProduct' :: 
-  forall a. (Eq a, AlgMod.C Rational a, AlgRing.C a)
+  (Eq a, AlgMod.C Rational a, AlgRing.C a)
   => Spray a   -- ^ spray
   -> Spray a   -- ^ spray
   -> a         -- ^ parameter
@@ -1216,7 +1125,7 @@ qtSkewKostkaPolynomials' ::
 qtSkewKostkaPolynomials' = qtSkewKostkaPolynomials
 
 -- | Hall-Littlewood polynomial of a given partition. This is a multivariate 
--- symmetric polynomial whose coefficients are polynomial in one parameter.
+-- symmetric polynomial whose coefficients are polynomial in a single parameter.
 hallLittlewoodPolynomial :: 
   (Eq a, AlgRing.C a) 
   => Int       -- ^ number of variables
@@ -1243,7 +1152,7 @@ hallLittlewoodPolynomial n lambda which
             (\mu c -> c *^ (HM.map constantSpray (schurPol n mu))) coeffs)
 
 -- | Hall-Littlewood polynomial of a given partition. This is a multivariate 
--- symmetric polynomial whose coefficients are polynomial in one parameter.
+-- symmetric polynomial whose coefficients are polynomial in a single parameter.
 hallLittlewoodPolynomial' :: 
      Int       -- ^ number of variables
   -> Partition -- ^ integer partition
@@ -1265,7 +1174,7 @@ transitionsSchurToHallLittlewood weight which
       _transitionMatrixHallLittlewoodSchur which weight
 
 -- | Skew Hall-Littlewood polynomial of a given skew partition. This is a multivariate 
--- symmetric polynomial whose coefficients are polynomial in one parameter.
+-- symmetric polynomial whose coefficients are polynomial in a single parameter.
 skewHallLittlewoodPolynomial :: (Eq a, AlgRing.C a)
   => Int       -- ^ number of variables
   -> Partition -- ^ outer partition of the skew partition
@@ -1342,7 +1251,6 @@ tSchurPolynomial n lambda
       _tSkewSchurPolynomial 
         (\i j -> AlgRing.fromInteger i AlgField./ AlgRing.fromInteger j)
           n lambda []
-
 
 -- | t-Schur polynomial. This is a multivariate 
 -- symmetric polynomial whose coefficients are polynomial in one parameter.

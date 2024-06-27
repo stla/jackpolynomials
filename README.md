@@ -97,7 +97,8 @@ putStrLn $ prettySymmetricQSpray jp
 -- 42*M[3,1,1] + 28*M[2,2,1]
 ```
 
-And another example, with a symbolic Jack polynomial:
+And another example, involving a Jack polynomial with symbolic Jack
+parameter:
 
 ```haskell
 import Math.Algebra.JackSymbolicPol
