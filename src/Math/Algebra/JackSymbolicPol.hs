@@ -140,16 +140,14 @@ skewJackSymbolicPol n lambda mu which
     msCombo = 
       DM.filter
         ((<= n) . fst)
-          (DM.mapWithKey 
-            (\kappa rOS -> (length kappa, rOS)) 
-              (skewSymbolicJackInMSPbasis which lambda mu))
+          (skewSymbolicJackInMSPbasis which lambda mu)
     sprays = 
       map (
         \(kappa, (l, rOS)) -> 
-          fromList
-            (zip 
-              (permuteMultiset (kappa ++ replicate (n - l) 0)) 
-              (repeat rOS))
+            fromList
+              (zip 
+                (permuteMultiset (kappa ++ replicate (n - l) 0)) 
+                (repeat rOS))
         ) (DM.assocs msCombo)
 
 skewJackSymbolicPol' :: 

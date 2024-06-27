@@ -144,16 +144,14 @@ skewJackPol n lambda mu alpha which
     msCombo = 
       DM.filter
         ((<= n) . fst)
-          (DM.mapWithKey 
-            (\kappa coeff -> (length kappa, coeff)) 
-              (skewJackInMSPbasis alpha which lambda mu))
+          (skewJackInMSPbasis alpha which lambda mu)
     sprays = 
       map (
         \(kappa, (l, coeff)) -> 
-          fromList
-            (zip 
-              (permuteMultiset (kappa ++ replicate (n - l) 0)) 
-              (repeat coeff))
+            fromList
+              (zip 
+                (permuteMultiset (kappa ++ replicate (n - l) 0)) 
+                (repeat coeff))
         ) (DM.assocs msCombo)
 
 skewJackPol' :: 

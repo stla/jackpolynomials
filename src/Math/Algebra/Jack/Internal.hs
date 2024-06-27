@@ -563,9 +563,11 @@ _skewJackInMSPbasis ::
   -> Char
   -> Partition 
   -> Partition
-  -> Map Partition a
+  -> Map Partition (Int, a)
 _skewJackInMSPbasis func ccoeff which lambda mu = 
-  DM.map makeCoeffFromListOfPairs mapOfPairs
+  DM.mapWithKey 
+    (\nu listOfPairs -> (length nu, makeCoeffFromListOfPairs listOfPairs)) 
+      mapOfPairs
   where
     nus = 
       dominatedPartitions 
@@ -610,7 +612,7 @@ skewSymbolicJackInMSPbasis ::
   => Char
   -> Partition 
   -> Partition
-  -> Map Partition (RatioOfSprays a)
+  -> Map Partition (Int, RatioOfSprays a)
 skewSymbolicJackInMSPbasis = 
   _skewJackInMSPbasis rosFromAssocs ccoeff
   where
@@ -627,7 +629,7 @@ skewJackInMSPbasis ::
   -> Char
   -> Partition 
   -> Partition
-  -> Map Partition a
+  -> Map Partition (Int, a)
 skewJackInMSPbasis alpha = 
   _skewJackInMSPbasis ratioFromAssocs ccoeff
   where

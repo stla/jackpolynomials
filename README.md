@@ -244,4 +244,4 @@ ratios of polynomials.
 
 * J. Demmel and P. Koev. *Accurate and efficient evaluation of Schur and Jack functions*. Mathematics of computations, vol. 75, n. 253, 223-229, 2005.
 
-* Jack polynomials. <https://www.symmetricfunctions.com/jack.htm>.
+* The symmetric functions catalog. <https://www.symmetricfunctions.com/index.htm>.

@@ -59,6 +59,8 @@ module Math.Algebra.SymmetricPolynomials
   -- * Kostka numbers
   , kostkaNumbers
   , symbolicKostkaNumbers
+  , skewKostkaNumbers
+  , symbolicSkewKostkaNumbers
   -- * Kostka-Foulkes polynomials
   , kostkaFoulkesPolynomial
   , kostkaFoulkesPolynomial'
@@ -214,6 +216,8 @@ import           Math.Algebra.Jack.Internal       (
                                                   , macdonaldJinMSPbasis
                                                   , inverseKostkaNumbers
                                                   , skewSchurLRCoefficients
+                                                  , skewJackInMSPbasis
+                                                  , skewSymbolicJackInMSPbasis
                                                   )
 import           Math.Algebra.JackPol             ( 
                                                     schurPol
@@ -936,7 +940,7 @@ schurCombination' ::
 schurCombination' = _schurCombination (flip (AlgMod.*>))
 
 -- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) for a given weight of the 
--- partitions \(\lambda\) and \(\mu\) and a given parameter 
+-- partitions \(\lambda\) and \(\mu\) and a given Jack parameter 
 -- \(\alpha\) (these are the standard Kostka numbers when
 -- \(\alpha=1\)). This returns a map whose keys represent the 
 -- partitions \(\lambda\) and the value attached to a partition \(\lambda\)
@@ -955,7 +959,7 @@ kostkaNumbers weight alpha
   | otherwise =
       _kostkaNumbers weight weight alpha 'P'
 
--- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) with symbolic parameter \(\alpha\) 
+-- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) with symbolic Jack parameter \(\alpha\) 
 -- for a given weight of the partitions \(\lambda\) and \(\mu\). This returns a map 
 -- whose keys represent the 
 -- partitions \(\lambda\) and the value attached to a partition \(\lambda\)
@@ -970,6 +974,33 @@ symbolicKostkaNumbers weight
       DM.singleton [] (DM.singleton [] unitRatioOfSprays)
   | otherwise =
       _symbolicKostkaNumbers weight weight 'P'
+
+-- | Skew Kostka numbers \(K_{\lambda/\mu, \nu}(\alpha)\) with a given Jack 
+-- parameter \(\alpha\) and a given skew partition \(\lambda/\mu\). 
+-- This returns a map whose keys represent the partitions \(\nu\).
+skewKostkaNumbers ::
+     Rational  -- ^ Jack parameter
+  -> Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
+  -> Map Partition Rational
+skewKostkaNumbers alpha lambda mu 
+  | not (isSkewPartition lambda mu) =
+     error "skewKostkaNumbers: invalid skew partition."
+  | otherwise = 
+      DM.map snd (skewJackInMSPbasis alpha 'P' lambda mu)
+
+-- | Skew Kostka numbers \(K_{\lambda/\mu, \nu}(\alpha)\) with symbolic Jack 
+-- parameter \(\alpha\) for a given skew partition \(\lambda/\mu\). 
+-- This returns a map whose keys represent the partitions \(\nu\).
+symbolicSkewKostkaNumbers ::
+     Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
+  -> Map Partition RatioOfQSprays
+symbolicSkewKostkaNumbers lambda mu 
+  | not (isSkewPartition lambda mu) =
+     error "symbolicSkewKostkaNumbers: invalid skew partition."
+  | otherwise = 
+      DM.map snd (skewSymbolicJackInMSPbasis 'P' lambda mu)
 
 -- | monomial symmetric polynomials in Jack polynomials basis
 msPolynomialsInJackBasis :: 
