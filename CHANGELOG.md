@@ -122,6 +122,12 @@ greatly improved
 
 1.4.5.0
 -------
+* new function `skewKostkaNumbers`, to get skew Kostka numbers with a given
+Jack parameter
+
+* new function `symbolicSkewKostkaNumbers`, to get skew Kostka numbers with a 
+symbolic Jack parameter
+
 * new function `skewJackPol`, to get a skew Jack polynomial with a given 
 Jack parameter
 

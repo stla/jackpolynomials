@@ -12,8 +12,8 @@ See README for examples and references.
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Math.Algebra.JackPol
-  ( jackPol', skewJackPol', zonalPol', schurPol', skewSchurPol'
-  , jackPol, skewJackPol, zonalPol, schurPol, skewSchurPol )
+  ( jackPol', skewJackPol', zonalPol', skewZonalPol', schurPol', skewSchurPol'
+  , jackPol, skewJackPol, zonalPol, skewZonalPol, schurPol, skewSchurPol )
   where
 import           Prelude 
   hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger)
@@ -121,6 +121,7 @@ jackPol n lambda alpha which
                         | otherwise =
                             jck' nu' (arr // [(_N_lambda_nu_m, Just ss)]) 
 
+-- | Skew Jack polynomial
 skewJackPol :: 
     (Eq a, AlgField.C a) 
   => Int       -- ^ number of variables
@@ -154,6 +155,7 @@ skewJackPol n lambda mu alpha which
                 (repeat coeff))
         ) (DM.assocs msCombo)
 
+-- | Skew Jack polynomial
 skewJackPol' :: 
      Int       -- ^ number of variables
   -> Partition -- ^ outer partition of the skew partition
@@ -163,14 +165,14 @@ skewJackPol' ::
   -> QSpray
 skewJackPol' = skewJackPol
 
--- | Symbolic zonal polynomial
+-- | Zonal polynomial
 zonalPol' 
   :: Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> QSpray
 zonalPol' = zonalPol
 
--- | Symbolic zonal polynomial
+-- | Zonal polynomial
 zonalPol :: (Eq a, AlgField.C a) 
   => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
@@ -178,14 +180,31 @@ zonalPol :: (Eq a, AlgField.C a)
 zonalPol n lambda = 
   jackPol n lambda (fromInteger 2) 'C'
 
--- | Symbolic Schur polynomial
+-- | Skew zonal polynomial
+skewZonalPol' 
+  :: Int       -- ^ number of variables
+  -> Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
+  -> QSpray
+skewZonalPol' = skewZonalPol
+
+-- | Zonal polynomial
+skewZonalPol :: (Eq a, AlgField.C a) 
+  => Int       -- ^ number of variables
+  -> Partition -- ^ outer partition of the skew partition
+  -> Partition -- ^ inner partition of the skew partition
+  -> Spray a
+skewZonalPol n lambda mu = 
+  skewJackPol n lambda mu (fromInteger 2) 'C'
+
+-- | Schur polynomial
 schurPol' 
   :: Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> QSpray 
 schurPol' = schurPol
 
--- | Symbolic Schur polynomial
+-- | Schur polynomial
 schurPol :: forall a. (Eq a, AlgRing.C a)
   => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
