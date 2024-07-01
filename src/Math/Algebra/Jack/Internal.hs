@@ -649,16 +649,14 @@ skewGelfandTsetlinPatterns lambda mu weight
     wMu = DF.sum mu'
     weight' = S.filter (/= 0) (S.fromList weight)
     wWeight = DF.sum weight'
-    ellWeight = S.length weight' 
     mu'' = mu' >< (S.replicate (ellLambda - ellMu) 0)
-    bs = S.replicate ellWeight (lambda' `S.index` 0) >< mu'' 
     recursiveFun :: Seq Int -> Seq Int -> [Seq (Seq Int)]
     recursiveFun kappa w =
       if ellW == 0 
         then
           [S.singleton mu']
         else 
-          if length parts == 0
+          if ellW < ellLambda && or (S.zipWith (<) mu' (S.drop ellW kappa))
             then []
             else 
               concatMap
@@ -668,8 +666,7 @@ skewGelfandTsetlinPatterns lambda mu weight
           ellW = S.length w 
           d = DF.sum kappa - w `S.index` (ellW - 1)
           lower = S.zipWith max mu'' (S.drop 1 kappa |> 0) 
-          upper = S.zipWith min kappa (S.drop (ellWeight - ellW) bs) 
-          parts = sandwichedPartitions d lower upper 
+          parts = sandwichedPartitions d lower kappa 
           hw = S.take (ellW - 1) w
     patterns = recursiveFun lambda' weight'
     indices = map (subtract 1) (scanl1 (+) (1 : map (min 1) weight))
