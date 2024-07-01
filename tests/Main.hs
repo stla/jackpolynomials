@@ -156,6 +156,20 @@ main = defaultMain $ testGroup
           | mu <- [[], [1], [2], [1,1], [2,1], [2,2]]
           ]
     assertEqual "" jackPoly expected
+
+  , testCase "Jack combination of skew Jack with Hall inner product" $ do
+    let
+      lambda = [3, 1, 1]
+      mu = [2, 1]
+      alpha = 2 :: Rational
+      n = 5
+      skewJackPoly = skewJackPol' n lambda mu alpha 'Q'
+      jackCombo = jackCombination alpha 'Q' skewJackPoly
+      jackQpoly = jackPol' n lambda alpha 'Q'
+      jackPpoly = jackPol' n mu alpha 'P'
+      jackPpolys = DM.mapWithKey (\nu _ -> jackPol' n nu alpha 'P') jackCombo
+      fs = DM.map (\poly -> hallInnerProduct jackQpoly (jackPpoly ^*^ poly) alpha) jackPpolys
+    assertEqual "" jackCombo fs
     
   , testCase "t-Schur polynomial" $ do
     let 
