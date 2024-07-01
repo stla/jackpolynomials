@@ -637,37 +637,66 @@ skewGelfandTsetlinPatterns lambda mu weight
       []
   | wWeight == 0 =
       [replicate (length weight + 1) lambda']
+  -- | not (lsp `dominates` sWeight) = 
+  --     [] 
   | otherwise =
       if any (== 0) weight 
         then map (\pattern -> [pattern `S.index` i | i <- indices]) patterns
         else map DF.toList patterns
   where
-    wWeight = sum weight
     lambda' = S.fromList lambda
+    ellLambda = S.length lambda'
     wLambda = DF.sum lambda'
     mu' = S.fromList mu
+    ellMu = S.length mu'
     wMu = DF.sum mu'
+    weight' = S.filter (/= 0) (S.fromList weight)
+    wWeight = DF.sum weight'
+    ellWeight = S.length weight' 
+    lsp = toPartitionUnsafe (lastSubPartition wWeight lambda)
+    sWeight = toPartitionUnsafe (DF.toList (S.reverse (S.sort weight')))
+    bs = S.replicate ellWeight (lambda' `S.index` 0) >< mu' >< (S.replicate (ellLambda - ellMu) 0)
+    muInit = S.deleteAt (ellMu - 1) mu'
+    muLast = mu' `S.index` (ellMu - 1) 
+    mu'' = mu' >< (S.replicate (ellLambda - ellMu) 0)
     recursiveFun :: Seq Int -> Seq Int -> [Seq (Seq Int)]
     recursiveFun kappa w =
-      if d == wMu 
+      if ellW == 0 
         then
-          if ellKappa >= ellMu && 
-              and (S.zipWith (>=) kappa mu') && 
-                ellKappa <= ellMu + 1 && 
-                  and (S.zipWith (>=) (mu') (S.drop 1 kappa))
-            then [S.fromList [mu', kappa]]
-            else [] 
+          [S.fromList [mu']]
+--          [S.fromList [mu', kappa >< (S.replicate (ellLambda - S.length kappa) 0)]]
+          -- if ellKappa >= ellMu && 
+          --     and (S.zipWith (>=) kappa mu') && 
+          --       ellKappa <= ellMu + 1 && 
+          --         and (S.zipWith (>=) (mu') (S.drop 1 kappa))
+          --   then [S.fromList [mu', kappa]]
+          --   else [] 
         else 
-          concatMap
-            (\nu -> [list |> kappa | list <- recursiveFun nu hw])
-              (sandwichedPartitions d (S.drop 1 kappa |> 0) kappa)
+          if length partoches == 0
+            then []
+            else 
+              concatMap
+                (\nu -> [list |> kappa | list <- recursiveFun nu hw])
+                  partoches
+              -- concatMap
+              --   (\nu -> [list |> (kappa >< (S.replicate (ellLambda - S.length kappa) 0)) | list <- recursiveFun nu hw])
+              --     partoches
+--              (sandwichedPartitions d (S.drop 1 kappa |> 0) kappa)
         where
-          ellKappa = S.length kappa
-          ellMu = S.length mu'
-          d = DF.sum kappa - w `S.index` 0
-          hw = S.drop 1 w
-    weight' = S.filter (/= 0) (S.fromList weight)
-    patterns = recursiveFun lambda' (S.reverse weight')
+          ellW = S.length w 
+          kappa' = kappa >< (S.replicate (ellLambda - S.length kappa) 0)
+          -- kappa''' = S.drop 1 kappa |> 0 
+          -- kappa'''' = S.take (ellMu - 1) (S.drop 1 kappa) |> 0
+          lower = (S.zipWith max mu'' (S.drop 1 kappa' |> 0)) -- >< (S.replicate (ellLambda - ellMu) 0)
+          upper = S.zipWith min kappa' (S.drop (ellWeight - ellW) bs) 
+          partoches = 
+            sandwichedPartitions 
+              d 
+                lower upper -- (upper >< (S.replicate (ellLambda - S.length upper) 0)) --  (S.drop (S.length bs - ellW - ellLambda) bs)) -- (S.take (S.length bs - ellW) bs)))
+          --ellKappa = S.length kappa
+          d = DF.sum kappa - w `S.index` (ellW - 1)
+          hw = S.take (ellW - 1) w
+    patterns = recursiveFun lambda' (weight')
     indices = map (subtract 1) (scanl1 (+) (1 : map (min 1) (reverse weight)))
 
 skewGelfandTsetlinPatternToTableau :: [Seq Int] -> [(Int, Seq Int)]
