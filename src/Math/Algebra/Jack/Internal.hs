@@ -609,9 +609,8 @@ skewMacdonaldPolynomialQ = _skewMacdonaldPolynomial phiLambdaMu
 
 sandwichedPartitions :: Int -> Seq Int -> Seq Int -> [Seq Int]
 sandwichedPartitions weight mu lambda = 
-  recursiveFun weight (lambda `S.index` 0) mu' lambda
+  recursiveFun weight (lambda `S.index` 0) mu lambda
   where
-    mu' = mu >< (S.replicate (S.length lambda - S.length mu) 0)
     recursiveFun :: Int -> Int -> Seq Int -> Seq Int -> [Seq Int]
     recursiveFun d h0 a_as b_bs
       | d < 0 || d < DF.sum a_as || d > DF.sum b_bs = []
