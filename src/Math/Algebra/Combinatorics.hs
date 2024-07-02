@@ -5,6 +5,10 @@ Copyright   : (c) Stéphane Laurent, 2024
 License     : GPL-3
 Maintainer  : laurent_step@outlook.fr
 
+This module provides some functions to compute Kostka numbers with a Jack
+parameter, possibly skew, some functions to enumerate semistandard tableaux,
+possibly skew, with a given shape and a given weight, and a function to 
+enumerate the Gelfand-Tsetlin patterns defined by a skew partition.
 -}
 
 module Math.Algebra.Combinatorics

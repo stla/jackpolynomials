@@ -156,4 +156,16 @@ Macdonald-Kostka polynomials
 
 * new function `qtSkewKostkaPolynomials`, to get skew qt-Kostka polynomials
 
+1.4.6.0
+-------
+* new module `Combinatorics` 
+
+* new function `semiStandardTableauxWithGivenShapeAndWeight`, to get all 
+semistandard tableaux with a given shape and a given weight
+
+* new function `skewTableauxWithGivenShapeAndWeight`, to get all 
+semistandard skew tableaux with a given shape and a given weight
+
+* new function `skewGelfandTsetlinPatterns`, to get Gelfand-Tsetlin patterns
+defined by a skew partition
 

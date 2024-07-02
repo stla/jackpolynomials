@@ -1,6 +1,6 @@
 {-|
 Module      : Math.Algebra.SymmetricPolynomials
-Description : Some utilities for Jack polynomials.
+Description : More symmetric polynomials.
 Copyright   : (c) Stéphane Laurent, 2024
 License     : GPL-3
 Maintainer  : laurent_step@outlook.fr
@@ -9,7 +9,7 @@ A Jack polynomial can have a very long expression in the canonical basis.
 A considerably shorter expression is obtained by writing the polynomial as 
 a linear combination of the monomial symmetric polynomials instead, which is 
 always possible since Jack polynomials are symmetric. This is the initial 
-motivation of this module. But now it contains more stuff dealing with 
+motivation of this module. But now it contains much more stuff dealing with 
 symmetric polynomials.
 -}
 {-# LANGUAGE FlexibleContexts    #-}
