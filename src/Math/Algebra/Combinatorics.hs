@@ -29,10 +29,6 @@ import           Data.Map.Strict                  (
                                                     Map
                                                   )
 import qualified Data.Map.Strict                  as DM
--- import           Data.Sequence                    ( 
---                                                     Seq (..)
---                                                   )
--- import qualified Data.Sequence                    as S
 import           Data.Tuple.Extra                 ( 
                                                     second  
                                                   )
@@ -95,7 +91,8 @@ symbolicKostkaNumbers weight
       _symbolicKostkaNumbers weight weight 'P'
 
 -- | Skew Kostka numbers \(K_{\lambda/\mu, \nu}(\alpha)\) with a given Jack 
--- parameter \(\alpha\) and a given skew partition \(\lambda/\mu\). 
+-- parameter \(\alpha\) and a given skew partition \(\lambda/\mu\). For \(\alpha=1\)
+-- these are the ordinary skew Kostka numbers.
 -- This returns a map whose keys represent the partitions \(\nu\).
 skewKostkaNumbers ::
      Rational  -- ^ Jack parameter

@@ -958,10 +958,12 @@ skewKostkaFoulkesPolynomial' ::
   -> QSpray
 skewKostkaFoulkesPolynomial' = skewKostkaFoulkesPolynomial 
 
--- | qt-Kostka polynomials, aka Kostka-Macdonald polynomials. They are usually
--- denoted by \(K(\lambda, \mu)\) for two integer partitions \(\lambda\) and
--- \(\mu\). For a given partition \(\mu\), the function returns the polynomials
--- \(K(\lambda, \mu)\) for all partitions \(\lambda\) of the same weight as 
+-- | qt-Kostka polynomials, aka Kostka-Macdonald polynomials. These are bivariate
+-- symmetric polynomials usually denoted by \(K_{\lambda, \mu}(q,t)\) for two 
+-- integer partitions \(\lambda\) and \(mu\), and \(q\) and \(t\) denote the 
+-- variables. One obtains the Kostka-Foulkes polynomials by substituting \(q\) 
+-- with \(0\). For a given partition \(\mu\), the function returns the polynomials
+-- \(K_{\lambda, \mu}(q,t)\) for all partitions \(\lambda\) of the same weight as 
 -- \(\mu\).
 qtKostkaPolynomials :: 
   (Eq a, AlgField.C a) 
@@ -998,22 +1000,26 @@ qtKostkaPolynomials mu
       )
       DM.empty psCombo
 
--- | qt-Kostka polynomials, aka Kostka-Macdonald polynomials. They are usually
--- denoted by \(K(\lambda, \mu)\) for two integer partitions \(\lambda\) and
--- \(mu\). For a given partition \(\mu\), the function returns the polynomials
--- \(K(\lambda, \mu)\) for all partitions \(\lambda\) of the same weight as 
+-- | qt-Kostka polynomials, aka Kostka-Macdonald polynomials. These are bivariate
+-- symmetric polynomials usually denoted by \(K_{\lambda, \mu}(q,t)\) for two 
+-- integer partitions \(\lambda\) and \(mu\), and \(q\) and \(t\) denote the 
+-- variables. One obtains the Kostka-Foulkes polynomials by substituting \(q\) 
+-- with \(0\). For a given partition \(\mu\), the function returns the polynomials
+-- \(K_{\lambda, \mu}(q,t)\) for all partitions \(\lambda\) of the same weight as 
 -- \(\mu\).
 qtKostkaPolynomials' :: 
      Partition 
   -> Map Partition QSpray
 qtKostkaPolynomials' = qtKostkaPolynomials
 
--- | Skew qt-Kostka polynomials. They are usually
--- denoted by \(K(\lambda/\mu, \nu)\) for two integer partitions \(\lambda\) and
--- \(\mu\) defining a skew partition and an integer partition \(\nu\). 
--- For given partitions \(\lambda\) and \(\mu\), the function returns the polynomials
--- \(K(\lambda/\mu, \nu)\) for all partitions \(\nu\) of the same weight as 
--- the skew partition.
+-- | Skew qt-Kostka polynomials. These are bivariate
+-- symmetric polynomials usually denoted by \(K_{\lambda/\mu, \nu}(q,t)\) for two 
+-- integer partitions \(\lambda\) and \(mu\) defining a skew partition, an 
+-- integer partition \(\nu\), and \(q\) and \(t\) denote the 
+-- variables. One obtains the skew Kostka-Foulkes polynomials by substituting \(q\) 
+-- with \(0\). For given partitions \(\lambda\) and \(\mu\), the function returns 
+-- the polynomials \(K_{\lambda/\mu, \nu}(q,t)\) for all partitions \(\nu\) of the 
+-- same weight as the skew partition.
 qtSkewKostkaPolynomials :: 
   (Eq a, AlgField.C a) 
   => Partition -- ^ outer partition of the skew partition
@@ -1039,12 +1045,14 @@ qtSkewKostkaPolynomials lambda mu
                 (DM.intersectionWith (.^) lrCoeffs (qtKostkaPolynomials nu'))
         )
 
--- | Skew qt-Kostka polynomials. They are usually
--- denoted by \(K(\lambda/\mu, \nu)\) for two integer partitions \(\lambda\) and
--- \(\mu\) defining a skew partition and an integer partition \(\nu\). 
--- For given partitions \(\lambda\) and \(\mu\), the function returns the polynomials
--- \(K(\lambda/\mu, \nu)\) for all partitions \(\nu\) of the same weight as 
--- the skew partition.
+-- | Skew qt-Kostka polynomials. These are bivariate
+-- symmetric polynomials usually denoted by \(K_{\lambda/\mu, \nu}(q,t)\) for two 
+-- integer partitions \(\lambda\) and \(mu\) defining a skew partition, an 
+-- integer partition \(\nu\), and \(q\) and \(t\) denote the 
+-- variables. One obtains the skew Kostka-Foulkes polynomials by substituting \(q\) 
+-- with \(0\). For given partitions \(\lambda\) and \(\mu\), the function returns 
+-- the polynomials \(K_{\lambda/\mu, \nu}(q,t)\) for all partitions \(\nu\) of the 
+-- same weight as the skew partition.
 qtSkewKostkaPolynomials' :: 
      Partition -- ^ outer partition of the skew partition
   -> Partition -- ^ inner partition of the skew partition
@@ -1052,7 +1060,9 @@ qtSkewKostkaPolynomials' ::
 qtSkewKostkaPolynomials' = qtSkewKostkaPolynomials
 
 -- | Hall-Littlewood polynomial of a given partition. This is a multivariate 
--- symmetric polynomial whose coefficients are polynomial in a single parameter.
+-- symmetric polynomial whose coefficients are polynomial in a single parameter
+-- usually denoted by \(t\). When substituting \(t\) with \(0\) in the 
+-- Hall-Littlewood \(P\)-polynomials, one obtains the Schur polynomials.
 hallLittlewoodPolynomial :: 
   (Eq a, AlgRing.C a) 
   => Int       -- ^ number of variables
@@ -1079,7 +1089,9 @@ hallLittlewoodPolynomial n lambda which
             (\mu c -> c *^ (HM.map constantSpray (schurPol n mu))) coeffs)
 
 -- | Hall-Littlewood polynomial of a given partition. This is a multivariate 
--- symmetric polynomial whose coefficients are polynomial in a single parameter.
+-- symmetric polynomial whose coefficients are polynomial in a single parameter
+-- usually denoted by \(t\). When substituting \(t\) with \(0\) in the 
+-- Hall-Littlewood \(P\)-polynomials, one obtains the Schur polynomials.
 hallLittlewoodPolynomial' :: 
      Int       -- ^ number of variables
   -> Partition -- ^ integer partition
@@ -1101,7 +1113,9 @@ transitionsSchurToHallLittlewood weight which
       _transitionMatrixHallLittlewoodSchur which weight
 
 -- | Skew Hall-Littlewood polynomial of a given skew partition. This is a multivariate 
--- symmetric polynomial whose coefficients are polynomial in a single parameter.
+-- symmetric polynomial whose coefficients are polynomial in a single parameter
+-- usually denoted by \(t\). When substituting \(t\) with \(0\) in the skew
+-- Hall-Littlewood \(P\)-polynomials, one obtains the skew Schur polynomials.
 skewHallLittlewoodPolynomial :: (Eq a, AlgRing.C a)
   => Int       -- ^ number of variables
   -> Partition -- ^ outer partition of the skew partition
@@ -1123,7 +1137,9 @@ skewHallLittlewoodPolynomial n lambda mu which
         else skewHallLittlewoodQ n (S.fromList lambda) (S.fromList mu)
   
 -- | Skew Hall-Littlewood polynomial of a given skew partition. This is a multivariate 
--- symmetric polynomial whose coefficients are polynomial in one parameter.
+-- symmetric polynomial whose coefficients are polynomial in a single parameter
+-- usually denoted by \(t\). When substituting \(t\) with \(0\) in the skew
+-- Hall-Littlewood \(P\)-polynomials, one obtains the skew Schur polynomials.
 skewHallLittlewoodPolynomial' :: 
      Int       -- ^ number of variables
   -> Partition -- ^ outer partition of the skew partition
@@ -1162,8 +1178,9 @@ _tSkewSchurPolynomial f n lambda mu = sumOfSprays sprays
       | (rho, c) <- chi_lambda_mu_rhos, c /= 0
       ]
 
--- | t-Schur polynomial. This is a multivariate 
--- symmetric polynomial whose coefficients are polynomial in a single parameter.
+-- | t-Schur polynomial. This is a multivariate symmetric polynomial whose 
+-- coefficients are polynomial in a single parameter usually denoted by \(t\).
+-- One obtains the Schur polynomials by substituting \(t\) with \(0\). 
 tSchurPolynomial ::
   (Eq a, AlgField.C a)
   => Int        -- ^ number of variables
@@ -1179,8 +1196,9 @@ tSchurPolynomial n lambda
         (\i j -> AlgRing.fromInteger i AlgField./ AlgRing.fromInteger j)
           n lambda []
 
--- | t-Schur polynomial. This is a multivariate 
--- symmetric polynomial whose coefficients are polynomial in one parameter.
+-- | t-Schur polynomial. This is a multivariate symmetric polynomial whose 
+-- coefficients are polynomial in a single parameter usually denoted by \(t\).
+-- One obtains the Schur polynomials by substituting \(t\) with \(0\). 
 tSchurPolynomial' ::
      Int        -- ^ number of variables
   -> Partition  -- ^ integer partition
@@ -1194,7 +1212,9 @@ tSchurPolynomial' n lambda
       _tSkewSchurPolynomial (%) n lambda []
 
 -- | Skew t-Schur polynomial of a given skew partition. This is a multivariate 
--- symmetric polynomial whose coefficients are polynomial in one parameter.
+-- symmetric polynomial whose coefficients are polynomial in a single parameter
+-- usually denoted by \(t\). One obtains the skew Schur polynomials by substituting 
+-- \(t\) with \(0\). 
 tSkewSchurPolynomial ::
   (Eq a, AlgField.C a)
   => Int       -- ^ number of variables
@@ -1212,7 +1232,9 @@ tSkewSchurPolynomial n lambda mu
           n lambda mu
 
 -- | Skew t-Schur polynomial of a given skew partition. This is a multivariate 
--- symmetric polynomial whose coefficients are polynomial in one parameter.
+-- symmetric polynomial whose coefficients are polynomial in a single parameter
+-- usually denoted by \(t\). One obtains the skew Schur polynomials by substituting 
+-- \(t\) with \(0\). 
 tSkewSchurPolynomial' ::
      Int       -- ^ number of variables
   -> Partition -- ^ outer partition of the skew partition
@@ -1221,7 +1243,8 @@ tSkewSchurPolynomial' ::
 tSkewSchurPolynomial' = _tSkewSchurPolynomial (%)
 
 -- | Macdonald polynomial. This is a symmetric multivariate polynomial 
--- depending on two parameters usually denoted by @q@ and @t@.
+-- depending on two parameters usually denoted by \(q\) and \(t\).
+-- Substituting \(q\) with \(0\) yields the Hall-Littlewood polynomials.
 --
 -- >>> macPoly = macdonaldPolynomial 3 [2, 1] 'P'
 -- >>> putStrLn $ prettySymmetricParametricQSpray ["q", "t"] macPoly
@@ -1248,7 +1271,8 @@ macdonaldPolynomial n lambda which
         else macdonaldPolynomialQ n lambda
 
 -- | Macdonald polynomial. This is a symmetric multivariate polynomial 
--- depending on two parameters usually denoted by @q@ and @t@.
+-- depending on two parameters usually denoted by \(q\) and \(t\).
+-- Substituting \(q\) with \(0\) yields the Hall-Littlewood polynomials.
 macdonaldPolynomial' ::  
      Int        -- ^ number of variables
   -> Partition  -- ^ integer partition
@@ -1257,7 +1281,8 @@ macdonaldPolynomial' ::
 macdonaldPolynomial' = macdonaldPolynomial
 
 -- | Skew Macdonald polynomial of a given skew partition. This is a multivariate 
--- symmetric polynomial with two parameters.
+-- symmetric polynomial with two parameters usually denoted by \(q\) and \(t\).
+-- Substituting \(q\) with \(0\) yields the skew Hall-Littlewood polynomials.
 skewMacdonaldPolynomial :: (Eq a, AlgField.C a)
   => Int       -- ^ number of variables
   -> Partition -- ^ outer partition of the skew partition
@@ -1279,7 +1304,8 @@ skewMacdonaldPolynomial n lambda mu which
         else skewMacdonaldPolynomialQ n lambda mu
 
 -- | Skew Macdonald polynomial of a given skew partition. This is a multivariate 
--- symmetric polynomial with two parameters.
+-- symmetric polynomial with two parameters usually denoted by \(q\) and \(t\).
+-- Substituting \(q\) with \(0\) yields the skew Hall-Littlewood polynomials.
 skewMacdonaldPolynomial' :: 
      Int       -- ^ number of variables
   -> Partition -- ^ outer partition of the skew partition
