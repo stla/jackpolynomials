@@ -43,6 +43,8 @@ module Math.Algebra.Jack.Internal
   , inverseKostkaNumbers
   , skewSymbolicJackInMSPbasis 
   , skewJackInMSPbasis
+  , _skewGelfandTsetlinPatterns
+  , _skewTableauxWithGivenShapeAndWeight
   )
   where
 import           Prelude 
@@ -408,7 +410,7 @@ macdonaldJinMSPbasis lambda =
 --         let nu' = fromPartition nu in
 --           (
 --             nu'
---           , skewGelfandTsetlinPatterns lambda mu nu'
+--           , _skewGelfandTsetlinPatterns lambda mu nu'
 --           )        
 --         ) nus))
 --     mapOfPairs = DM.map (map pairing) mapOfPatterns
@@ -496,7 +498,7 @@ _skewJackInMSPbasis func ccoeff which lambda mu =
         let nu' = fromPartition nu in
           (
             nu'
-          , skewGelfandTsetlinPatterns lambda mu nu'
+          , _skewGelfandTsetlinPatterns lambda mu nu'
           )        
         ) nus))
     mapOfPairs = DM.map (map pairing) mapOfPatterns
@@ -577,7 +579,7 @@ _skewMacdonaldPolynomial f n lambda mu = HM.unions hashMaps
         let nu' = fromPartition nu in
           (
             S.fromList nu'
-          , skewGelfandTsetlinPatterns lambda mu nu'
+          , _skewGelfandTsetlinPatterns lambda mu nu'
           )        
         ) nus))
     mapOfPairs = HM.map (map pairing) mapOfPatterns
@@ -627,8 +629,8 @@ sandwichedPartitions weight mu lambda =
             as = S.drop 1 a_as
             bs = S.drop 1 b_bs
 
-skewGelfandTsetlinPatterns :: Partition -> Partition -> [Int] -> [[Seq Int]]
-skewGelfandTsetlinPatterns lambda mu weight 
+_skewGelfandTsetlinPatterns :: Partition -> Partition -> [Int] -> [[Seq Int]]
+_skewGelfandTsetlinPatterns lambda mu weight 
   | any (< 0) weight =
       []
   | wWeight /= wLambda - wMu = 
@@ -693,11 +695,11 @@ skewGelfandTsetlinPatternToTableau pattern =
     skewTableau = 
       S.zip mu' (DF.foldl' growTableau startingTableau skewPartitions)
 
-skewTableauxWithGivenShapeAndWeight :: 
+_skewTableauxWithGivenShapeAndWeight :: 
   Partition -> Partition -> [Int] -> [[(Int, Seq Int)]]
-skewTableauxWithGivenShapeAndWeight lambda mu weight = 
+_skewTableauxWithGivenShapeAndWeight lambda mu weight = 
   map skewGelfandTsetlinPatternToTableau 
-      (skewGelfandTsetlinPatterns lambda mu weight) 
+      (_skewGelfandTsetlinPatterns lambda mu weight) 
 
 _skewKostkaFoulkesPolynomial :: 
   (Eq a, AlgRing.C a) => Partition -> Partition -> Partition -> Spray a
@@ -706,7 +708,7 @@ _skewKostkaFoulkesPolynomial lambda mu nu =
     then sumOfSprays sprays
     else zeroSpray
   where
-    tableaux = skewTableauxWithGivenShapeAndWeight lambda mu nu
+    tableaux = _skewTableauxWithGivenShapeAndWeight lambda mu nu
     word skewT = mconcat (map S.reverse (snd (unzip skewT))) 
     mm = lone' 1 
     sprays = map (mm . charge . word) tableaux
@@ -749,9 +751,9 @@ gtPatternToTableau pattern =
     growTableau j tableau skewPart =
       DF.foldr (S.adjust' (flip (|>) j)) tableau (skewPartitionRows skewPart)
 
-semiStandardTableauxWithGivenShapeAndWeight :: 
+_semiStandardTableauxWithGivenShapeAndWeight :: 
   Partition -> Partition -> [[Seq Int]]
-semiStandardTableauxWithGivenShapeAndWeight lambda mu =
+_semiStandardTableauxWithGivenShapeAndWeight lambda mu =
   if lambda' `dominates` mu'
     then map gtPatternToTableau (kostkaGelfandTsetlinPatterns lambda' mu')
     else []
@@ -838,7 +840,7 @@ _paths n lambda mu =
             in
       (
         nu''
-      , map pairing (skewGelfandTsetlinPatterns lambda' mu' nu'')
+      , map pairing (_skewGelfandTsetlinPatterns lambda' mu' nu'')
       )
     ) 
     nus)
@@ -946,7 +948,7 @@ _kostkaFoulkesPolynomial lambda mu =
     then sumOfSprays sprays
     else zeroSpray
   where
-    tableaux = semiStandardTableauxWithGivenShapeAndWeight lambda mu
+    tableaux = _semiStandardTableauxWithGivenShapeAndWeight lambda mu
     mm = lone' 1 
     sprays =
       map (mm . charge . (mconcat . (map S.reverse))) tableaux 

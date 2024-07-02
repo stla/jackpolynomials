@@ -1,5 +1,5 @@
 {-|
-Module      : Math.Algebra.Jack.SymmetricPolynomials
+Module      : Math.Algebra.SymmetricPolynomials
 Description : Some utilities for Jack polynomials.
 Copyright   : (c) Stéphane Laurent, 2024
 License     : GPL-3
@@ -56,11 +56,6 @@ module Math.Algebra.SymmetricPolynomials
   , symbolicHallInnerProduct
   , symbolicHallInnerProduct'
   , symbolicHallInnerProduct''
-  -- * Kostka numbers
-  , kostkaNumbers
-  , symbolicKostkaNumbers
-  , skewKostkaNumbers
-  , symbolicSkewKostkaNumbers
   -- * Kostka-Foulkes polynomials
   , kostkaFoulkesPolynomial
   , kostkaFoulkesPolynomial'
@@ -171,7 +166,6 @@ import           Math.Algebra.Hspray              (
                                                   , RatioOfQSprays
                                                   , constantRatioOfSprays
                                                   , zeroRatioOfSprays
-                                                  , unitRatioOfSprays
                                                   , prettyRatioOfQSpraysXYZ
                                                   , showNumSpray
                                                   , showQSpray
@@ -192,8 +186,6 @@ import           Math.Algebra.Jack.Internal       (
                                                   , sprayToMap
                                                   , comboToSpray 
                                                   , _inverseKostkaMatrix
-                                                  , _kostkaNumbers
-                                                  , _symbolicKostkaNumbers
                                                   , _inverseSymbolicKostkaMatrix
                                                   , _kostkaFoulkesPolynomial
                                                   , _skewKostkaFoulkesPolynomial
@@ -217,8 +209,6 @@ import           Math.Algebra.Jack.Internal       (
                                                   , macdonaldJinMSPbasis
                                                   , inverseKostkaNumbers
                                                   , skewSchurLRCoefficients
-                                                  , skewJackInMSPbasis
-                                                  , skewSymbolicJackInMSPbasis
                                                   )
 import           Math.Algebra.JackPol             ( 
                                                     schurPol
@@ -847,69 +837,6 @@ schurCombination' ::
   (Eq a, AlgMod.C Rational a, AlgRing.C a) 
   => Spray a -> Map Partition a
 schurCombination' = _schurCombination (flip (AlgMod.*>))
-
--- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) for a given weight of the 
--- partitions \(\lambda\) and \(\mu\) and a given Jack parameter 
--- \(\alpha\) (these are the standard Kostka numbers when
--- \(\alpha=1\)). This returns a map whose keys represent the 
--- partitions \(\lambda\) and the value attached to a partition \(\lambda\)
--- represents the map \(\mu \mapsto K_{\lambda,\mu}(\alpha)\) where the 
--- partition \(\mu\) is included in the keys of this map if and only if 
--- \(K_{\lambda,\mu}(\alpha) \neq 0\).
-kostkaNumbers :: 
-     Int      -- ^ weight of the partitions
-  -> Rational -- ^ Jack parameter
-  -> Map Partition (Map Partition Rational)
-kostkaNumbers weight alpha 
-  | weight < 0 = 
-      error "kostkaNumbers: negative weight."
-  | weight == 0 =
-      DM.singleton [] (DM.singleton [] 1)
-  | otherwise =
-      _kostkaNumbers weight weight alpha 'P'
-
--- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) with symbolic Jack parameter \(\alpha\) 
--- for a given weight of the partitions \(\lambda\) and \(\mu\). This returns a map 
--- whose keys represent the 
--- partitions \(\lambda\) and the value attached to a partition \(\lambda\)
--- represents the map \(\mu \mapsto K_{\lambda,\mu}(\alpha)\) where the 
--- partition \(\mu\) is included in the keys of this map if and only if 
--- \(K_{\lambda,\mu}(\alpha) \neq 0\).
-symbolicKostkaNumbers :: Int -> Map Partition (Map Partition RatioOfQSprays)
-symbolicKostkaNumbers weight
-  | weight < 0 = 
-      error "symbolicKostkaNumbers: negative weight."
-  | weight == 0 =
-      DM.singleton [] (DM.singleton [] unitRatioOfSprays)
-  | otherwise =
-      _symbolicKostkaNumbers weight weight 'P'
-
--- | Skew Kostka numbers \(K_{\lambda/\mu, \nu}(\alpha)\) with a given Jack 
--- parameter \(\alpha\) and a given skew partition \(\lambda/\mu\). 
--- This returns a map whose keys represent the partitions \(\nu\).
-skewKostkaNumbers ::
-     Rational  -- ^ Jack parameter
-  -> Partition -- ^ outer partition of the skew partition
-  -> Partition -- ^ inner partition of the skew partition
-  -> Map Partition Rational
-skewKostkaNumbers alpha lambda mu 
-  | not (isSkewPartition lambda mu) =
-     error "skewKostkaNumbers: invalid skew partition."
-  | otherwise = 
-      DM.map snd (skewJackInMSPbasis alpha 'P' lambda mu)
-
--- | Skew Kostka numbers \(K_{\lambda/\mu, \nu}(\alpha)\) with symbolic Jack 
--- parameter \(\alpha\) for a given skew partition \(\lambda/\mu\). 
--- This returns a map whose keys represent the partitions \(\nu\).
-symbolicSkewKostkaNumbers ::
-     Partition -- ^ outer partition of the skew partition
-  -> Partition -- ^ inner partition of the skew partition
-  -> Map Partition RatioOfQSprays
-symbolicSkewKostkaNumbers lambda mu 
-  | not (isSkewPartition lambda mu) =
-     error "symbolicSkewKostkaNumbers: invalid skew partition."
-  | otherwise = 
-      DM.map snd (skewSymbolicJackInMSPbasis 'P' lambda mu)
 
 -- | monomial symmetric polynomials in Jack polynomials basis
 msPolynomialsInJackBasis :: 

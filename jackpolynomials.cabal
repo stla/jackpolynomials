@@ -1,5 +1,5 @@
 name:                jackpolynomials
-version:             1.4.5.0
+version:             1.4.6.0
 synopsis:            Jack, zonal, Schur, and other symmetric polynomials
 description:         This library can compute Jack polynomials, zonal polynomials, Schur polynomials, flagged Schur polynomials, factorial Schur polynomials, t-Schur polynomials, Hall-Littlewood polynomials, Macdonald polynomials, Kostka-Foulkes polynomials, and Kostka-Macdonald polynomials.
 homepage:            https://github.com/stla/jackpolynomials#readme
@@ -18,6 +18,7 @@ library
   hs-source-dirs:      src
   exposed-modules:     Math.Algebra.Jack.HypergeoPQ
                      , Math.Algebra.SymmetricPolynomials
+                     , Math.Algebra.Combinatorics
                      , Math.Algebra.Jack
                      , Math.Algebra.JackPol
                      , Math.Algebra.JackSymbolicPol

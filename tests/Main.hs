@@ -8,6 +8,10 @@ import           Data.Matrix                    (
                                                   fromLists
                                                 )
 import Data.Ratio                               ( (%) )
+import           Math.Algebra.Combinatorics     ( 
+                                                  kostkaNumbers
+                                                , symbolicKostkaNumbers
+                                                )
 import Math.Algebra.Hspray                      ( FunctionLike (..)
                                                 , Spray, QSpray
                                                 , SimpleParametricSpray
@@ -58,8 +62,6 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , jackCombination
                                                 , jackSymbolicCombination
                                                 , jackSymbolicCombination'
-                                                , kostkaNumbers
-                                                , symbolicKostkaNumbers
                                                 , kostkaFoulkesPolynomial
                                                 , skewKostkaFoulkesPolynomial'
                                                 , hallLittlewoodPolynomial
