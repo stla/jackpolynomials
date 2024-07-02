@@ -240,6 +240,16 @@ its coefficients are not polynomials in the two parameters $q$ and $t$, but
 ratios of polynomials.
 
 
+### Combinatorics
+
+The module `Math.Algebra.Combinatorics` appeared in version 1.4.6.0.
+It provides some functions to compute Kostka numbers, possibly skew, 
+to enumerate the semistandard Young tableaux with a given shape and 
+a given weight, possibly skew, and to enumerate Gelfand-Tsetlin patterns.
+The reason to include this module in the package is that these functions
+are used to compute the symmetric polynomials.
+
+
 ## References
 
 * I.G. Macdonald. *Symmetric Functions and Hall Polynomials*. Oxford Mathematical Monographs. The Clarendon Press Oxford University Press, New York, second edition, 1995.
