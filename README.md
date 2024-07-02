@@ -13,7 +13,8 @@ applications in multivariate statistics. They are particular cases of
 allows to compute these polynomials. It also allows to compute other 
 symmetric polynomials: Kostka-Foulkes polynomials, t-Schur polynomials, 
 Hall-Littlewood polynomials, Kostka-Macdonald polynomials, and Macdonald 
-polynomials.
+polynomials. In addition, it provides some functions to compute Kostka 
+numbers and to enumerate Gelfand-Tsetlin patterns.
 
 ___
 

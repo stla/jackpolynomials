@@ -757,12 +757,8 @@ _semiStandardTableauxWithGivenShapeAndWeight ::
   Partition -> [Int] -> [[Seq Int]]
 _semiStandardTableauxWithGivenShapeAndWeight lambda weight =
   map gtPatternToTableau (kostkaGelfandTsetlinPatterns' lambda' weight)
-  -- if lambda' `dominates` mu'
-  --   then map gtPatternToTableau (kostkaGelfandTsetlinPatterns lambda' mu')
-  --   else []
   where
     lambda' = toPartitionUnsafe lambda
---    mu' = toPartitionUnsafe mu
 
 -- length lambda = length as = length bs; as <= bs; last bs >= length lambda
 flaggedSemiStandardYoungTableaux :: Partition -> [Int] -> [Int] -> [[[Int]]] 

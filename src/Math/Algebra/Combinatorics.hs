@@ -83,7 +83,9 @@ kostkaNumbers weight alpha
 -- represents the map \(\mu \mapsto K_{\lambda,\mu}(\alpha)\) where the 
 -- partition \(\mu\) is included in the keys of this map if and only if 
 -- \(K_{\lambda,\mu}(\alpha) \neq 0\).
-symbolicKostkaNumbers :: Int -> Map Partition (Map Partition RatioOfQSprays)
+symbolicKostkaNumbers :: 
+     Int  -- ^ weight of the partitions
+  -> Map Partition (Map Partition RatioOfQSprays)
 symbolicKostkaNumbers weight
   | weight < 0 = 
       error "symbolicKostkaNumbers: negative weight."
