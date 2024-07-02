@@ -3,6 +3,9 @@ import qualified Algebra.Additive               as AlgAdd
 import qualified Algebra.Module                 as AlgMod
 import qualified Data.HashMap.Strict            as HM
 import qualified Data.IntMap.Strict             as IM
+import           Data.List                      ( 
+                                                  (\\)
+                                                )
 import qualified Data.Map.Strict                as DM
 import           Data.Matrix                    ( 
                                                   fromLists
@@ -11,6 +14,8 @@ import Data.Ratio                               ( (%) )
 import           Math.Algebra.Combinatorics     ( 
                                                   kostkaNumbers
                                                 , symbolicKostkaNumbers
+                                                , skewKostkaNumbers
+                                                , skewGelfandTsetlinPatterns
                                                 )
 import Math.Algebra.Hspray                      ( FunctionLike (..)
                                                 , Spray, QSpray
@@ -124,7 +129,22 @@ main = defaultMain $ testGroup
   "Tests"
 
   [ 
-  testCase "Jack polynomial branching rule" $ do
+
+  testCase "Skew Kostka numbers are numbers of skew Gelfand-Tsetlin patterns" $ do
+    let
+      lambda = [5, 4, 3, 2, 1]
+      mu = [2, 2, 2, 1]
+      skNumbers = skewKostkaNumbers 1 lambda mu
+      nus = DM.keys skNumbers
+      ellGTpatterns = map (toRational . length . skewGelfandTsetlinPatterns lambda mu) nus
+      parts = map fromPartition (partitions (sum lambda - sum mu))
+      nus' = parts \\ nus
+      ellGTpatterns' = map (length . skewGelfandTsetlinPatterns lambda mu) nus'
+    assertEqual ""
+      (ellGTpatterns, ellGTpatterns')
+      (DM.elems skNumbers, replicate (length nus') 0)
+
+  , testCase "Jack polynomial branching rule" $ do
     let
       nx = 2
       ny = 2
