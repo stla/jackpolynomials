@@ -45,6 +45,7 @@ module Math.Algebra.Jack.Internal
   , skewJackInMSPbasis
   , _skewGelfandTsetlinPatterns
   , _skewTableauxWithGivenShapeAndWeight
+  , _semiStandardTableauxWithGivenShapeAndWeight
   )
   where
 import           Prelude 
@@ -131,6 +132,7 @@ import           Math.Combinat.Permutations                  ( permuteMultiset )
 import           Math.Combinat.Tableaux.GelfandTsetlin       (
                                                                 GT
                                                               , kostkaGelfandTsetlinPatterns
+                                                              , kostkaGelfandTsetlinPatterns'
                                                               , kostkaNumbersWithGivenLambda
                                                              )
 import           Math.Combinat.Tableaux.LittlewoodRichardson ( _lrRule )
@@ -752,14 +754,15 @@ gtPatternToTableau pattern =
       DF.foldr (S.adjust' (flip (|>) j)) tableau (skewPartitionRows skewPart)
 
 _semiStandardTableauxWithGivenShapeAndWeight :: 
-  Partition -> Partition -> [[Seq Int]]
-_semiStandardTableauxWithGivenShapeAndWeight lambda mu =
-  if lambda' `dominates` mu'
-    then map gtPatternToTableau (kostkaGelfandTsetlinPatterns lambda' mu')
-    else []
+  Partition -> [Int] -> [[Seq Int]]
+_semiStandardTableauxWithGivenShapeAndWeight lambda weight =
+  map gtPatternToTableau (kostkaGelfandTsetlinPatterns' lambda' weight)
+  -- if lambda' `dominates` mu'
+  --   then map gtPatternToTableau (kostkaGelfandTsetlinPatterns lambda' mu')
+  --   else []
   where
     lambda' = toPartitionUnsafe lambda
-    mu' = toPartitionUnsafe mu
+--    mu' = toPartitionUnsafe mu
 
 -- length lambda = length as = length bs; as <= bs; last bs >= length lambda
 flaggedSemiStandardYoungTableaux :: Partition -> [Int] -> [Int] -> [[[Int]]] 

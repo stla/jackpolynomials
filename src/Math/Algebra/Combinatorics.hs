@@ -14,9 +14,11 @@ module Math.Algebra.Combinatorics
   , symbolicKostkaNumbers
   , skewKostkaNumbers
   , symbolicSkewKostkaNumbers
-  -- *
-  , skewGelfandTsetlinPatterns
+  -- * Tableaux
+  , semiStandardTableauxWithGivenShapeAndWeight
   , skewTableauxWithGivenShapeAndWeight
+  -- * Gelfand-Tsetlin patterns
+  , skewGelfandTsetlinPatterns
   ) where
 import qualified Data.Foldable                    as DF
 import           Data.Map.Strict                  ( 
@@ -36,6 +38,7 @@ import           Math.Algebra.Hspray              (
                                                   )
 import           Math.Algebra.Jack.Internal       ( 
                                                     Partition
+                                                  , _isPartition
                                                   , _kostkaNumbers
                                                   , _symbolicKostkaNumbers
                                                   , isSkewPartition
@@ -43,6 +46,7 @@ import           Math.Algebra.Jack.Internal       (
                                                   , skewSymbolicJackInMSPbasis
                                                   , _skewGelfandTsetlinPatterns
                                                   , _skewTableauxWithGivenShapeAndWeight
+                                                  , _semiStandardTableauxWithGivenShapeAndWeight
                                                   )
 import           Math.Combinat.Tableaux.Skew      (
                                                     SkewTableau (..)
@@ -124,12 +128,32 @@ skewGelfandTsetlinPatterns lambda mu weight
       map (map DF.toList) (_skewGelfandTsetlinPatterns lambda mu weight)
 
 -- | Skew semistandard tableaux with a given shape (a skew partition) and
--- a given weight vector.
+-- a given weight vector. The weight is the vector whose @i@-th element is the 
+-- number of occurrences of @i@ in the tableau.
 skewTableauxWithGivenShapeAndWeight :: 
      Partition -- ^ outer partition of the skew partition
   -> Partition -- ^ inner partition of the skew partition
   -> [Int]     -- ^ weight
   -> [SkewTableau Int] 
-skewTableauxWithGivenShapeAndWeight lambda mu weight = 
-  map (SkewTableau . (map (second DF.toList)))
-    (_skewTableauxWithGivenShapeAndWeight lambda mu weight)
+skewTableauxWithGivenShapeAndWeight lambda mu weight 
+  | not (isSkewPartition lambda mu) =
+     error "skewTableauxWithGivenShapeAndWeight: invalid skew partition."
+  | otherwise = 
+      map (SkewTableau . (map (second DF.toList)))
+        (_skewTableauxWithGivenShapeAndWeight lambda mu weight)
+
+-- | Semistandard tableaux with a given shape (an integer partition) and
+-- a given weight vector. The weight is the vector whose @i@-th element is the 
+-- number of occurrences of @i@ in the tableau.
+semiStandardTableauxWithGivenShapeAndWeight :: 
+     Partition   -- ^ shape, integer partition
+  -> [Int]       -- ^ weight
+  -> [[[Int]]]
+semiStandardTableauxWithGivenShapeAndWeight lambda weight 
+  | not (_isPartition lambda) =
+      error "semiStandardTableauxWithGivenShapeAndWeight: invalid partition."
+  | any (< 0) weight =
+      []
+  | otherwise = 
+      map (map DF.toList) 
+        (_semiStandardTableauxWithGivenShapeAndWeight lambda weight)
