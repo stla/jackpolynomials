@@ -52,14 +52,19 @@ import           Math.Combinat.Tableaux.Skew      (
                                                     SkewTableau (..)
                                                   )
 
--- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) for a given weight of the 
+-- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) with Jack parameter, or 
+-- Kostka-Jack numbers, for a given weight of the 
 -- partitions \(\lambda\) and \(\mu\) and a given Jack parameter 
 -- \(\alpha\) (these are the standard Kostka numbers when
 -- \(\alpha=1\)). This returns a map whose keys represent the 
 -- partitions \(\lambda\) and the value attached to a partition \(\lambda\)
 -- represents the map \(\mu \mapsto K_{\lambda,\mu}(\alpha)\) where the 
 -- partition \(\mu\) is included in the keys of this map if and only if 
--- \(K_{\lambda,\mu}(\alpha) \neq 0\).
+-- \(K_{\lambda,\mu}(\alpha) \neq 0\). The Kostka-Jack number 
+-- \(K_{\lambda,\mu}(\alpha)\) is the coefficient of the monomial symmetric 
+-- polynomial \(m_\mu\) in the expression of the \(P\)-Jack polynomial 
+-- \(P_\lambda(\alpha)\) as a linear combination of monomial symmetric 
+-- polynomials.
 kostkaNumbers :: 
      Int      -- ^ weight of the partitions
   -> Rational -- ^ Jack parameter
@@ -93,7 +98,12 @@ symbolicKostkaNumbers weight
 -- | Skew Kostka numbers \(K_{\lambda/\mu, \nu}(\alpha)\) with a given Jack 
 -- parameter \(\alpha\) and a given skew partition \(\lambda/\mu\). For \(\alpha=1\)
 -- these are the ordinary skew Kostka numbers.
--- This returns a map whose keys represent the partitions \(\nu\).
+-- The function returns a map whose keys represent the partitions \(\nu\). 
+-- The skew Kostka-Jack number \(K_{\lambda/\mu, \nu}(\alpha)\)
+-- is the coefficient of the monomial symmetric 
+-- polynomial \(m_\nu\) in the expression of the skew \(P\)-Jack polynomial 
+-- \(P_{\lambda/\mu}(\alpha)\) as a linear combination of monomial symmetric 
+-- polynomials.
 skewKostkaNumbers ::
      Rational  -- ^ Jack parameter
   -> Partition -- ^ outer partition of the skew partition

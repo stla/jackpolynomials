@@ -552,7 +552,7 @@ _hallInnerProduct psCombinationFunc multabFunc spray1 spray2 alpha =
     f lambda coeff1 coeff2 = 
       multabFunc (zlambda' lambda) (coeff1 AlgRing.* coeff2)
 
--- | Hall inner product with Jack parameter, aka Jack-scalar product. It 
+-- | Hall inner product with Jack parameter, aka Jack scalar product. It 
 -- makes sense only for symmetric sprays, and the symmetry is not checked. 
 hallInnerProduct :: 
   (Eq a, AlgField.C a)
@@ -562,7 +562,7 @@ hallInnerProduct ::
   -> a 
 hallInnerProduct = _hallInnerProduct psCombination (AlgRing.*)
 
--- | Hall inner product with parameter. Same as @hallInnerProduct@ but 
+-- | Hall inner product with Jack parameter. Same as @hallInnerProduct@ but 
 -- with other constraints on the base ring of the sprays.
 hallInnerProduct' :: 
   (Eq a, AlgMod.C Rational a, AlgRing.C a)
@@ -572,7 +572,7 @@ hallInnerProduct' ::
   -> a 
 hallInnerProduct' = _hallInnerProduct psCombination' (AlgRing.*)
 
--- | Hall inner product with parameter. Same as @hallInnerProduct@ but 
+-- | Hall inner product with Jack parameter. Same as @hallInnerProduct@ but 
 -- with other constraints on the base ring of the sprays. It is applicable 
 -- to @Spray Int@ sprays.
 hallInnerProduct'' :: 
@@ -590,7 +590,7 @@ hallInnerProduct'' spray1 spray2 alpha =
     qspray1 = asQSpray spray1
     qspray2 = asQSpray spray2
 
--- | Hall inner product with parameter for parametric sprays, because the
+-- | Hall inner product with Jack parameter for parametric sprays, because the
 -- type of the parameter in @hallInnerProduct@ is strange. For example, a
 -- @ParametricQSpray@ spray is a @Spray RatioOfQSprays@ spray, and it makes
 -- more sense to compute the Hall product with a @Rational@ parameter then 
@@ -609,7 +609,7 @@ hallInnerProduct''' ::
   -> b 
 hallInnerProduct''' = _hallInnerProduct psCombination (AlgMod.*>) 
 
--- | Hall inner product with parameter for parametric sprays. Same as 
+-- | Hall inner product with Jack parameter for parametric sprays. Same as 
 -- @hallInnerProduct'''@ but with other constraints on the types. It is 
 -- applicable to @SimpleParametricQSpray@ sprays, while @hallInnerProduct'''@ 
 -- is not.
@@ -631,7 +631,7 @@ _symbolicHallInnerProduct func spray1 spray2 = func spray1' spray2' (lone 1)
     spray1' = HM.map constantSpray spray1
     spray2' = HM.map constantSpray spray2
 
--- | Hall inner product with symbolic parameter. See README for some examples.
+-- | Hall inner product with symbolic Jack parameter. See README for some examples.
 symbolicHallInnerProduct :: 
   (Eq a, AlgField.C a) => Spray a -> Spray a -> Spray a
 symbolicHallInnerProduct =
@@ -641,14 +641,14 @@ symbolicHallInnerProduct =
         (_psCombination (\spray_a r -> fromRational r *^ spray_a)) (^*^)
     ) 
 
--- | Hall inner product with symbolic parameter. Same as @symbolicHallInnerProduct@ 
+-- | Hall inner product with symbolic Jack parameter. Same as @symbolicHallInnerProduct@ 
 -- but with other type constraints.
 symbolicHallInnerProduct' :: 
   (Eq a, AlgMod.C Rational (Spray a), AlgRing.C a) 
   => Spray a -> Spray a -> Spray a
 symbolicHallInnerProduct' =  _symbolicHallInnerProduct (hallInnerProduct')
 
--- | Hall inner product with symbolic parameter. Same as @symbolicHallInnerProduct@ 
+-- | Hall inner product with symbolic Jack parameter. Same as @symbolicHallInnerProduct@ 
 -- but with other type constraints. It is applicable to @Spray Int@ sprays.
 symbolicHallInnerProduct'' :: forall a. Real a => Spray a -> Spray a -> QSpray
 symbolicHallInnerProduct'' spray1 spray2 = 
