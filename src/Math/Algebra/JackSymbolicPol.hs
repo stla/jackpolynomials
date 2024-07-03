@@ -5,14 +5,21 @@ Copyright   : (c) Stéphane Laurent, 2024
 License     : GPL-3
 Maintainer  : laurent_step@outlook.fr
 
-Computation of Jack polynomials with a symbolic Jack parameter. 
-See README for examples and references.
+Computation of Jack polynomials and skew Jack polynomials with a 
+symbolic Jack parameter. See README for examples and references.
 -}
 
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Math.Algebra.JackSymbolicPol
-  ( jackSymbolicPol, jackSymbolicPol', skewJackSymbolicPol, skewJackSymbolicPol' )
+  ( 
+  -- * Jack polynomial with symbolic Jack parameter
+    jackSymbolicPol
+  , jackSymbolicPol'
+  -- * Skew Jack polynomial with symbolic Jack parameter
+  , skewJackSymbolicPol
+  , skewJackSymbolicPol'
+  )
   where
 import           Prelude 
   hiding ((/), (^), (*>), product, fromIntegral, fromInteger, recip)
@@ -40,18 +47,18 @@ import           Math.Algebra.Hspray        ( FunctionLike (..), (.^)
 import           Math.Combinat.Permutations ( permuteMultiset )
 
 
--- | Jack polynomial with symbolic Jack parameter
+-- | Jack polynomial with a symbolic Jack parameter.
 jackSymbolicPol' 
   :: Int       -- ^ number of variables
-  -> Partition -- ^ partition of integers
+  -> Partition -- ^ integer partition 
   -> Char      -- ^ which Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> ParametricQSpray
 jackSymbolicPol' = jackSymbolicPol
 
--- | Jack polynomial with symbolic Jack parameter
+-- | Jack polynomial with a symbolic Jack parameter.
 jackSymbolicPol :: forall a. (Eq a, AlgField.C a) 
   => Int       -- ^ number of variables
-  -> Partition -- ^ partition of integers
+  -> Partition -- ^ integer partition 
   -> Char      -- ^ which Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> ParametricSpray a
 jackSymbolicPol n lambda which =
@@ -118,6 +125,7 @@ jackSymbolicPol n lambda which =
                         | otherwise =
                             jck' nu' (arr // [(_N_lambda_nu_m, Just ss)]) 
 
+-- | Skew Jack polynomial with a symbolic Jack parameter.
 skewJackSymbolicPol :: 
     (Eq a, AlgField.C a) 
   => Int       -- ^ number of variables
@@ -150,6 +158,7 @@ skewJackSymbolicPol n lambda mu which
                 (repeat rOS))
         ) (DM.assocs msCombo)
 
+-- | Skew Jack polynomial with a symbolic Jack parameter.
 skewJackSymbolicPol' :: 
      Int       -- ^ number of variables
   -> Partition -- ^ outer partition of the skew partition

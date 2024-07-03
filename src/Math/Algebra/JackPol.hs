@@ -5,15 +5,31 @@ Copyright   : (c) Stéphane Laurent, 2024
 License     : GPL-3
 Maintainer  : laurent_step@outlook.fr
 
-Computation of symbolic Jack polynomials, zonal polynomials, Schur polynomials and skew Schur polynomials. 
+Computation of Jack polynomials, skew Jack polynomials, zonal polynomials, 
+skew zonal polynomials, Schur polynomials and skew Schur polynomials. 
 See README for examples and references.
 -}
 
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Math.Algebra.JackPol
-  ( jackPol', skewJackPol', zonalPol', skewZonalPol', schurPol', skewSchurPol'
-  , jackPol, skewJackPol, zonalPol, skewZonalPol, schurPol, skewSchurPol )
+  ( 
+  -- * Jack and skew Jack polynomials
+    jackPol
+  , jackPol'
+  , skewJackPol
+  , skewJackPol'
+  -- * Zonal and skew zonal polynomials
+  , zonalPol
+  , zonalPol'
+  , skewZonalPol
+  , skewZonalPol'
+  -- * Schur and skew Schur polynomials
+  , schurPol
+  , schurPol'
+  , skewSchurPol 
+  , skewSchurPol'
+  )
   where
 import           Prelude 
   hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger)

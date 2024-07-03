@@ -12,7 +12,21 @@ See README for examples and references.
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Math.Algebra.Jack
-  (Partition, jack', zonal', schur', skewSchur', jack, zonal, schur, skewSchur)
+  (
+  -- * The `Partition` type  
+    Partition
+  -- * Evaluation of Jack polynomials
+  , jack
+  , jack'
+  -- * Evaluation of zonal polynomials
+  , zonal
+  , zonal'
+  -- * Evaluation of Schur and skew Schur polynomials
+  , schur
+  , schur'
+  , skewSchur
+  , skewSchur'
+  )
   where
 import           Prelude 
   hiding ((*), (+), (-), (/), (^), (*>), product, fromIntegral, fromInteger)
