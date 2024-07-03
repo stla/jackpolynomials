@@ -38,19 +38,19 @@ import           Math.Algebra.Hspray        ( FunctionLike (..), (.^)
                                             , fromList )
 import           Math.Combinat.Permutations ( permuteMultiset )
 
--- | Jack polynomial
+-- | Jack polynomial.
 jackPol' 
   :: Int       -- ^ number of variables
-  -> Partition -- ^ partition of integers
+  -> Partition -- ^ integer partition 
   -> Rational  -- ^ Jack parameter
   -> Char      -- ^ which Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> QSpray
 jackPol' = jackPol
 
--- | Jack polynomial
+-- | Jack polynomial.
 jackPol :: forall a. (Eq a, AlgField.C a)
   => Int       -- ^ number of variables
-  -> Partition -- ^ partition of integers
+  -> Partition -- ^ integer partition 
   -> a         -- ^ Jack parameter
   -> Char      -- ^ which Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> Spray a
@@ -121,7 +121,7 @@ jackPol n lambda alpha which
                         | otherwise =
                             jck' nu' (arr // [(_N_lambda_nu_m, Just ss)]) 
 
--- | Skew Jack polynomial
+-- | Skew Jack polynomial.
 skewJackPol :: 
     (Eq a, AlgField.C a) 
   => Int       -- ^ number of variables
@@ -155,7 +155,7 @@ skewJackPol n lambda mu alpha which
                 (repeat coeff))
         ) (DM.assocs msCombo)
 
--- | Skew Jack polynomial
+-- | Skew Jack polynomial.
 skewJackPol' :: 
      Int       -- ^ number of variables
   -> Partition -- ^ outer partition of the skew partition
@@ -165,14 +165,16 @@ skewJackPol' ::
   -> QSpray
 skewJackPol' = skewJackPol
 
--- | Zonal polynomial
+-- | Zonal polynomial. The zonal polynomials are the 
+-- Jack \(C\)-polynomials with Jack parameter \(\alpha=2\).
 zonalPol' 
   :: Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> QSpray
 zonalPol' = zonalPol
 
--- | Zonal polynomial
+-- | Zonal polynomial. The zonal polynomials are the 
+-- Jack \(C\)-polynomials with Jack parameter \(\alpha=2\).
 zonalPol :: (Eq a, AlgField.C a) 
   => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
@@ -180,7 +182,7 @@ zonalPol :: (Eq a, AlgField.C a)
 zonalPol n lambda = 
   jackPol n lambda (fromInteger 2) 'C'
 
--- | Skew zonal polynomial
+-- | Skew zonal polynomial.
 skewZonalPol' 
   :: Int       -- ^ number of variables
   -> Partition -- ^ outer partition of the skew partition
@@ -188,7 +190,7 @@ skewZonalPol'
   -> QSpray
 skewZonalPol' = skewZonalPol
 
--- | Zonal polynomial
+-- | Skew zonal polynomial.
 skewZonalPol :: (Eq a, AlgField.C a) 
   => Int       -- ^ number of variables
   -> Partition -- ^ outer partition of the skew partition
@@ -197,14 +199,16 @@ skewZonalPol :: (Eq a, AlgField.C a)
 skewZonalPol n lambda mu = 
   skewJackPol n lambda mu (fromInteger 2) 'C'
 
--- | Schur polynomial
+-- | Schur polynomial. The Schur polynomials are the 
+-- Jack \(P\)-polynomials with Jack parameter \(\alpha=1\).
 schurPol' 
   :: Int       -- ^ number of variables
   -> Partition -- ^ partition of integers
   -> QSpray 
 schurPol' = schurPol
 
--- | Schur polynomial
+-- | Schur polynomial. The Schur polynomials are the 
+-- Jack \(P\)-polynomials with Jack parameter \(\alpha=1\).
 schurPol :: forall a. (Eq a, AlgRing.C a)
   => Int       -- ^ number of variables
   -> Partition -- ^ partition of integers

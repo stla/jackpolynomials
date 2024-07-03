@@ -31,7 +31,7 @@ import           Math.Algebra.Jack.Internal ( _N, jackCoeffC
                                             , isSkewPartition, _fromInt )
 import Math.Algebra.Hspray                  ( (.^) )
 
--- | Evaluation of Jack polynomial
+-- | Evaluation of a Jack polynomial.
 jack' 
   :: [Rational] -- ^ values of the variables
   -> Partition  -- ^ partition of integers
@@ -40,7 +40,7 @@ jack'
   -> Rational
 jack' = jack
 
--- | Evaluation of Jack polynomial
+-- | Evaluation of a Jack polynomial.
 jack :: forall a. (Eq a, AlgField.C a)
   => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers
@@ -112,28 +112,32 @@ jack x@(x0:_) lambda alpha which =
                         | otherwise =
                             jck' nu' (arr // [(_N_lambda_nu_m, Just ss)]) 
 
--- | Evaluation of zonal polynomial
+-- | Evaluation of a zonal polynomial. The zonal polynomials are the 
+-- Jack \(C\)-polynomials with Jack parameter \(\alpha=2\).
 zonal' 
   :: [Rational] -- ^ values of the variables
-  -> Partition  -- ^ partition of integers
+  -> Partition  -- ^ integer partition 
   -> Rational
 zonal' = zonal
 
--- | Evaluation of zonal polynomial
+-- | Evaluation of a zonal polynomial. The zonal polynomials are the 
+-- Jack \(C\)-polynomials with Jack parameter \(\alpha=2\).
 zonal :: (Eq a, AlgField.C a)
   => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers
   -> a
 zonal x lambda = jack x lambda (fromInteger 2) 'C'
 
--- | Evaluation of Schur polynomial
+-- | Evaluation of a Schur polynomial. The Schur polynomials are the 
+-- Jack \(P\)-polynomials with Jack parameter \(\alpha=1\).
 schur'
   :: [Rational] -- ^ values of the variables
-  -> Partition  -- ^ partition of integers 
+  -> Partition  -- ^ integer partition 
   -> Rational
 schur' = schur
 
--- | Evaluation of Schur polynomial
+-- | Evaluation of a Schur polynomial. The Schur polynomials are the 
+-- Jack \(P\)-polynomials with Jack parameter \(\alpha=1\).
 schur :: forall a. AlgRing.C a 
   => [a]       -- ^ values of the variables
   -> Partition -- ^ partition of integers 
