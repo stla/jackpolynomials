@@ -18,14 +18,20 @@ numbers and to enumerate Gelfand-Tsetlin patterns.
 
 ___
 
-Evaluation of the Jack polynomial with parameter `2` associated to the integer 
-partition `[3, 1]`, at `x1 = 1` and `x2 = 1`:
+Evaluation of the Jack polynomial with Jack parameter `2`, associated to the 
+integer partition `[3, 1]`, at `x1 = 1` and `x2 = 1`:
 
 ```haskell
 import Math.Algebra.Jack
 jack' [1, 1] [3, 1] 2 'J'
 -- 48 % 1
 ```
+
+The last argument, here `'J'`, is used to specify the choice of the Jack 
+polynomial, because there are four possible Jack polynomials for a given 
+Jack parameter and a given integer partition: the $J$-polynomial, 
+the $P$-polynomial, the $Q$-polynomial and the $C$-polynomial, each 
+corresponding to a certain normalization. 
 
 The non-evaluated Jack polynomial:
 
@@ -78,7 +84,7 @@ objects.
 Note that if you use the function `jackSymbolicPol` to get a 
 `ParametricSpray Double` object in the output, it is not guaranted that you 
 will visually get some polynomials in the Jack parameter for the coefficients, 
-because the arithmetic operations are not exact with the `Double` type
+because the arithmetic operations are not exact with the `Double` type.
 
 
 ### Showing symmetric polynomials
@@ -118,9 +124,9 @@ than the function with the same name in the **hspray** package.
 ### Hall inner product
 
 As of version 1.4.1.0, the package provides an implementation of the Hall 
-inner product with parameter. It is known that the Jack polynomials with 
-Jack parameter $\alpha$ are orthogonal for the Hall inner product with 
-parameter $\alpha$. 
+inner product with Jack parameter, aka the Jack scalar product. It is known 
+that the Jack polynomials with Jack parameter $\alpha$ are orthogonal for 
+the Hall inner product with Jack parameter $\alpha$. 
 
 There is a function `hallInnerProduct` as well as a function 
 `symbolicHallInnerProduct`. The latter allows to get the Hall inner product 
