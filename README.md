@@ -9,12 +9,14 @@
 
 Schur polynomials have applications in combinatorics and zonal polynomials have
 applications in multivariate statistics. They are particular cases of
-[Jack polynomials](https://en.wikipedia.org/wiki/Jack_function). This package
+[Jack polynomials](https://en.wikipedia.org/wiki/Jack_function), which are 
+multivariate symmetric polynomials. This package
 allows to compute these polynomials. It also allows to compute other 
-symmetric polynomials: Kostka-Foulkes polynomials, t-Schur polynomials, 
-Hall-Littlewood polynomials, Kostka-Macdonald polynomials, and Macdonald 
-polynomials. In addition, it provides some functions to compute Kostka 
-numbers and to enumerate Gelfand-Tsetlin patterns.
+symmetric polynomials: t-Schur polynomials, 
+Hall-Littlewood polynomials, and Macdonald 
+polynomials. In addition, it provides some functions to compute Kostka-Jack 
+numbers, Kostka-Foulkes polynomials, Kostka-Macdonald polynomials, and to 
+enumerate Gelfand-Tsetlin patterns.
 
 ___
 
@@ -203,7 +205,7 @@ polynomials implemented in the package, returned by the
 `hallLittlewoodPolynomial` function, are represented by some sprays of type 
 `SimpleParametricSpray a`, an alias of the type `Spray (Spray a)`. 
 
-When the value of the parameter of a Hall-Littlewood polynomial is `0`, then 
+When the value of the parameter of a Hall-Littlewood $P$-polynomial is `0`, then 
 this polynomial is the Schur polynomial of the given partition.
 
 ```haskell
@@ -225,9 +227,9 @@ hlPolyAt0 == schurPol' 3 lambda
 As of version 1.4.5.0, the package can compute some Macdonald polynomials. 
 The Macdonald polynomials are symmetric multivariate polynomials whose 
 coefficients depend on two parameters usually denoted by $q$ and $t$. 
-Let's consider for example the Macdonald P-polynomial. It generalizes 
-the Hall-Littlewood P-polynomial: the Hall-Littlewood P-polynomial with 
-parameter $t$ is obtained from the Macdonald P-polynomial by substituting
+Let's consider for example the Macdonald $P$-polynomial. It generalizes 
+the Hall-Littlewood $P$-polynomial: the Hall-Littlewood $P$-polynomial with 
+parameter $t$ is obtained from the Macdonald $P$-polynomial by substituting
 the parameter $q$ with $0$.
 
 ```haskell
@@ -243,7 +245,7 @@ asSimpleParametricSpray poly == hlPoly
 ```
 
 We use `asSimpleParametricSpray` because, contrary to the Hall-Littlewood 
-J-polynomial, the Macdonald J-polynomial is not represented by a 
+$P$-polynomial, the Macdonald $P$-polynomial is not represented by a 
 `SimpleParametricSpray a` spray but by a `ParametricSpray a` spray, because 
 its coefficients are not polynomials in the two parameters $q$ and $t$, but 
 ratios of polynomials.
@@ -252,7 +254,7 @@ ratios of polynomials.
 ### Combinatorics
 
 The module `Math.Algebra.Combinatorics` appeared in version 1.4.6.0.
-It provides some functions to compute Kostka numbers, possibly skew, 
+It provides some functions to compute Kostka-Jack numbers, possibly skew, 
 to enumerate the semistandard Young tableaux with a given shape and 
 a given weight, possibly skew, and to enumerate Gelfand-Tsetlin patterns.
 The reason to include this module in the package is that these functions
