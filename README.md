@@ -47,6 +47,9 @@ evalSpray jp [1, 1]
 
 The first argument, here `2`, is the number of variables of the polynomial.
 
+Jack polynomials are generalized by skew Jack polynomials, which are available 
+in the package as of version `1.4.5.0`.
+
 
 ### Symbolic Jack parameter
 
