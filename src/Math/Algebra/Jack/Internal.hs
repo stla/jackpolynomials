@@ -17,6 +17,7 @@ module Math.Algebra.Jack.Internal
   , isSkewPartition
   , sprayToMap
   , comboToSpray
+  , _kostkaNumbersWithGivenLambda
   , _kostkaNumbers
   , _inverseKostkaMatrix
   , _symbolicKostkaNumbers
@@ -68,6 +69,7 @@ import           Data.List                                   (
                                                              , foldl'
                                                              , uncons
                                                              , tails
+                                                             , elem
                                                              )
 import           Data.List.Extra                             ( 
                                                                unsnoc
@@ -1012,6 +1014,69 @@ _eSymbolic lambda =
   where
     alpha = lone 1
     _n mu = sum (zipWith (P.*) [0 .. ] (fromPartition mu))
+
+_kostkaNumbersWithGivenLambda :: 
+  forall a. (AlgField.C a) 
+  => Int -> Partition -> a -> Char -> Map Partition a
+_kostkaNumbersWithGivenLambda nv lambda alpha which = rec (length mus')
+  where
+    kN1 = case which of
+      'J' -> recip (jackCoeffP lambda alpha)
+      'P' -> AlgRing.one
+      'C' -> jackCoeffC lambda alpha / jackCoeffP lambda alpha
+      'Q' -> jackCoeffQ lambda alpha / jackCoeffP lambda alpha
+      _   -> error "_kostkaNumbersWithGivenLambda: should not happen."
+    mu_r_plus :: 
+      Seq Int -> (Int, Int) -> Int -> (Partition, (Int, Int), Int)
+    mu_r_plus mu pair@(i, j) r = 
+      (
+          DF.toList $ S.reverse $ S.sort $ 
+            S.adjust' ((P.+) r) i (S.adjust' (subtract r) j mu)
+        , pair
+        , r
+      )
+    mu_r_plus' :: 
+      Seq Int -> (Int, Int) -> Int -> (Partition, (Int, Int), Int)
+    mu_r_plus' mu pair@(i, j) r = 
+      (
+          DF.toList $ S.reverse $ S.sort $ 
+            S.deleteAt j (S.adjust' ((P.+) r) i mu)
+        , pair
+        , r
+      )
+    lambda' = toPartitionUnsafe lambda
+    mus' = reverse $ 
+      filter (\part -> partitionWidth part <= nv) (dominatedPartitions lambda')
+    _e_lambda_alpha = _e lambda' alpha
+    rec :: Int -> Map Partition a
+    rec n = if n == 1
+      then DM.singleton lambda kN1
+      else DM.insert mu kNumber previous 
+      where
+        previous = rec (n - 1)
+        parts = DM.keys previous
+        mu' = mus' !! (n - 1)
+        mu = fromPartition mu'
+        _e_mu_alpha = _e mu' alpha
+        ee = _e_lambda_alpha - _e_mu_alpha
+        mu'' = S.fromList mu
+        l = S.length mu''
+        pairs = [(i, j) | i <- [0 .. l-2], j <- [i+1 .. l-1]]
+        triplets = 
+          filter ((\nu -> nu `elem` parts) . fst3)
+            (
+              [mu_r_plus mu'' (i, j) r 
+                      | (i, j) <- pairs, r <- [1 .. S.index mu'' j - 1]]
+              ++
+              [mu_r_plus' mu'' (i, j) (S.index mu'' j) 
+                      | (i, j) <- pairs]
+            )
+        kNumber = 
+          AlgAdd.sum [
+              fromIntegral (S.index mu'' i P.- S.index mu'' j P.+ 2 P.* r) 
+              * (previous DM.! nu) / ee 
+              | (nu, (i, j), r) <- triplets
+            ]
 
 _inverseKostkaMatrix :: 
   (Eq a, AlgField.C a) 
