@@ -72,8 +72,7 @@ import           Data.List                                   (
                                                              , tails
                                                              )
 import           Data.List.Extra                             ( 
-                                                               unsnoc
-                                                             , drop1
+                                                               drop1
                                                              )
 import           Data.List.Index                             ( iconcatMap )
 import           Data.Map.Strict                             ( Map )
@@ -124,7 +123,6 @@ import           Math.Combinat.Partitions.Integer            (
                                                              , dualPartition
                                                              , partitions
                                                              , partitions'
-                                                             , dominates
                                                              , dominatedPartitions
                                                              , partitionWidth
                                                              , toPartitionUnsafe

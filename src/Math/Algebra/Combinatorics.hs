@@ -14,7 +14,9 @@ enumerate the Gelfand-Tsetlin patterns defined by a skew partition.
 module Math.Algebra.Combinatorics
   (
   -- * Kostka numbers
-    kostkaNumbers
+    kostkaNumbersWithGivenLambda
+  , kostkaNumbers
+  , symbolicKostkaNumbersWithGivenLambda
   , symbolicKostkaNumbers
   , skewKostkaNumbers
   , symbolicSkewKostkaNumbers
@@ -41,6 +43,8 @@ import           Math.Algebra.Jack.Internal       (
                                                   , _isPartition
                                                   , _kostkaNumbers
                                                   , _symbolicKostkaNumbers
+                                                  , _kostkaNumbersWithGivenLambda
+                                                  , _symbolicKostkaNumbersWithGivenLambda
                                                   , isSkewPartition
                                                   , skewJackInMSPbasis
                                                   , skewSymbolicJackInMSPbasis
@@ -51,6 +55,30 @@ import           Math.Algebra.Jack.Internal       (
 import           Math.Combinat.Tableaux.Skew      (
                                                     SkewTableau (..)
                                                   )
+
+-- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) with Jack parameter, or 
+-- Kostka-Jack numbers, for a given integer partition \(\lambda\) and a 
+-- given Jack parameter \(\alpha\) (these are the ordinary Kostka numbers when
+-- \(\alpha=1\)). This returns a map whose keys represent the 
+-- partitions \(\mu\) and the value attached to a partition \(\mu\) is the
+-- Kostka-Jack number \(K_{\lambda,\mu}(\alpha)\). The 
+-- partition \(\mu\) is included in the keys of this map if and only if 
+-- \(K_{\lambda,\mu}(\alpha) \neq 0\). The Kostka-Jack number 
+-- \(K_{\lambda,\mu}(\alpha)\) is the coefficient of the monomial symmetric 
+-- polynomial \(m_\mu\) in the expression of the \(P\)-Jack polynomial 
+-- \(P_\lambda(\alpha)\) as a linear combination of monomial symmetric 
+-- polynomials.
+kostkaNumbersWithGivenLambda :: 
+     Partition -- ^ the integer partition @lambda@
+  -> Rational  -- ^ Jack parameter
+  -> Map Partition Rational
+kostkaNumbersWithGivenLambda lambda alpha 
+  | not (_isPartition lambda) = 
+      error "kostkaNumbersWithGivenLambda: invalid integer partition."
+  | null lambda =
+      DM.singleton [] 1
+  | otherwise =
+      _kostkaNumbersWithGivenLambda (sum lambda) lambda alpha 'P'
 
 -- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) with Jack parameter, or 
 -- Kostka-Jack numbers, for a given weight of the 
@@ -77,7 +105,7 @@ kostkaNumbers weight alpha
   | otherwise =
       _kostkaNumbers weight weight alpha 'P'
 
--- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) with symbolic Jack parameter \(\alpha\) 
+-- | Kostka-Jack numbers \(K_{\lambda,\mu}(\alpha)\) with symbolic Jack parameter \(\alpha\) 
 -- for a given weight of the partitions \(\lambda\) and \(\mu\). This returns a map 
 -- whose keys represent the 
 -- partitions \(\lambda\) and the value attached to a partition \(\lambda\)
@@ -94,6 +122,24 @@ symbolicKostkaNumbers weight
       DM.singleton [] (DM.singleton [] unitRatioOfSprays)
   | otherwise =
       _symbolicKostkaNumbers weight weight 'P'
+
+-- | Kostka-Jack numbers \(K_{\lambda,\mu}(\alpha)\) with symbolic Jack 
+-- parameter \(\alpha\) for a given integer partition \(\lambda\). This 
+-- returns a map whose keys represent the 
+-- partitions \(\mu\) and the value attached to a partition \(\mu\) is the
+-- Kostka-Jack number \(K_{\lambda,\mu}(\alpha)\). The 
+-- partition \(\mu\) is included in the keys of this map if and only if 
+-- \(K_{\lambda,\mu}(\alpha) \neq 0\). 
+symbolicKostkaNumbersWithGivenLambda :: 
+     Partition -- ^ the integer partition @lambda@
+  -> Map Partition RatioOfQSprays
+symbolicKostkaNumbersWithGivenLambda lambda 
+  | not (_isPartition lambda) = 
+      error "symbolicKostkaNumbersWithGivenLambda: invalid integer partition."
+  | null lambda =
+      DM.singleton [] unitRatioOfSprays
+  | otherwise =
+      _symbolicKostkaNumbersWithGivenLambda (sum lambda) lambda 'P'
 
 -- | Skew Kostka numbers \(K_{\lambda/\mu, \nu}(\alpha)\) with a given Jack 
 -- parameter \(\alpha\) and a given skew partition \(\lambda/\mu\). For \(\alpha=1\)
