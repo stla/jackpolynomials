@@ -158,7 +158,7 @@ Macdonald-Kostka polynomials
 
 1.4.6.0
 -------
-* new module `Combinatorics` 
+* new module `Math.Algebra.Combinatorics` 
 
 * new function `semiStandardTableauxWithGivenShapeAndWeight`, to get all 
 semistandard tableaux with a given shape and a given weight
@@ -168,4 +168,12 @@ semistandard skew tableaux with a given shape and a given weight
 
 * new function `skewGelfandTsetlinPatterns`, to get Gelfand-Tsetlin patterns
 defined by a skew partition
+
+1.4.7.0
+-------
+* new function `kostkaNumbersWithGivenLambda`, to get the Kostka-Jack numbers 
+with a given Jack parameter and a given partition `lambda`
+
+* new function `symbolicKostkaNumbersWithGivenLambda`, to get the Kostka-Jack 
+numbers with a symbolic Jack parameter for a given partition `lambda`
 
