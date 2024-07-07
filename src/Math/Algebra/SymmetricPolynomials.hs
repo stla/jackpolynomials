@@ -183,6 +183,8 @@ import           Math.Algebra.Hspray              (
 import           Math.Algebra.Jack.Internal       ( 
                                                     Partition
                                                   , _isPartition
+                                                  , msPolynomialUnsafe
+                                                  , _esPolynomial
                                                   , sprayToMap
                                                   , comboToSpray 
                                                   , _inverseKostkaMatrix
@@ -231,18 +233,6 @@ import           Math.Combinat.Tableaux.Skew      (
                                                     SkewTableau (..) 
                                                   , semiStandardSkewTableaux 
                                                   )
-
--- | monomial symmetric polynomial
-msPolynomialUnsafe :: (AlgRing.C a, Eq a) 
-  => Int       -- ^ number of variables
-  -> Partition -- ^ integer partition
-  -> Spray a
-msPolynomialUnsafe n lambda
-  = fromList $ zip permutations coefficients
-    where
-      llambda      = length lambda
-      permutations = permuteMultiset (lambda ++ replicate (n-llambda) 0)
-      coefficients = repeat AlgRing.one
 
 -- | Monomial symmetric polynomial
 --
@@ -740,12 +730,11 @@ esPolynomial n lambda
       error "esPolynomial: negative number of variables."
   | not (_isPartition lambda) = 
       error "esPolynomial: invalid partition."
-  | null lambda               = unitSpray
-  | l > n || any (>n) lambda  = zeroSpray
-  | otherwise                 = productOfSprays (map esPolynomialK lambda)
+  | null lambda                = unitSpray
+  | l > n || any (> n) lambda  = zeroSpray
+  | otherwise                  = _esPolynomial n lambda
     where
       l = length lambda
-      esPolynomialK k = msPolynomialUnsafe n (replicate k 1)
 
 -- | power sum polynomial as a linear combination of 
 -- elementary symmetric polynomials

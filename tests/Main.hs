@@ -130,7 +130,18 @@ main = defaultMain $ testGroup
 
   [ 
 
-  testCase "Skew Kostka numbers are numbers of skew Gelfand-Tsetlin patterns" $ do
+  testCase "Jack polynomial for alpha=0" $ do
+    let
+      n = 4
+      lambda = [3, 1]
+      which = 'P'
+      jackPoly = jackPol' n lambda 0 which
+      jackSymPoly = jackSymbolicPol' n lambda which
+    assertEqual ""
+      jackPoly
+      (substituteParameters jackSymPoly [0])
+
+  , testCase "Skew Kostka numbers are numbers of skew Gelfand-Tsetlin patterns" $ do
     let
       lambda = [5, 4, 3, 2, 1]
       mu = [2, 2, 2, 1]

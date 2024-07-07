@@ -2,6 +2,9 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Math.Algebra.Jack.Internal
   ( Partition
+  , msPolynomialUnsafe
+  , _esPolynomial
+  , jackJpol0
   , jackCoeffP
   , jackCoeffQ
   , jackCoeffC
@@ -117,6 +120,7 @@ import           Math.Algebra.Hspray                         (
                                                              , sumOfSprays
                                                              , productOfSprays
                                                              , FunctionLike (..)
+                                                             , fromList
                                                              )
 import           Math.Combinat.Partitions.Integer            (
                                                                fromPartition
@@ -143,6 +147,40 @@ type Partition = [Int]
 
 type PartitionsPair = (Seq Int, Seq Int)
 type PairsMap = Map PartitionsPair ([(Int,Int)], [(Int,Int)]) 
+
+-- | monomial symmetric polynomial
+msPolynomialUnsafe :: (AlgRing.C a, Eq a) 
+  => Int       -- ^ number of variables
+  -> Partition -- ^ integer partition
+  -> Spray a
+msPolynomialUnsafe n lambda
+  = fromList $ zip permutations coefficients
+    where
+      ellLambda    = length lambda
+      permutations = permuteMultiset (lambda ++ replicate (n-ellLambda) 0)
+      coefficients = repeat AlgRing.one
+
+-- | elementary symmetric polynomial.
+_esPolynomial :: (AlgRing.C a, Eq a) 
+  => Int       -- ^ number of variables
+  -> Partition -- ^ integer partition
+  -> Spray a
+_esPolynomial n lambda =
+  productOfSprays (map esPolynomialK lambda)
+    where
+      esPolynomialK k = msPolynomialUnsafe n (replicate k 1)
+
+-- | Jack polynomial for alpha=0.
+jackJpol0 :: (AlgRing.C a, Eq a) 
+  => Int       -- ^ number of variables
+  -> Partition -- ^ integer partition
+  -> Spray a
+jackJpol0 n lambda =
+  f .^ _esPolynomial n (DF.toList lambda')
+  where
+    lambda' = _dualPartition' (S.fromList lambda)
+    factorial i = P.product [2 .. i]
+    f = DF.product (fmap factorial lambda')
 
 inverseKostkaNumbers :: Int -> Map Partition (Map Partition Int)
 inverseKostkaNumbers n = 

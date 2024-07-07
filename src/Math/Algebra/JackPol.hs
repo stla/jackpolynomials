@@ -33,7 +33,7 @@ module Math.Algebra.JackPol
   where
 import           Prelude 
   hiding ((*), (+), (-), (/), (^), (*>), product, sum, fromIntegral, fromInteger)
-import           Algebra.Additive           ( (+), (-), sum )
+import           Algebra.Additive           ( (+), (-), sum, zero )
 import qualified Algebra.Field              as AlgField
 import           Algebra.Ring               ( (*), product, one, fromInteger )
 import qualified Algebra.Ring               as AlgRing
@@ -47,7 +47,9 @@ import           Math.Algebra.Jack.Internal ( _betaratio, jackCoeffC
                                             , jackCoeffP, jackCoeffQ
                                             , skewSchurLRCoefficients
                                             , isSkewPartition, _fromInt
-                                            , skewJackInMSPbasis )
+                                            , skewJackInMSPbasis
+                                            , jackJpol0
+                                            )
 import           Math.Algebra.Hspray        ( FunctionLike (..), (.^)
                                             , lone, lone', Spray, QSpray
                                             , zeroSpray, unitSpray
@@ -85,8 +87,11 @@ jackPol n lambda alpha which
       'P' -> jackCoeffP lambda alpha *^ resultJ
       _   -> jackCoeffQ lambda alpha *^ resultJ
       where
+      resultJ = 
+        if alpha == zero
+          then jackJpol0 n lambda
+          else jck n lambda arr0 
       jck m kappa arr = jac m 0 kappa kappa arr 
-      resultJ = jck n lambda arr0 
       nll = _N lambda lambda
       arr0 = listArray ((1, 1), (nll, n)) (replicate (nll * n) Nothing)
       jac :: Int -> Int -> Partition -> Partition 
