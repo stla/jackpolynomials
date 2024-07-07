@@ -20,6 +20,7 @@ module Math.Algebra.Jack.Internal
   , _kostkaNumbersWithGivenLambda
   , _kostkaNumbers
   , _inverseKostkaMatrix
+  , _symbolicKostkaNumbersWithGivenLambda
   , _symbolicKostkaNumbers
   , _inverseSymbolicKostkaMatrix
   , _kostkaFoulkesPolynomial
@@ -69,7 +70,6 @@ import           Data.List                                   (
                                                              , foldl'
                                                              , uncons
                                                              , tails
-                                                             , elem
                                                              )
 import           Data.List.Extra                             ( 
                                                                unsnoc
@@ -123,6 +123,7 @@ import           Math.Combinat.Partitions.Integer            (
                                                                fromPartition
                                                              , dualPartition
                                                              , partitions
+                                                             , partitions'
                                                              , dominates
                                                              , dominatedPartitions
                                                              , partitionWidth
@@ -1074,9 +1075,9 @@ _kostkaNumbersWithGivenLambda nv lambda alpha which = rec (length mus')
         kNumber = 
           AlgAdd.sum [
               fromIntegral (S.index mu'' i P.- S.index mu'' j P.+ 2 P.* r) 
-              * (previous DM.! nu) / ee 
+              * (previous DM.! nu)  
               | (nu, (i, j), r) <- triplets
-            ]
+            ] / ee
 
 _inverseKostkaMatrix :: 
   (Eq a, AlgField.C a) 
@@ -1096,156 +1097,233 @@ _inverseKostkaMatrix n weight alpha which =
 _kostkaNumbers :: 
   forall a. (AlgField.C a) 
   => Int -> Int -> a -> Char -> Map Partition (Map Partition a)
-_kostkaNumbers nv weight alpha which = kostkaMatrix'
+_kostkaNumbers nv weight alpha which = 
+  DM.fromDistinctAscList 
+    [
+      (lambda, _kostkaNumbersWithGivenLambda nv lambda alpha which)
+      | lambda' <- partitions' (weight, nv) weight
+      , let lambda = fromPartition lambda'
+    ]
+  -- kostkaMatrix'
+  -- where
+  --   coeffsP = DM.fromDistinctDescList 
+  --     [(kappa, recip (jackCoeffP kappa alpha)) | kappa <- lambdas']
+  --   coeffsC = DM.fromDistinctDescList 
+  --     [(kappa, jackCoeffC kappa alpha / jackCoeffP kappa alpha) 
+  --       | kappa <- lambdas'] 
+  --   coeffsQ = DM.fromDistinctDescList 
+  --     [(kappa, jackCoeffQ kappa alpha / jackCoeffP kappa alpha) 
+  --       | kappa <- lambdas']    
+  --   kostkaMatrix = DM.mapKeys fromPartition (rec (length lambdas))
+  --   kostkaMatrix' = case which of
+  --     'J' -> DM.mapWithKey (\kappa m -> DM.map ((*) (coeffsP DM.! kappa)) m) 
+  --                           kostkaMatrix
+  --     'P' -> kostkaMatrix
+  --     'C' -> DM.mapWithKey (\kappa m -> DM.map ((*) (coeffsC DM.! kappa)) m) 
+  --                           kostkaMatrix
+  --     'Q' -> DM.mapWithKey (\kappa m -> DM.map ((*) (coeffsQ DM.! kappa)) m) 
+  --                           kostkaMatrix
+  --     _   -> error "_kostkaNumbers: should not happen."
+  --   mu_r_plus :: 
+  --     Seq Int -> (Int, Int) -> Int -> (MCP.Partition, (Int, Int), Int)
+  --   mu_r_plus mu pair@(i, j) r = 
+  --     (
+  --       MCP.Partition $ 
+  --         DF.toList $ S.dropWhileR (== 0) $ S.reverse $ S.sort $ 
+  --           S.adjust' ((P.+) r) i (S.adjust' (subtract r) j mu)
+  --       , pair
+  --       , r
+  --     )
+  --   lambdas = reverse $ 
+  --     filter (\part -> partitionWidth part <= nv) (partitions weight)
+  --   lambdas' = map fromPartition lambdas
+  --   rec :: Int -> Map MCP.Partition (Map Partition a)
+  --   rec n = if n == 1
+  --     then DM.singleton (MCP.Partition [weight]) 
+  --                       (DM.singleton [weight] AlgRing.one)
+  --     else DM.insert mu (DM.singleton mu' AlgRing.one) 
+  --           (
+  --             DM.fromDistinctDescList 
+  --             [(
+  --                 kappa
+  --               , DM.insert mu' (newColumn DM.! kappa) (previous DM.! kappa)
+  --              ) | kappa <- kappas]
+  --           ) 
+  --     where
+  --       previous = rec (n - 1)
+  --       parts = take n lambdas
+  --       (kappas, mu) = fromJust (unsnoc parts)
+  --       _e_mu_alpha = _e mu alpha
+  --       mu' = fromPartition mu
+  --       mu'' = S.fromList mu'
+  --       l = S.length mu''
+  --       pairs = [(i, j) | i <- [0 .. l-2], j <- [i+1 .. l-1]]
+  --       triplets = [mu_r_plus mu'' (i, j) r 
+  --                   | (i, j) <- pairs, r <- [1 .. S.index mu'' j]]
+  --       newColumn = 
+  --         DM.fromDistinctDescList [(kappa, f kappa) | kappa <- kappas]
+  --       f kappa = AlgAdd.sum xs 
+  --         where
+  --           previousRow = previous DM.! kappa
+  --           triplets' = filter ((dominates kappa) . fst3) triplets
+  --           ee = _e kappa alpha - _e_mu_alpha
+  --           xs = [
+  --             fromIntegral (S.index mu'' i P.- S.index mu'' j P.+ 2 P.* r) 
+  --             * (previousRow DM.! (fromPartition nu)) / ee 
+  --             | (nu, (i, j), r) <- triplets'
+  --             ]
+
+_symbolicKostkaNumbersWithGivenLambda :: 
+  forall a. (Eq a, AlgField.C a) 
+  => Int -> Partition -> Char -> Map Partition (RatioOfSprays a)
+_symbolicKostkaNumbersWithGivenLambda nv lambda which = rec (length mus')
   where
-    coeffsP = DM.fromDistinctDescList 
-      [(kappa, recip (jackCoeffP kappa alpha))| kappa <- lambdas']
-    coeffsC = DM.fromDistinctDescList 
-      [(kappa, jackCoeffC kappa alpha / jackCoeffP kappa alpha) 
-        | kappa <- lambdas'] 
-    coeffsQ = DM.fromDistinctDescList 
-      [(kappa, jackCoeffQ kappa alpha / jackCoeffP kappa alpha) 
-        | kappa <- lambdas']    
-    kostkaMatrix = DM.mapKeys fromPartition (rec (length lambdas))
-    kostkaMatrix' = case which of
-      'J' -> DM.mapWithKey (\kappa m -> DM.map ((*) (coeffsP DM.! kappa)) m) 
-                            kostkaMatrix
-      'P' -> kostkaMatrix
-      'C' -> DM.mapWithKey (\kappa m -> DM.map ((*) (coeffsC DM.! kappa)) m) 
-                            kostkaMatrix
-      'Q' -> DM.mapWithKey (\kappa m -> DM.map ((*) (coeffsQ DM.! kappa)) m) 
-                            kostkaMatrix
-      _   -> error "_kostkaNumbers: should not happen."
+    kN1 = case which of
+      'J' -> asRatioOfSprays (jackSymbolicCoeffPinv lambda)
+      'P' -> unitRatioOfSprays
+      'C' -> (jackSymbolicCoeffPinv lambda :: Spray a) *> jackSymbolicCoeffC lambda
+      'Q' -> jackSymbolicCoeffPinv lambda %//% jackSymbolicCoeffQinv lambda
+      _   -> error "_symbolicKostkaNumbersWithGivenLambda: should not happen."
     mu_r_plus :: 
-      Seq Int -> (Int, Int) -> Int -> (MCP.Partition, (Int, Int), Int)
+      Seq Int -> (Int, Int) -> Int -> (Partition, (Int, Int), Int)
     mu_r_plus mu pair@(i, j) r = 
       (
-        MCP.Partition $ 
-          DF.toList $ S.dropWhileR (== 0) $ S.reverse $ S.sort $ 
+          DF.toList $ S.reverse $ S.sort $ 
             S.adjust' ((P.+) r) i (S.adjust' (subtract r) j mu)
         , pair
         , r
       )
-    lambdas = reverse $ 
-      filter (\part -> partitionWidth part <= nv) (partitions weight)
-    lambdas' = map fromPartition lambdas
-    rec :: Int -> Map MCP.Partition (Map Partition a)
+    mu_r_plus' :: 
+      Seq Int -> (Int, Int) -> Int -> (Partition, (Int, Int), Int)
+    mu_r_plus' mu pair@(i, j) r = 
+      (
+          DF.toList $ S.reverse $ S.sort $ 
+            S.deleteAt j (S.adjust' ((P.+) r) i mu)
+        , pair
+        , r
+      )
+    lambda' = toPartitionUnsafe lambda
+    mus' = reverse $ 
+      filter (\part -> partitionWidth part <= nv) (dominatedPartitions lambda')
+    _e_lambda = _eSymbolic lambda' 
+    rec :: Int -> Map Partition (RatioOfSprays a)
     rec n = if n == 1
-      then DM.singleton (MCP.Partition [weight]) 
-                        (DM.singleton [weight] AlgRing.one)
-      else DM.insert mu (DM.singleton mu' AlgRing.one) 
-            (
-              DM.fromDistinctDescList 
-              [(
-                  kappa
-                , DM.insert mu' (newColumn DM.! kappa) (previous DM.! kappa)
-               ) | kappa <- kappas]
-            ) 
+      then DM.singleton lambda kN1
+      else DM.insert mu kNumber previous 
       where
         previous = rec (n - 1)
-        parts = take n lambdas
-        (kappas, mu) = fromJust (unsnoc parts)
-        _e_mu_alpha = _e mu alpha
-        mu' = fromPartition mu
-        mu'' = S.fromList mu'
+        parts = DM.keys previous
+        mu' = mus' !! (n - 1)
+        mu = fromPartition mu'
+        _e_mu = _eSymbolic mu' 
+        ee = _e_lambda - _e_mu
+        mu'' = S.fromList mu
         l = S.length mu''
         pairs = [(i, j) | i <- [0 .. l-2], j <- [i+1 .. l-1]]
-        triplets = [mu_r_plus mu'' (i, j) r 
-                    | (i, j) <- pairs, r <- [1 .. S.index mu'' j]]
-        newColumn = 
-          DM.fromDistinctDescList [(kappa, f kappa) | kappa <- kappas]
-        f kappa = AlgAdd.sum xs 
-          where
-            previousRow = previous DM.! kappa
-            triplets' = filter ((dominates kappa) . fst3) triplets
-            ee = _e kappa alpha - _e_mu_alpha
-            xs = [
-              fromIntegral (S.index mu'' i P.- S.index mu'' j P.+ 2 P.* r) 
-              * (previousRow DM.! (fromPartition nu)) / ee 
-              | (nu, (i, j), r) <- triplets'
-              ]
+        triplets = 
+          filter ((\nu -> nu `elem` parts) . fst3)
+            (
+              [mu_r_plus mu'' (i, j) r 
+                      | (i, j) <- pairs, r <- [1 .. S.index mu'' j - 1]]
+              ++
+              [mu_r_plus' mu'' (i, j) (S.index mu'' j) 
+                      | (i, j) <- pairs]
+            )
+        kNumber = 
+          AlgAdd.sum [
+              (S.index mu'' i P.- S.index mu'' j P.+ 2 P.* r) 
+                .^ (previous DM.! nu)  
+              | (nu, (i, j), r) <- triplets
+            ] %/% ee
 
 _symbolicKostkaNumbers :: 
   forall a. (Eq a, AlgField.C a) 
   => Int -> Int -> Char -> Map Partition (Map Partition (RatioOfSprays a))
-_symbolicKostkaNumbers nv weight which = kostkaMatrix'
-  where
-    coeffsP = DM.fromDistinctDescList 
-      [(kappa, asRatioOfSprays (jackSymbolicCoeffPinv kappa))
-        | kappa <- lambdas']
-    coeffsC = DM.fromDistinctDescList 
-      [(
-          kappa
-        , (jackSymbolicCoeffPinv kappa :: Spray a) *> jackSymbolicCoeffC kappa
-       ) | kappa <- lambdas']    
-    coeffsQ = DM.fromDistinctDescList 
-      [(
-          kappa
-        , jackSymbolicCoeffPinv kappa %//% jackSymbolicCoeffQinv kappa
-       ) | kappa <- lambdas']    
-    kostkaMatrix = DM.mapKeys fromPartition (rec (length lambdas))
-    kostkaMatrix' = case which of
-      'J' -> DM.mapWithKey (\kappa m -> DM.map ((*) (coeffsP DM.! kappa)) m) 
-              kostkaMatrix
-      'P' -> kostkaMatrix
-      'C' -> DM.mapWithKey (\kappa m -> DM.map ((*) (coeffsC DM.! kappa)) m) 
-              kostkaMatrix
-      'Q' -> DM.mapWithKey (\kappa m -> DM.map ((*) (coeffsQ DM.! kappa)) m) 
-              kostkaMatrix
-      _   -> error "_symbolicKostkaNumbers: should not happen."
-    mu_r_plus :: 
-      Seq Int -> (Int, Int) -> Int -> (MCP.Partition, (Int, Int), Int)
-    mu_r_plus mu pair@(i, j) r = 
-      (
-        MCP.Partition $ 
-          DF.toList $ S.dropWhileR (== 0) $ S.reverse $ S.sort $ 
-            S.adjust' ((P.+) r) i (S.adjust' (subtract r) j mu)
-        , pair
-        , r
-      )
-    lambdas = reverse $ 
-      filter (\part -> partitionWidth part <= nv) (partitions weight)
-    lambdas' = map fromPartition lambdas
-    rec :: Int -> Map MCP.Partition (Map Partition (RatioOfSprays a))
-    rec n = if n == 1
-      then DM.singleton (MCP.Partition [weight]) 
-                        (DM.singleton [weight] unitRatioOfSprays)
-      else DM.insert mu (DM.singleton mu' unitRatioOfSprays) 
-        (
-          DM.fromDistinctDescList 
-          [
-            ( 
-              kappa
-            , DM.insert mu' (newColumn DM.! kappa) (previous DM.! kappa)
-            ) 
-            | kappa <- kappas
-          ]
-        ) 
-      where
-        previous = rec (n - 1)
-        parts = take n lambdas
-        (kappas, mu) = fromJust (unsnoc parts)
-        _eSymbolic_mu = _eSymbolic mu
-        mu' = fromPartition mu
-        mu'' = S.fromList mu'
-        l = S.length mu''
-        pairs = [(i, j) | i <- [0 .. l-2], j <- [i+1 .. l-1]]
-        triplets = [mu_r_plus mu'' (i, j) r 
-                    | (i, j) <- pairs, r <- [1 .. S.index mu'' j]]
-        newColumn = 
-          DM.fromDistinctDescList [(kappa, f kappa) | kappa <- kappas]
-        f kappa = AlgAdd.sum xs 
-          where
-            previousRow = previous DM.! kappa
-            triplets' = filter ((dominates kappa) . fst3) triplets
-            ee = _eSymbolic kappa - _eSymbolic_mu
-            xs = [
-              (
-                (S.index mu'' i P.- S.index mu'' j P.+ 2 P.* r) 
-                .^ (previousRow DM.! (fromPartition nu)) 
-              ) %/% ee 
-              | (nu, (i, j), r) <- triplets'
-              ]
+_symbolicKostkaNumbers nv weight which = 
+  DM.fromDistinctAscList 
+    [
+      (lambda, _symbolicKostkaNumbersWithGivenLambda nv lambda which)
+      | lambda' <- partitions' (weight, nv) weight
+      , let lambda = fromPartition lambda'
+    ]
+  -- kostkaMatrix'
+  -- where
+  --   coeffsP = DM.fromDistinctDescList 
+  --     [(kappa, asRatioOfSprays (jackSymbolicCoeffPinv kappa))
+  --       | kappa <- lambdas']
+  --   coeffsC = DM.fromDistinctDescList 
+  --     [(
+  --         kappa
+  --       , (jackSymbolicCoeffPinv kappa :: Spray a) *> jackSymbolicCoeffC kappa
+  --      ) | kappa <- lambdas']    
+  --   coeffsQ = DM.fromDistinctDescList 
+  --     [(
+  --         kappa
+  --       , jackSymbolicCoeffPinv kappa %//% jackSymbolicCoeffQinv kappa
+  --      ) | kappa <- lambdas']    
+  --   kostkaMatrix = DM.mapKeys fromPartition (rec (length lambdas))
+  --   kostkaMatrix' = case which of
+  --     'J' -> DM.mapWithKey (\kappa m -> DM.map ((*) (coeffsP DM.! kappa)) m) 
+  --             kostkaMatrix
+  --     'P' -> kostkaMatrix
+  --     'C' -> DM.mapWithKey (\kappa m -> DM.map ((*) (coeffsC DM.! kappa)) m) 
+  --             kostkaMatrix
+  --     'Q' -> DM.mapWithKey (\kappa m -> DM.map ((*) (coeffsQ DM.! kappa)) m) 
+  --             kostkaMatrix
+  --     _   -> error "_symbolicKostkaNumbers: should not happen."
+  --   mu_r_plus :: 
+  --     Seq Int -> (Int, Int) -> Int -> (MCP.Partition, (Int, Int), Int)
+  --   mu_r_plus mu pair@(i, j) r = 
+  --     (
+  --       MCP.Partition $ 
+  --         DF.toList $ S.dropWhileR (== 0) $ S.reverse $ S.sort $ 
+  --           S.adjust' ((P.+) r) i (S.adjust' (subtract r) j mu)
+  --       , pair
+  --       , r
+  --     )
+  --   lambdas = reverse $ 
+  --     filter (\part -> partitionWidth part <= nv) (partitions weight)
+  --   lambdas' = map fromPartition lambdas
+  --   rec :: Int -> Map MCP.Partition (Map Partition (RatioOfSprays a))
+  --   rec n = if n == 1
+  --     then DM.singleton (MCP.Partition [weight]) 
+  --                       (DM.singleton [weight] unitRatioOfSprays)
+  --     else DM.insert mu (DM.singleton mu' unitRatioOfSprays) 
+  --       (
+  --         DM.fromDistinctDescList 
+  --         [
+  --           ( 
+  --             kappa
+  --           , DM.insert mu' (newColumn DM.! kappa) (previous DM.! kappa)
+  --           ) 
+  --           | kappa <- kappas
+  --         ]
+  --       ) 
+  --     where
+  --       previous = rec (n - 1)
+  --       parts = take n lambdas
+  --       (kappas, mu) = fromJust (unsnoc parts)
+  --       _eSymbolic_mu = _eSymbolic mu
+  --       mu' = fromPartition mu
+  --       mu'' = S.fromList mu'
+  --       l = S.length mu''
+  --       pairs = [(i, j) | i <- [0 .. l-2], j <- [i+1 .. l-1]]
+  --       triplets = [mu_r_plus mu'' (i, j) r 
+  --                   | (i, j) <- pairs, r <- [1 .. S.index mu'' j]]
+  --       newColumn = 
+  --         DM.fromDistinctDescList [(kappa, f kappa) | kappa <- kappas]
+  --       f kappa = AlgAdd.sum xs 
+  --         where
+  --           previousRow = previous DM.! kappa
+  --           triplets' = filter ((dominates kappa) . fst3) triplets
+  --           ee = _eSymbolic kappa - _eSymbolic_mu
+  --           xs = [
+  --             (
+  --               (S.index mu'' i P.- S.index mu'' j P.+ 2 P.* r) 
+  --               .^ (previousRow DM.! (fromPartition nu)) 
+  --             ) %/% ee 
+  --             | (nu, (i, j), r) <- triplets'
+  --             ]
 
 _inverseSymbolicKostkaMatrix :: 
   (Eq a, AlgField.C a) 
