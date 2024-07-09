@@ -253,11 +253,12 @@ ratios of polynomials.
 
 ### Combinatorics
 
-The module `Math.Algebra.Combinatorics` appeared in version 1.4.6.0.
-It provides some functions to compute Kostka-Jack numbers, possibly skew, 
-to enumerate the semistandard Young tableaux with a given shape and 
-a given weight, possibly skew, and to enumerate Gelfand-Tsetlin patterns.
-The reason to include this module in the package is that these functions
+The modules `Math.Combinatorics.Kostka` and `Math.Combinatorics.Tableaux` 
+appeared in version 1.4.6.0. They provide some functions to compute Kostka-Jack 
+numbers, possibly skew, to enumerate the semistandard Young tableaux with a 
+given shape and a given weight, possibly skew, and to enumerate 
+Gelfand-Tsetlin patterns.
+The reason to include these modules in the package is that these functions
 are used to compute the symmetric polynomials.
 
 

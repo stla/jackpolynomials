@@ -11,13 +11,6 @@ import           Data.Matrix                    (
                                                   fromLists
                                                 )
 import Data.Ratio                               ( (%) )
-import           Math.Algebra.Combinatorics     ( 
-                                                  kostkaNumbers
-                                                , kostkaNumbersWithGivenLambda
-                                                , symbolicKostkaNumbers
-                                                , skewKostkaNumbers
-                                                , skewGelfandTsetlinPatterns
-                                                )
 import Math.Algebra.Hspray                      ( FunctionLike (..)
                                                 , Spray, QSpray
                                                 , SimpleParametricSpray
@@ -98,6 +91,15 @@ import Math.Combinat.Partitions.Integer         (
 import qualified Math.Combinat.Partitions.Integer as PI
 import Math.Combinat.Tableaux.GelfandTsetlin    ( kostkaNumber )
 import qualified Math.Combinat.Tableaux.GelfandTsetlin as GT
+import           Math.Combinatorics.Kostka      ( 
+                                                  kostkaNumbers
+                                                , kostkaNumbersWithGivenLambda
+                                                , symbolicKostkaNumbers
+                                                , skewKostkaNumbers
+                                                )
+import           Math.Combinatorics.Tableaux    ( 
+                                                  skewGelfandTsetlinPatterns
+                                                )
 import Math.HypergeoMatrix                      ( hypergeomat )
 import Test.Tasty                               ( defaultMain
                                                 , testGroup

@@ -158,7 +158,7 @@ Macdonald-Kostka polynomials
 
 1.4.6.0
 -------
-* new module `Math.Algebra.Combinatorics` 
+* new modules `Math.Combinatorics.Kostka` and `Math.Combinatorics.Tableaux` 
 
 * new function `semiStandardTableauxWithGivenShapeAndWeight`, to get all 
 semistandard tableaux with a given shape and a given weight
