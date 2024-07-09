@@ -948,7 +948,7 @@ skewKostkaFoulkesPolynomial' ::
 skewKostkaFoulkesPolynomial' = skewKostkaFoulkesPolynomial 
 
 -- | qt-Kostka polynomials, aka Kostka-Macdonald polynomials. These are bivariate
--- symmetric polynomials usually denoted by \(K_{\lambda, \mu}(q,t)\) for two 
+-- polynomials usually denoted by \(K_{\lambda, \mu}(q,t)\) for two 
 -- integer partitions \(\lambda\) and \(mu\), and \(q\) and \(t\) denote the 
 -- variables. One obtains the Kostka-Foulkes polynomials by substituting \(q\) 
 -- with \(0\). For a given partition \(\mu\), the function returns the polynomials
@@ -990,7 +990,7 @@ qtKostkaPolynomials mu
       DM.empty psCombo
 
 -- | qt-Kostka polynomials, aka Kostka-Macdonald polynomials. These are bivariate
--- symmetric polynomials usually denoted by \(K_{\lambda, \mu}(q,t)\) for two 
+-- polynomials usually denoted by \(K_{\lambda, \mu}(q,t)\) for two 
 -- integer partitions \(\lambda\) and \(mu\), and \(q\) and \(t\) denote the 
 -- variables. One obtains the Kostka-Foulkes polynomials by substituting \(q\) 
 -- with \(0\). For a given partition \(\mu\), the function returns the polynomials
@@ -1002,7 +1002,7 @@ qtKostkaPolynomials' ::
 qtKostkaPolynomials' = qtKostkaPolynomials
 
 -- | Skew qt-Kostka polynomials. These are bivariate
--- symmetric polynomials usually denoted by \(K_{\lambda/\mu, \nu}(q,t)\) for two 
+-- polynomials usually denoted by \(K_{\lambda/\mu, \nu}(q,t)\) for two 
 -- integer partitions \(\lambda\) and \(mu\) defining a skew partition, an 
 -- integer partition \(\nu\), and \(q\) and \(t\) denote the 
 -- variables. One obtains the skew Kostka-Foulkes polynomials by substituting \(q\) 
@@ -1035,7 +1035,7 @@ qtSkewKostkaPolynomials lambda mu
         )
 
 -- | Skew qt-Kostka polynomials. These are bivariate
--- symmetric polynomials usually denoted by \(K_{\lambda/\mu, \nu}(q,t)\) for two 
+-- polynomials usually denoted by \(K_{\lambda/\mu, \nu}(q,t)\) for two 
 -- integer partitions \(\lambda\) and \(mu\) defining a skew partition, an 
 -- integer partition \(\nu\), and \(q\) and \(t\) denote the 
 -- variables. One obtains the skew Kostka-Foulkes polynomials by substituting \(q\) 

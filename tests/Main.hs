@@ -13,6 +13,7 @@ import           Data.Matrix                    (
 import Data.Ratio                               ( (%) )
 import           Math.Algebra.Combinatorics     ( 
                                                   kostkaNumbers
+                                                , kostkaNumbersWithGivenLambda
                                                 , symbolicKostkaNumbers
                                                 , skewKostkaNumbers
                                                 , skewGelfandTsetlinPatterns
@@ -105,16 +106,21 @@ import Test.Tasty.HUnit                         ( assertEqual
                                                 , testCase
                                                 )
 
+-- b_lambda_mu :: [Int] -> [Int] -> Int
+-- b_lambda_mu lambda mu = sum $ DM.elems wholeMap 
+--   where
+--     parts = partitions (sum lambda)
+--     zeros = DM.fromList (zip parts (repeat 0))
+--     map1 = DM.union (GT.kostkaNumbersWithGivenMu (mkPartition lambda)) zeros
+--     map2 = DM.union (GT.kostkaNumbersWithGivenMu (mkPartition mu)) zeros
+--     wholeMap = DM.unionWithKey (\part kn1 _ -> kn1 * (map2 DM.! (dualPartition part))) map1 map2
+
 b_lambda_mu :: [Int] -> [Int] -> Int
-b_lambda_mu lambda mu = sum $ DM.elems wholeMap -- zipWith (*) k1 k2 
+b_lambda_mu lambda mu = sum $ DM.elems wholeMap 
   where
-    parts = partitions (sum lambda)
-    zeros = DM.fromList (zip parts (repeat 0))
-    map1 = DM.union (GT.kostkaNumbersWithGivenMu (mkPartition lambda)) zeros
-    map2 = DM.union (GT.kostkaNumbersWithGivenMu (mkPartition mu)) zeros
-    wholeMap = DM.unionWithKey (\part kn1 _ -> kn1 * (map2 DM.! (dualPartition part))) map1 map2
-    -- k1 = map ((flip kostkaNumber) (mkPartition lambda)) parts
-    -- k2 = map (((flip kostkaNumber) (mkPartition mu)) . dualPartition) parts
+    map1 = GT.kostkaNumbersWithGivenMu (mkPartition lambda)
+    map2 = DM.mapKeys dualPartition (GT.kostkaNumbersWithGivenMu (mkPartition mu)) 
+    wholeMap = DM.intersectionWith (*) map1 map2
 
 a_lambda_mu :: [Int] -> [Int] -> Int
 a_lambda_mu lambda mu = sum $ zipWith (*) k1 k2 
@@ -140,6 +146,19 @@ main = defaultMain $ testGroup
     assertEqual ""
       jackPoly
       (substituteParameters jackSymPoly [0])
+
+  , testCase "Kostka-Jack numbers for alpha=0 and elementary symmetric polynomial" $ do
+    let
+      lambda = [3, 3]
+      lambda' = [2, 2, 2] -- dual partitition
+      kNumbers = kostkaNumbersWithGivenLambda lambda 0
+      esPoly = esPolynomial 6 lambda'
+      combo = msCombination esPoly
+      mus = DM.keys kNumbers
+      b_lambda_mus = map (toRational . (b_lambda_mu lambda')) mus
+    assertEqual ""
+      (kNumbers, DM.elems kNumbers)
+      (combo, b_lambda_mus)
 
   , testCase "Skew Kostka numbers are numbers of skew Gelfand-Tsetlin patterns" $ do
     let
