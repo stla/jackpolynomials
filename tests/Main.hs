@@ -29,6 +29,7 @@ import Math.Algebra.Hspray                      ( FunctionLike (..)
                                                 , evalSpray 
                                                 , evalParametricSpray'
                                                 , substituteParameters
+                                                , changeParameters
                                                 , canCoerceToSimpleParametricSpray
                                                 , isHomogeneousSpray
                                                 , asRatioOfSprays
@@ -159,6 +160,19 @@ main = defaultMain $ testGroup
     assertEqual ""
       (kNumbers, DM.elems kNumbers)
       (combo, b_lambda_mus)
+
+  , testCase "Skew Jack with alpha=0 is same as skew Macdonald with q=1" $ do
+    -- I don't know why. In particular, skew Macdonald with q=1 does not depend on t
+    let
+      n = 4
+      lambda = [4, 2]
+      mu = [1, 1]
+      which = 'P'
+      skJackPoly =
+        changeParameters (skewJackSymbolicPol' n lambda mu which) [zeroSpray]
+      skMacPoly = 
+        changeParameters (skewMacdonaldPolynomial' n lambda mu which) [unitSpray, qlone 2]
+    assertEqual "" skJackPoly skMacPoly
 
   , testCase "Skew Kostka numbers are numbers of skew Gelfand-Tsetlin patterns" $ do
     let

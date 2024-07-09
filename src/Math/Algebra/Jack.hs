@@ -157,12 +157,15 @@ schur' = schur
 -- Jack \(P\)-polynomials with Jack parameter \(\alpha=1\).
 schur :: forall a. AlgRing.C a 
   => [a]       -- ^ values of the variables
-  -> Partition -- ^ partition of integers 
+  -> Partition -- ^ integer partition 
   -> a
-schur []       _      = error "schur: empty list of variables"
+schur []       lambda =
+  if null lambda
+    then one
+    else zero
 schur x@(x0:_) lambda =
   case _isPartition lambda of
-    False -> error "schur: invalid integer partition"
+    False -> error "schur: invalid integer partition."
     True -> sch n 1 lambda arr0
       where
         n = length x
@@ -222,7 +225,7 @@ skewSchur :: forall a. (Eq a, AlgRing.C a)
 skewSchur xs lambda mu = 
   if isSkewPartition lambda mu 
     then DM.foldlWithKey' f zero lrCoefficients
-    else error "skewSchur: invalid skew partition"
+    else error "skewSchur: invalid skew partition."
   where
     lrCoefficients = skewSchurLRCoefficients lambda mu
     f :: a -> Partition -> Int -> a
