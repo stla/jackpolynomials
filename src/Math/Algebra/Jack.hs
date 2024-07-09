@@ -57,11 +57,14 @@ jack' = jack
 -- | Evaluation of a Jack polynomial.
 jack :: forall a. (Eq a, AlgField.C a)
   => [a]       -- ^ values of the variables
-  -> Partition -- ^ partition of integers
+  -> Partition -- ^ integer partition 
   -> a         -- ^ Jack parameter
   -> Char      -- ^ which Jack polynomial, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> a
-jack []       _      _     _     = error "jack: empty list of variables."
+jack []       lambda _     _     =
+  if null lambda
+    then one
+    else zero
 jack x@(x0:_) lambda alpha which =
   case _isPartition lambda of
     False -> error "jack: invalid integer partition."
