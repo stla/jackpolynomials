@@ -132,6 +132,9 @@ a_lambda_mu lambda mu = sum $ zipWith (*) k1 k2
     k1 = map ((flip kostkaNumber) (mkPartition lambda)) parts
     k2 = map ((flip kostkaNumber) (mkPartition mu)) parts
 
+conjugatePartition :: [Int] -> [Int]
+conjugatePartition = fromPartition . dualPartition . toPartition
+
 main :: IO ()
 main = defaultMain $ testGroup
 
@@ -848,6 +851,14 @@ main = defaultMain $ testGroup
         ]
     assertEqual ""
       p (sumOfSprays sprays)
+
+  , testCase "Jack-P combination with alpha=0 is dual es combination" $ do
+    let
+      poly = 3*^esPolynomial 4 [2, 1, 1] ^-^ 7*^skewSchurPol' 4 [3, 2, 1, 1] [2, 1] 
+      esCombo = DM.mapKeys conjugatePartition (esCombination poly)
+      jackCombo = jackCombination 0 'P' poly
+    assertEqual ""
+      esCombo jackCombo
 
   , testCase "jackSymbolicCombination" $ do
     let
