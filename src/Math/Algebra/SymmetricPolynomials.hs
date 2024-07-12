@@ -36,6 +36,7 @@ module Math.Algebra.SymmetricPolynomials
   , schurCombination
   , schurCombination'
   , jackCombination
+  , jackCombination'
   , jackSymbolicCombination
   , jackSymbolicCombination'
   -- * Printing symmetric polynomials
@@ -856,6 +857,29 @@ jackCombination alpha which spray =
       _symmPolyCombination 
         (\lambda -> (combos IM.! (sum lambda)) DM.! lambda) 
           (AlgRing.*) spray
+  where
+    weights = filter (/= 0) (map DF.sum (allExponents spray))
+    n = numberOfVariables spray
+    combos = 
+      IM.fromList 
+        (zip weights (map (msPolynomialsInJackBasis alpha which n) weights))
+
+-- | Symmetric parametric polynomial as a linear combination of Jack 
+-- polynomials with a given Jack parameter. Symmetry is not checked.
+-- Similar to @jackCombination@ but for a parametric spray.
+jackCombination' :: 
+    (FunctionLike b, Eq b, AlgRing.C b, Eq (BaseRing b), AlgField.C (BaseRing b))
+  => BaseRing b             -- ^ Jack parameter
+  -> Char                   -- ^ which Jack polynomials, @'J'@, @'C'@, @'P'@ or @'Q'@
+  -> Spray b                -- ^ parametric spray representing a symmetric polynomial
+  -> Map Partition b  
+jackCombination' alpha which spray = 
+  if not (which `elem` ['J', 'C', 'P', 'Q']) 
+    then error "jackCombination': invalid character, must be 'J', 'C', 'P' or 'Q'."
+    else
+      _symmPolyCombination 
+        (\lambda -> (combos IM.! (sum lambda)) DM.! lambda) 
+          (flip (*^)) spray
   where
     weights = filter (/= 0) (map DF.sum (allExponents spray))
     n = numberOfVariables spray
