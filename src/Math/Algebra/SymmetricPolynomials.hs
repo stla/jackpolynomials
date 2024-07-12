@@ -99,6 +99,7 @@ module Math.Algebra.SymmetricPolynomials
   , factorialSchurPol'
   , skewFactorialSchurPol
   , skewFactorialSchurPol'
+  , hallPolynomials
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -157,6 +158,7 @@ import           Math.Algebra.Hspray              (
                                                   , lone
                                                   , qlone
                                                   , lone'
+                                                  , qlone'
                                                   , fromList
                                                   , getCoefficient
                                                   , getConstantTerm
@@ -165,6 +167,8 @@ import           Math.Algebra.Hspray              (
                                                   , (%/%)
                                                   , RatioOfSprays (..)
                                                   , RatioOfQSprays
+                                                  , asRatioOfSprays
+                                                  , evalRatioOfSprays'
                                                   , constantRatioOfSprays
                                                   , zeroRatioOfSprays
                                                   , prettyRatioOfQSpraysXYZ
@@ -212,6 +216,7 @@ import           Math.Algebra.Jack.Internal       (
                                                   , macdonaldJinMSPbasis
                                                   , inverseKostkaNumbers
                                                   , skewSchurLRCoefficients
+                                                  , _msPolynomialsInHLPbasis
                                                   )
 import           Math.Algebra.JackPol             ( 
                                                     schurPol
@@ -926,6 +931,40 @@ jackSymbolicCombination' which spray =
     combos = 
       IM.fromList 
       (zip weights (map (msPolynomialsInJackSymbolicBasis which n) weights))
+
+-- | symmetric simple parametric spray as a linear combination of 
+-- Hall-Littlewood P-polynomials 
+hlpCombination :: 
+  SimpleParametricQSpray -> Map Partition QSpray    
+hlpCombination spray = 
+  _symmPolyCombination 
+    (\lambda -> (combos IM.! (sum lambda)) DM.! lambda) 
+      (AlgRing.*) spray
+  where
+    weights = filter (/= 0) (map DF.sum (allExponents spray))
+    n = numberOfVariables spray
+    combos = 
+      IM.fromList 
+        (zip weights (map (_msPolynomialsInHLPbasis n) weights))
+
+hallPolynomials ::
+     Partition
+  -> Partition
+  -> Map Partition RatioOfQSprays
+hallPolynomials mu nu = 
+  DM.mapWithKey f
+    (hlpCombination 
+      (hallLittlewoodPolynomial' n mu 'P' ^*^ hallLittlewoodPolynomial' n nu 'P'))
+  where
+    n = sum mu + sum nu
+    _n :: Partition -> Int
+    _n lambda = sum (zipWith (*) [1 .. ] (drop1 lambda))
+    _n_mu_nu = _n mu + _n nu
+    t = qlone' 1
+    invt = RatioOfSprays unitSpray (qlone 1)
+    f :: Partition -> QSpray -> RatioOfQSprays
+    f lambda spray = 
+      (t (_n lambda - _n_mu_nu)) AlgMod.*> (evalRatioOfSprays' (asRatioOfSprays spray) [invt])
 
 -- | Kostka-Foulkes polynomial of two given partitions. This is a univariate 
 -- polynomial whose value at @1@ is the Kostka number of the two partitions.

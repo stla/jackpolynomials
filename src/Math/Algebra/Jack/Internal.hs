@@ -51,6 +51,7 @@ module Math.Algebra.Jack.Internal
   , _skewGelfandTsetlinPatterns
   , _skewTableauxWithGivenShapeAndWeight
   , _semiStandardTableauxWithGivenShapeAndWeight
+  , _msPolynomialsInHLPbasis
   )
   where
 import           Prelude 
@@ -1060,15 +1061,17 @@ msPolynomialsInSchurBasis ::
 msPolynomialsInSchurBasis n weight = 
    _inverseKostkaMatrix n weight 1 'P'
 
-msPolynomialsInHLPbasis :: 
+-- | monomial symmetric polynomials in Hall-Littlewood P-polynomials basis
+_msPolynomialsInHLPbasis :: 
   Int -> Int -> Map Partition (Map Partition (Spray Rational))
-msPolynomialsInHLPbasis n weight = 
+_msPolynomialsInHLPbasis n weight = 
   DM.fromDistinctAscList
     (map (
       \lambda -> 
         (
           lambda
-        , DM.filter (not . isZeroSpray) $ DM.unionsWith (^+^) (hlpCombos lambda)
+        , DM.filter (not . isZeroSpray) $ 
+            DM.unionsWith (^+^) (hlpCombos lambda)
         )
       ) lambdas)
   where
@@ -1084,9 +1087,6 @@ msPolynomialsInHLPbasis n weight =
         (\(mu, r) ->
           DM.map (\spray -> r *^ spray) (hlpCombo mu))
         (msAssocs lambda)
-
-
-
 
 _e :: AlgRing.C a => MCP.Partition -> a -> a
 _e lambda alpha = 
