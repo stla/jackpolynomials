@@ -1039,6 +1039,55 @@ _hallLittlewoodPolynomialsInSchurBasis which lambda =
     coeffs = DM.filter (not . isZeroSpray) 
           (DM.fromDistinctDescList (zip lambdas (V.toList (getRow 1 matrix))))
 
+-- _hallLittlewoodPpolynomialInMSPbasis :: 
+--   (Eq a, AlgRing.C a) => Partition -> Map Partition (Spray a)
+-- _hallLittlewoodPpolynomialInMSPbasis lambda = 
+--   DM.unionsWith (^+^) msCombos
+--   where
+--     schurCombo = _hallLittlewoodPolynomialsInSchurBasis 'P' lambda
+--     schurAssocs = DM.assocs schurCombo
+--     msCombos = 
+--       map 
+--         (\(kappa, spray) -> 
+--           DM.mapKeys fromPartition 
+--             (DM.map (\kn -> kn .^ spray) 
+--               (kostkaNumbersWithGivenLambda (toPartitionUnsafe kappa))))
+--         schurAssocs
+
+-- | monomial symmetric polynomials in Schur polynomials basis
+msPolynomialsInSchurBasis :: 
+  Int -> Int -> Map Partition (Map Partition Rational)
+msPolynomialsInSchurBasis n weight = 
+   _inverseKostkaMatrix n weight 1 'P'
+
+msPolynomialsInHLPbasis :: 
+  Int -> Int -> Map Partition (Map Partition (Spray Rational))
+msPolynomialsInHLPbasis n weight = 
+  DM.fromDistinctAscList
+    (map (
+      \lambda -> 
+        (
+          lambda
+        , DM.filter (not . isZeroSpray) $ DM.unionsWith (^+^) (hlpCombos lambda)
+        )
+      ) lambdas)
+  where
+    msCombos = msPolynomialsInSchurBasis n weight
+    lambdas = DM.keys msCombos
+    hlpCombo mu = 
+      DM.filter (not . isZeroSpray) $ 
+        DM.fromDistinctAscList 
+          (map (\kappa -> (kappa, _kostkaFoulkesPolynomial mu kappa)) lambdas)
+    msAssocs lambda = DM.assocs (msCombos DM.! lambda)
+    hlpCombos lambda =
+      map 
+        (\(mu, r) ->
+          DM.map (\spray -> r *^ spray) (hlpCombo mu))
+        (msAssocs lambda)
+
+
+
+
 _e :: AlgRing.C a => MCP.Partition -> a -> a
 _e lambda alpha = 
   alpha * fromIntegral (_n (dualPartition lambda)) - fromIntegral (_n lambda)

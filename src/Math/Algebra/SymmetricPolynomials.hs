@@ -910,7 +910,7 @@ jackSymbolicCombination which qspray =
 -- with symbolic parameter. 
 -- Similar to @jackSymbolicCombination@ but for a parametric spray.
 jackSymbolicCombination' :: 
-  (Eq a, AlgField.C a)
+    (Eq a, AlgField.C a)
   => Char                            -- ^ which Jack polynomials, @'J'@, @'C'@, @'P'@ or @'Q'@
   -> ParametricSpray a               -- ^ parametric spray representing a symmetric polynomial
   -> Map Partition (RatioOfSprays a) -- ^ map representing the linear combination; a partition @lambda@ in the keys of this map corresponds to the term @coeff *^ jackSymbolicPol' n lambda which@, where @coeff@ is the value attached to this key and @n@ is the number of variables of the spray
@@ -1193,7 +1193,10 @@ _tSkewSchurPolynomial f n lambda mu = sumOfSprays sprays
 
 -- | t-Schur polynomial. This is a multivariate symmetric polynomial whose 
 -- coefficients are polynomial in a single parameter usually denoted by \(t\).
--- One obtains the Schur polynomials by substituting \(t\) with \(0\). 
+-- One obtains the Schur polynomials by substituting \(t\) with \(0\).  
+-- The name \"\(t\)-Schur polynomial\" is taken from
+-- [Wheeler and Zinn-Justin's paper](https://www.sciencedirect.com/science/article/pii/S0097316518300724)
+-- /Hall polynomials, inverse Kostka polynomials and puzzles/.
 tSchurPolynomial ::
   (Eq a, AlgField.C a)
   => Int        -- ^ number of variables
@@ -1212,6 +1215,9 @@ tSchurPolynomial n lambda
 -- | t-Schur polynomial. This is a multivariate symmetric polynomial whose 
 -- coefficients are polynomial in a single parameter usually denoted by \(t\).
 -- One obtains the Schur polynomials by substituting \(t\) with \(0\). 
+-- The name \"\(t\)-Schur polynomial\" is taken from
+-- [Wheeler and Zinn-Justin's paper](https://www.sciencedirect.com/science/article/pii/S0097316518300724)
+-- /Hall polynomials, inverse Kostka polynomials and puzzles/.
 tSchurPolynomial' ::
      Int        -- ^ number of variables
   -> Partition  -- ^ integer partition
