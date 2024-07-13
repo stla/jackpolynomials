@@ -177,3 +177,5 @@ with a given Jack parameter and a given partition `lambda`
 * new function `symbolicKostkaNumbersWithGivenLambda`, to get the Kostka-Jack 
 numbers with a symbolic Jack parameter for a given partition `lambda`
 
+* new function `hallPolynomials`, to get the Hall polynomials
+
