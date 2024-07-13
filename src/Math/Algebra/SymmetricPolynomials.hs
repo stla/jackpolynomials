@@ -939,14 +939,10 @@ hlpCombination ::
   SimpleParametricQSpray -> Map Partition QSpray    
 hlpCombination spray = 
   _symmPolyCombination 
-    (\lambda -> _msPolynomialInHLPbasis n lambda) -- (combos IM.! (sum lambda)) DM.! lambda) 
+    (\lambda -> _msPolynomialInHLPbasis n lambda) 
       (AlgRing.*) spray
   where
---    weights = filter (/= 0) (map DF.sum (allExponents spray))
     n = numberOfVariables spray
-    -- combos = 
-    --   IM.fromList 
-    --     (zip weights (map (_msPolynomialsInHLPbasis n) weights))
 
 -- | Hall polynomials \(g^{\lambda}_{\mu,\nu}(t)\) for given integer partitions
 -- \(\mu\) and \(\nu\). The keys of the map returned by this function are the 
