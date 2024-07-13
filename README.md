@@ -12,11 +12,11 @@ applications in multivariate statistics. They are particular cases of
 [Jack polynomials](https://en.wikipedia.org/wiki/Jack_function), which are 
 multivariate symmetric polynomials. This package
 allows to compute these polynomials. It also allows to compute other 
-symmetric polynomials: t-Schur polynomials, 
+symmetric polynomials: $t$-Schur polynomials, 
 Hall-Littlewood polynomials, and Macdonald 
 polynomials. In addition, it provides some functions to compute Kostka-Jack 
-numbers, Kostka-Foulkes polynomials, Kostka-Macdonald polynomials, and to 
-enumerate Gelfand-Tsetlin patterns.
+numbers, Kostka-Foulkes polynomials, Kostka-Macdonald polynomials, Hall 
+polynomials, and to enumerate Gelfand-Tsetlin patterns.
 
 ___
 
