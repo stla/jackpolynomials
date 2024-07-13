@@ -947,10 +947,13 @@ hlpCombination spray =
       IM.fromList 
         (zip weights (map (_msPolynomialsInHLPbasis n) weights))
 
+-- | Hall polynomials \(g^{\lambda}_{\mu,\nu}(t)\) for given integer partitions
+-- \(\mu\) and \(\nu\). The keys of the map returned by this function are the 
+-- partitions \(\lambda\). __Warning:__ slow.
 hallPolynomials ::
-     Partition
-  -> Partition
-  -> Map Partition RatioOfQSprays
+     Partition -- ^ the integer partition \(\mu\)
+  -> Partition -- ^ the integer partition \(\nu\)
+  -> Map Partition QSpray
 hallPolynomials mu nu = 
   DM.mapWithKey f
     (hlpCombination 
@@ -962,9 +965,11 @@ hallPolynomials mu nu =
     _n_mu_nu = _n mu + _n nu
     t = qlone' 1
     invt = RatioOfSprays unitSpray (qlone 1)
-    f :: Partition -> QSpray -> RatioOfQSprays
+    f :: Partition -> QSpray -> QSpray
     f lambda spray = 
-      (t (_n lambda - _n_mu_nu)) AlgMod.*> (evalRatioOfSprays' (asRatioOfSprays spray) [invt])
+      _numerator $ 
+        (t (_n lambda - _n_mu_nu)) 
+          AlgMod.*> (evalRatioOfSprays' (asRatioOfSprays spray) [invt])
 
 -- | Kostka-Foulkes polynomial of two given partitions. This is a univariate 
 -- polynomial whose value at @1@ is the Kostka number of the two partitions.
