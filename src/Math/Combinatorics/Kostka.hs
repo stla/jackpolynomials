@@ -66,7 +66,7 @@ kostkaNumbersWithGivenLambda lambda alpha
 -- | Kostka numbers \(K_{\lambda,\mu}(\alpha)\) with Jack parameter, or 
 -- Kostka-Jack numbers, for a given weight of the 
 -- partitions \(\lambda\) and \(\mu\) and a given Jack parameter 
--- \(\alpha\). These are the standard Kostka numbers when
+-- \(\alpha\). These are the ordinary Kostka numbers when
 -- \(\alpha=1\). The function returns a map whose keys represent the 
 -- partitions \(\lambda\) and the value attached to a partition \(\lambda\)
 -- represents the map \(\mu \mapsto K_{\lambda,\mu}(\alpha)\) where the 
@@ -133,6 +133,13 @@ symbolicKostkaNumbersWithGivenLambda lambda
 -- polynomial \(m_\nu\) in the expression of the skew \(P\)-Jack polynomial 
 -- \(P_{\lambda/\mu}(\alpha)\) as a linear combination of monomial symmetric 
 -- polynomials.
+-- /Note:/ the skew Kostka-Jack numbers \(K_{\lambda/\mu, \nu}(\alpha)\) are 
+-- well defined when the Jack parameter \(\alpha\) is zero, however this 
+-- function does not work for \(\alpha=0\); a possible way to get the 
+-- skew Kostka-Jack numbers \(K_{\lambda/\mu, \nu}(0)\) is to use the 
+-- function @symbolicSkewKostkaNumbers@ to get the skew Kostka-Jack numbers
+-- with a symbolic Jack parameter \(\alpha\), and then to substitute \(\alpha\)
+-- with \(0\). 
 skewKostkaNumbers ::
      Rational  -- ^ Jack parameter
   -> Partition -- ^ outer partition of the skew partition
