@@ -51,7 +51,7 @@ module Math.Algebra.Jack.Internal
   , _skewGelfandTsetlinPatterns
   , _skewTableauxWithGivenShapeAndWeight
   , _semiStandardTableauxWithGivenShapeAndWeight
-  , _msPolynomialsInHLPbasis
+  , _msPolynomialInHLPbasis
   )
   where
 import           Prelude 
@@ -1061,32 +1061,25 @@ msPolynomialsInSchurBasis ::
 msPolynomialsInSchurBasis n weight = 
    _inverseKostkaMatrix n weight 1 'P'
 
--- | monomial symmetric polynomials in Hall-Littlewood P-polynomials basis
-_msPolynomialsInHLPbasis :: 
-  Int -> Int -> Map Partition (Map Partition (Spray Rational))
-_msPolynomialsInHLPbasis n weight = 
-  DM.fromDistinctAscList
-    (map (
-      \lambda -> 
-        (
-          lambda
-        , DM.filter (not . isZeroSpray) $ 
-            DM.unionsWith (^+^) (hlpCombos lambda)
-        )
-      ) lambdas)
+-- | monomial symmetric polynomial in Hall-Littlewood P-polynomials basis
+_msPolynomialInHLPbasis :: 
+  Int -> Partition -> Map Partition (Spray Rational)
+_msPolynomialInHLPbasis n lambda = 
+  DM.filter (not . isZeroSpray) (DM.unionsWith (^+^) hlpCombos)
   where
+    weight = sum lambda
     msCombos = msPolynomialsInSchurBasis n weight
     lambdas = DM.keys msCombos
     hlpCombo mu = 
       DM.filter (not . isZeroSpray) $ 
         DM.fromDistinctAscList 
           (map (\kappa -> (kappa, _kostkaFoulkesPolynomial mu kappa)) lambdas)
-    msAssocs lambda = DM.assocs (msCombos DM.! lambda)
-    hlpCombos lambda =
+    msAssocs = DM.assocs (msCombos DM.! lambda)
+    hlpCombos =
       map 
         (\(mu, r) ->
           DM.map (\spray -> r *^ spray) (hlpCombo mu))
-        (msAssocs lambda)
+        msAssocs
 
 _e :: AlgRing.C a => MCP.Partition -> a -> a
 _e lambda alpha = 

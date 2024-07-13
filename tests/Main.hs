@@ -80,6 +80,7 @@ import Math.Algebra.SymmetricPolynomials        ( isSymmetricSpray
                                                 , qtKostkaPolynomials'
                                                 , modifiedMacdonaldPolynomial'
                                                 , qtSkewKostkaPolynomials'
+                                                , hallPolynomials
                                                 )
 import Math.Combinat.Partitions.Integer         ( 
                                                   toPartition
@@ -142,7 +143,15 @@ main = defaultMain $ testGroup
 
   [ 
 
-  testCase "Jack polynomial for alpha=0" $ do
+  testCase "A Hall polynomial (comparison with Sage)" $ do
+    let
+      hallPolys = hallPolynomials [3, 1, 1] [2, 1]
+      hallPoly = hallPolys DM.! [4, 2, 1, 1]
+      t = qlone 1
+      expected = 2 *^ t^**^3 ^+^ t^**^2 ^-^ t ^-^ unitSpray
+    assertEqual "" hallPoly expected
+
+  , testCase "Jack polynomial for alpha=0" $ do
     let
       n = 4
       lambda = [3, 1]

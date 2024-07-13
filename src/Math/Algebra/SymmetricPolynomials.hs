@@ -73,6 +73,8 @@ module Math.Algebra.SymmetricPolynomials
   , transitionsSchurToHallLittlewood
   , skewHallLittlewoodPolynomial
   , skewHallLittlewoodPolynomial'
+  -- * Hall polynomials
+  , hallPolynomials
   -- * t-Schur polynomials
   , tSchurPolynomial
   , tSchurPolynomial'
@@ -99,7 +101,6 @@ module Math.Algebra.SymmetricPolynomials
   , factorialSchurPol'
   , skewFactorialSchurPol
   , skewFactorialSchurPol'
-  , hallPolynomials
   ) where
 import           Prelude hiding ( fromIntegral, fromRational )
 import qualified Algebra.Additive                 as AlgAdd
@@ -216,7 +217,7 @@ import           Math.Algebra.Jack.Internal       (
                                                   , macdonaldJinMSPbasis
                                                   , inverseKostkaNumbers
                                                   , skewSchurLRCoefficients
-                                                  , _msPolynomialsInHLPbasis
+                                                  , _msPolynomialInHLPbasis
                                                   )
 import           Math.Algebra.JackPol             ( 
                                                     schurPol
@@ -938,14 +939,14 @@ hlpCombination ::
   SimpleParametricQSpray -> Map Partition QSpray    
 hlpCombination spray = 
   _symmPolyCombination 
-    (\lambda -> (combos IM.! (sum lambda)) DM.! lambda) 
+    (\lambda -> _msPolynomialInHLPbasis n lambda) -- (combos IM.! (sum lambda)) DM.! lambda) 
       (AlgRing.*) spray
   where
-    weights = filter (/= 0) (map DF.sum (allExponents spray))
+--    weights = filter (/= 0) (map DF.sum (allExponents spray))
     n = numberOfVariables spray
-    combos = 
-      IM.fromList 
-        (zip weights (map (_msPolynomialsInHLPbasis n) weights))
+    -- combos = 
+    --   IM.fromList 
+    --     (zip weights (map (_msPolynomialsInHLPbasis n) weights))
 
 -- | Hall polynomials \(g^{\lambda}_{\mu,\nu}(t)\) for given integer partitions
 -- \(\mu\) and \(\nu\). The keys of the map returned by this function are the 
@@ -954,10 +955,16 @@ hallPolynomials ::
      Partition -- ^ the integer partition \(\mu\)
   -> Partition -- ^ the integer partition \(\nu\)
   -> Map Partition QSpray
-hallPolynomials mu nu = 
-  DM.mapWithKey f
-    (hlpCombination 
-      (hallLittlewoodPolynomial' n mu 'P' ^*^ hallLittlewoodPolynomial' n nu 'P'))
+hallPolynomials mu nu 
+  | not (_isPartition mu) =
+      error "hallPolynomials: invalid integer partition `mu`."
+  | not (_isPartition nu) =
+      error "hallPolynomials: invalid integer partition `nu`."
+  | otherwise =
+      DM.mapWithKey f
+        (hlpCombination 
+          (hallLittlewoodPolynomial' n mu 'P' 
+            ^*^ hallLittlewoodPolynomial' n nu 'P'))
   where
     n = sum mu + sum nu
     _n :: Partition -> Int
