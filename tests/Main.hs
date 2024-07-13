@@ -33,6 +33,7 @@ import Math.Algebra.Hspray                      ( FunctionLike (..)
                                                 , productOfSprays
                                                 , detLaplace
                                                 , getConstantTerm
+                                                , getCoefficient
                                                 )
 import qualified Math.Algebra.Hspray            as Hspray
 import Math.Algebra.Jack                        ( schur, skewSchur 
@@ -92,6 +93,7 @@ import Math.Combinat.Partitions.Integer         (
 import qualified Math.Combinat.Partitions.Integer as PI
 import Math.Combinat.Tableaux.GelfandTsetlin    ( kostkaNumber )
 import qualified Math.Combinat.Tableaux.GelfandTsetlin as GT
+import           Math.Combinat.Tableaux.LittlewoodRichardson ( lrMult )
 import           Math.Combinatorics.Kostka      ( 
                                                   kostkaNumbers
                                                 , kostkaNumbersWithGivenLambda
@@ -150,6 +152,24 @@ main = defaultMain $ testGroup
       t = qlone 1
       expected = 2 *^ t^**^3 ^+^ t^**^2 ^-^ t ^-^ unitSpray
     assertEqual "" hallPoly expected
+
+  , testCase "Leading coefficient of Hall polynomial is Littlewood-Richardson" $ do
+    let
+      mu = [3, 1]
+      nu = [2, 1]
+      _n :: Partition -> Int
+      _n lambda = sum (zipWith (*) [1 .. ] (drop 1 lambda))
+      _n_mu_nu = _n mu + _n nu
+      _degree :: Partition -> Int
+      _degree lambda = _n lambda - _n_mu_nu
+      lrCoeffs = 
+        DM.mapKeys fromPartition 
+          (DM.map toRational (lrMult (toPartition mu) (toPartition nu)))
+      leadingCoeffs = 
+        DM.mapWithKey 
+          (\lambda poly -> getCoefficient [_degree lambda] poly)
+            (hallPolynomials mu nu)
+    assertEqual "" lrCoeffs leadingCoeffs
 
   , testCase "Jack polynomial for alpha=0" $ do
     let
