@@ -946,7 +946,9 @@ hlpCombination spray =
 
 -- | Hall polynomials \(g^{\lambda}_{\mu,\nu}(t)\) for given integer partitions
 -- \(\mu\) and \(\nu\). The keys of the map returned by this function are the 
--- partitions \(\lambda\). __Warning:__ slow.
+-- partitions \(\lambda\) and the value attached to a key \(\lambda\) is the 
+-- Hall polynomial \(g^{\lambda}_{\mu,\nu}(t)\) (it is given as a @QSpray@ 
+-- spray but actually all its coefficients are integer). __Warning:__ slow.
 hallPolynomials ::
      Partition -- ^ the integer partition \(\mu\)
   -> Partition -- ^ the integer partition \(\nu\)
