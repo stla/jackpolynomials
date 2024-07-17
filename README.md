@@ -251,15 +251,21 @@ its coefficients are not polynomials in the two parameters $q$ and $t$, but
 ratios of polynomials.
 
 
-### Combinatorics
+### Kostka-Jack numbers, Kostka-Foulkes polynomials, and Kostka-Macdonald polynomials
 
-The modules `Math.Combinatorics.Kostka` and `Math.Combinatorics.Tableaux` 
-appeared in version 1.4.6.0. They provide some functions to compute Kostka-Jack 
-numbers, possibly skew, to enumerate the semistandard Young tableaux with a 
-given shape and a given weight, possibly skew, and to enumerate 
-Gelfand-Tsetlin patterns.
-The reason to include these modules in the package is that these functions
-are used to compute the symmetric polynomials.
+The package can also compute the Kostka-Jack numbers (i.e. Kostka numbers with
+a Jack parameter), the Kostka-Foulkes polynomials (aka $t$-Kostka polynomials), 
+the Kostka-Macdonald polynomials (aka $qt$-Kostka polynomials), and the 
+Hall polynomials. Skew generalizations are also available: skew Kostka-Jack 
+numbers, skew Kostka-Foulkes polynomials, and skew Kostka-Macdonald polynomials.
+
+
+### Semistandard Young tableaux and Gelfand-Tsetlin patterns 
+
+The package allows to enumerate the semistandard Young tableaux with a given 
+shape, possibly skew, and a given weight, and to enumerate Gelfand-Tsetlin 
+patterns defined by a skew partition.
+
 
 
 ## References
